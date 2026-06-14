@@ -13,6 +13,7 @@ from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_research import build_product_research_card
 from venus.self_improvement import build_self_improvement_report
+from venus.video_production import build_video_production_package
 from venus.wechat_private_domain import build_wechat_private_domain_report
 
 
@@ -102,6 +103,7 @@ def build_agent_run_plan(
     hotspots = list(safe_payload.get("hotspots") or [])
     products = list(safe_payload.get("products") or [])
     comments = list(safe_payload.get("comments") or [])
+    video_production = safe_payload.get("video_production")
     douyin_engagement = safe_payload.get("douyin_engagement")
     wechat_private_domain = safe_payload.get("wechat_private_domain")
     commercial_strategy = safe_payload.get("commercial_strategy")
@@ -135,6 +137,15 @@ def build_agent_run_plan(
             "total": result["summary"]["total"],
             "high_risk": result["summary"]["high_risk"],
             "approval_gated": result["summary"]["approval_gated"],
+        }
+
+    if isinstance(video_production, dict):
+        result = build_video_production_package(video_production)
+        executed_workflows.append("production")
+        workflow_summaries["production"] = {
+            "scene_count": result["summary"]["scene_count"],
+            "subtitle_card_count": result["summary"]["subtitle_card_count"],
+            "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
         }
 
     if isinstance(douyin_engagement, dict):

@@ -244,6 +244,29 @@ def test_cli_improvement_outputs_self_improvement_report():
     assert output["result"]["backup_tasks"][0]["execution_state"] == "blocked_until_approved"
 
 
+def test_cli_production_outputs_video_production_package():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "production",
+            "data/samples/video_production.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "production"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["scene_count"] == 5
+    assert output["result"]["summary"]["subtitle_card_count"] == 5
+    assert output["result"]["summary"]["approval_gated_action_count"] == 2
+    assert output["result"]["edit_plan"]["timeline"][0]["cut_style"] == "jump_cut"
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [

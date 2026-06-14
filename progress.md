@@ -124,3 +124,13 @@
 - Added Feishu dry-run command: `/venus improvement`.
 - Integrated self-improvement summaries into Agent Run when `self_improvement` data is present.
 - Preserved safety boundaries: no memory update, system prompt change, code change, backup restore, backup upload, external service write, or platform action is executed, and `external_actions: []` remains enforced.
+
+## Video Production Progress
+
+- Added the video production design spec and implementation plan.
+- Added a local dry-run `production` workflow for professional short-video copy, shot lists, editing timelines, subtitle cards, asset checklists, and publishing drafts.
+- Added approval records for claim review and publish review.
+- Added CLI command: `venus production data/samples/video_production.json`.
+- Added Feishu dry-run command: `/venus production`.
+- Integrated production summaries into Agent Run when `video_production` data is present.
+- Preserved safety boundaries: no media render, editor project modification, Douyin upload, publishing schedule, pinned comment, or external video action is executed, and `external_actions: []` remains enforced.

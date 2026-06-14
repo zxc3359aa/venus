@@ -59,6 +59,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         config.default_input_paths["improvement"]
         == tmp_workspace / "data" / "samples" / "self_improvement.json"
     )
+    assert (
+        config.default_input_paths["production"]
+        == tmp_workspace / "data" / "samples" / "video_production.json"
+    )
 
 
 def test_feishu_config_rejects_xiaolongxia_namespace(tmp_workspace):
@@ -134,6 +138,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus wechat" in result["card"]["summary"]
     assert "/venus commercial" in result["card"]["summary"]
     assert "/venus improvement" in result["card"]["summary"]
+    assert "/venus production" in result["card"]["summary"]
 
 
 def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
@@ -442,6 +447,24 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "video_production.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_content_brief",
+                "retrieved_at": "2026-06-14T14:00:00+08:00",
+                "topic": "早C晚A翻车自查",
+                "format": "douyin_short_video",
+                "duration_seconds": 45,
+                "objective": "提升完播、评论和关注",
+                "persona_samples": ["姐妹们，先看屏障状态，证据和体验都要说清楚。"],
+                "key_points": ["先判断屏障状态", "再看成分刺激叠加", "最后给评论区肤质自查问题"],
+                "risk_notes": ["避免100%修复屏障这类绝对功效承诺"],
+                "broll_assets": ["评论截图", "成分表特写", "备案截图"],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_run_feishu_entry_hotspot_routes_to_orchestrator(tmp_workspace):
@@ -636,6 +659,29 @@ def test_run_feishu_entry_improvement_routes_to_self_improvement_report(tmp_work
     assert result["card"]["result"]["workflow"] == "improvement"
     assert result["card"]["result"]["result"]["summary"]["learning_candidate_count"] == 2
     assert result["card"]["result"]["result"]["summary"]["backup_issue_count"] == 1
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_production_routes_to_video_production_package(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-production",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:39:55+08:00",
+            "text": "/venus production",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "production"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "production"
+    assert result["card"]["result"]["result"]["summary"]["scene_count"] == 5
+    assert result["card"]["result"]["result"]["summary"]["approval_gated_action_count"] == 2
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

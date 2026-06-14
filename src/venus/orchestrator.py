@@ -12,6 +12,7 @@ from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_research import build_product_research_card
 from venus.self_improvement import build_self_improvement_report
+from venus.video_production import build_video_production_package
 from venus.wechat_private_domain import build_wechat_private_domain_report
 
 
@@ -44,6 +45,8 @@ class VenusOrchestrator:
             result = build_commercial_strategy_report(payload)
         elif workflow == "improvement":
             result = build_self_improvement_report(payload)
+        elif workflow == "production":
+            result = build_video_production_package(payload)
         else:
             raise ValueError(f"Unsupported Venus workflow: {workflow}")
 

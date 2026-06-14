@@ -6,7 +6,7 @@ Build "Venus", a beauty and skincare agent system that helps the user's Douyin s
 
 ## Current Phase
 
-Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mobile entry, competitor monitoring workflow, Airtable-ready operations export, static operations dashboard, local Agent Run orchestration layer, dry-run Douyin engagement connector, dry-run WeChat private-domain connector, dry-run Qianchuan/Xingtu commercial strategy connector, and dry-run self-improvement/backup verification workflow are implemented before live Douyin, WeChat, Qianchuan, Xingtu, BI, Airtable writes, or autonomous memory changes are enabled.
+Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mobile entry, competitor monitoring workflow, Airtable-ready operations export, static operations dashboard, local Agent Run orchestration layer, dry-run video-production package, dry-run Douyin engagement connector, dry-run WeChat private-domain connector, dry-run Qianchuan/Xingtu commercial strategy connector, and dry-run self-improvement/backup verification workflow are implemented before live Douyin, WeChat, Qianchuan, Xingtu, BI, Airtable writes, media rendering, video publishing, or autonomous memory changes are enabled.
 
 ## Phases
 
@@ -17,7 +17,7 @@ Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mo
 | 3. Local project scaffold | Complete | Create the repo structure, environment templates, docs, and first runnable agent skeleton. | Local smoke commands run. |
 | 4. Knowledge and memory layer | Complete | Define Venus memory, style profile, skincare philosophy, content library, product database, and privacy controls. | Local persona and storage tests pass. |
 | 5. Trend and research pipeline | Complete | Build source collection, normalization, scoring, reports, and script ideation for Douyin beauty/skincare topics. | Sample report and script pack generated from test inputs. |
-| 6. Content creation workflow | Complete | Produce short-video scripts, shot lists, editing briefs, and review gates in the user's voice. | End-to-end content brief can be generated and reviewed. |
+| 6. Content creation workflow | Complete | Produce short-video scripts, shot lists, editing briefs, and review gates in the user's voice. | End-to-end content and production packages can be generated and reviewed. |
 | 7. Feishu mobile entry | Complete | Add a Feishu interface isolated from the existing "Xiaolongxia" agent. | Local dry-run Feishu entry parses `/venus` commands, routes safe workflows, and returns card-ready drafts with no external actions. |
 | 8. Analytics and monitoring | In Progress | Add dashboards for competitors, videos, comments, product risk, content performance, and growth loops. | Monitoring reports can be refreshed and inspected. |
 | 9. Platform integrations | In Progress | Add Douyin comments, livestream, e-commerce, Qianchuan, Xingtu, WeChat mini-program, and enterprise WeChat flows as approved connectors. | Each connector has permissions, logs, and rollback controls. |
