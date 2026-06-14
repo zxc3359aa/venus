@@ -94,3 +94,13 @@
 - Added Feishu dry-run command: `/venus douyin`.
 - Integrated Douyin engagement summaries into Agent Run when `douyin_engagement` data is present.
 - Preserved safety boundaries: no Douyin reply, live interaction, pinning, publishing, or user interaction is executed, and `external_actions: []` remains enforced.
+
+## WeChat Private-Domain Progress
+
+- Added the WeChat private-domain design spec and implementation plan.
+- Added a local dry-run `wechat` workflow for Mini Program skincare Q&A and Enterprise WeChat handoff queues.
+- Added answer queues, handoff queues, risk/lead intent summaries, approval records, and source/safety notes.
+- Added CLI command: `venus wechat data/samples/wechat_private_domain.json`.
+- Added Feishu dry-run command: `/venus wechat`.
+- Integrated WeChat private-domain summaries into Agent Run when `wechat_private_domain` data is present.
+- Preserved safety boundaries: no Mini Program answer, Enterprise WeChat message, contact add, group invite, customer route, or lead handoff is executed, and `external_actions: []` remains enforced.

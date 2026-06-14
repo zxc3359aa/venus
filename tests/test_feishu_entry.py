@@ -47,6 +47,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         config.default_input_paths["douyin"]
         == tmp_workspace / "data" / "samples" / "douyin_engagement.json"
     )
+    assert (
+        config.default_input_paths["wechat"]
+        == tmp_workspace / "data" / "samples" / "wechat_private_domain.json"
+    )
 
 
 def test_feishu_config_rejects_xiaolongxia_namespace(tmp_workspace):
@@ -119,6 +123,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus airtable" in result["card"]["summary"]
     assert "/venus agent-run" in result["card"]["summary"]
     assert "/venus douyin" in result["card"]["summary"]
+    assert "/venus wechat" in result["card"]["summary"]
 
 
 def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
@@ -323,6 +328,26 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "wechat_private_domain.json").write_text(
+        json.dumps(
+            {
+                "source": "mini_program_export",
+                "retrieved_at": "2026-06-14T11:00:00+08:00",
+                "mini_program_sessions": [
+                    {
+                        "session_id": "mp-001",
+                        "nickname": "敏敏",
+                        "questions": [
+                            {"question_id": "q1", "text": "屏障受损泛红，早C晚A还能继续吗？"},
+                            {"question_id": "q2", "text": "我想加企业微信进群，让你帮我看产品搭配"},
+                        ],
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_run_feishu_entry_hotspot_routes_to_orchestrator(tmp_workspace):
@@ -449,6 +474,29 @@ def test_run_feishu_entry_douyin_routes_to_engagement_report(tmp_workspace):
     assert result["card"]["result"]["workflow"] == "douyin"
     assert result["card"]["result"]["result"]["summary"]["comment_count"] == 2
     assert result["card"]["result"]["result"]["summary"]["live_message_count"] == 1
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_wechat_routes_to_private_domain_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-wechat",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:39:30+08:00",
+            "text": "/venus wechat",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "wechat"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "wechat"
+    assert result["card"]["result"]["result"]["summary"]["question_count"] == 2
+    assert result["card"]["result"]["result"]["summary"]["enterprise_wechat_handoff_count"] == 1
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

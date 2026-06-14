@@ -11,6 +11,7 @@ from venus.douyin_engagement import build_douyin_engagement_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_research import build_product_research_card
+from venus.wechat_private_domain import build_wechat_private_domain_report
 
 
 SECRET_KEYS = {
@@ -100,6 +101,7 @@ def build_agent_run_plan(
     products = list(safe_payload.get("products") or [])
     comments = list(safe_payload.get("comments") or [])
     douyin_engagement = safe_payload.get("douyin_engagement")
+    wechat_private_domain = safe_payload.get("wechat_private_domain")
     competitors = _competitor_payload(safe_payload.get("competitors"))
 
     if hotspots:
@@ -138,6 +140,15 @@ def build_agent_run_plan(
             "comment_count": result["summary"]["comment_count"],
             "live_message_count": result["summary"]["live_message_count"],
             "approval_gated_reply_count": result["summary"]["approval_gated_reply_count"],
+        }
+
+    if isinstance(wechat_private_domain, dict):
+        result = build_wechat_private_domain_report(wechat_private_domain)
+        executed_workflows.append("wechat")
+        workflow_summaries["wechat"] = {
+            "question_count": result["summary"]["question_count"],
+            "enterprise_wechat_handoff_count": result["summary"]["enterprise_wechat_handoff_count"],
+            "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
         }
 
     if competitors.get("competitors"):

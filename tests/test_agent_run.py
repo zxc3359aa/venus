@@ -64,6 +64,20 @@ def _agent_run_payload():
                 }
             ],
         },
+        "wechat_private_domain": {
+            "source": "mini_program_export",
+            "retrieved_at": "2026-06-14T11:00:00+08:00",
+            "mini_program_sessions": [
+                {
+                    "session_id": "mp-001",
+                    "nickname": "敏敏",
+                    "questions": [
+                        {"question_id": "q1", "text": "屏障受损泛红，早C晚A还能继续吗？"},
+                        {"question_id": "q2", "text": "我想加企业微信进群，让你帮我看产品搭配"},
+                    ],
+                }
+            ],
+        },
         "competitors": {
             "competitors": [
                 {
@@ -103,6 +117,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "product",
         "comments",
         "douyin",
+        "wechat",
         "monitoring",
         "airtable",
     ]
@@ -110,6 +125,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["workflow_summaries"]["product"]["risk_level"] == "high"
     assert plan["workflow_summaries"]["comments"]["approval_gated"] == 1
     assert plan["workflow_summaries"]["douyin"]["approval_gated_reply_count"] == 2
+    assert plan["workflow_summaries"]["wechat"]["enterprise_wechat_handoff_count"] == 1
     assert plan["workflow_summaries"]["monitoring"]["top_account"] == "成分党A"
     assert plan["workflow_summaries"]["airtable"]["table_count"] == 6
 

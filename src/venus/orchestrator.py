@@ -10,6 +10,7 @@ from venus.douyin_engagement import build_douyin_engagement_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_research import build_product_research_card
+from venus.wechat_private_domain import build_wechat_private_domain_report
 
 
 class VenusOrchestrator:
@@ -35,6 +36,8 @@ class VenusOrchestrator:
             result = build_agent_run_plan(payload)
         elif workflow == "douyin":
             result = build_douyin_engagement_report(payload)
+        elif workflow == "wechat":
+            result = build_wechat_private_domain_report(payload)
         else:
             raise ValueError(f"Unsupported Venus workflow: {workflow}")
 

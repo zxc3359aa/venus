@@ -175,6 +175,29 @@ def test_cli_douyin_outputs_approval_gated_engagement_report():
     assert output["result"]["reply_queue"][0]["execution_state"] == "blocked_until_approved"
 
 
+def test_cli_wechat_outputs_private_domain_handoff_report():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "wechat",
+            "data/samples/wechat_private_domain.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "wechat"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["question_count"] == 2
+    assert output["result"]["summary"]["enterprise_wechat_handoff_count"] == 1
+    assert output["result"]["summary"]["approval_gated_action_count"] == 2
+    assert output["result"]["handoff_queue"][0]["execution_state"] == "blocked_until_approved"
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [
