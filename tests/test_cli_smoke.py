@@ -152,6 +152,29 @@ def test_cli_airtable_outputs_json():
     assert output["result"]["base"]["name"] == "Venus Ops"
 
 
+def test_cli_douyin_outputs_approval_gated_engagement_report():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "douyin",
+            "data/samples/douyin_engagement.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "douyin"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["comment_count"] == 2
+    assert output["result"]["summary"]["live_message_count"] == 1
+    assert output["result"]["summary"]["approval_gated_reply_count"] == 2
+    assert output["result"]["reply_queue"][0]["execution_state"] == "blocked_until_approved"
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [

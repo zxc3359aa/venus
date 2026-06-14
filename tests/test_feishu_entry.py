@@ -43,6 +43,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         config.default_input_paths["agent-run"]
         == tmp_workspace / "data" / "samples" / "agent_run.json"
     )
+    assert (
+        config.default_input_paths["douyin"]
+        == tmp_workspace / "data" / "samples" / "douyin_engagement.json"
+    )
 
 
 def test_feishu_config_rejects_xiaolongxia_namespace(tmp_workspace):
@@ -114,6 +118,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus monitoring" in result["card"]["summary"]
     assert "/venus airtable" in result["card"]["summary"]
     assert "/venus agent-run" in result["card"]["summary"]
+    assert "/venus douyin" in result["card"]["summary"]
 
 
 def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
@@ -278,6 +283,46 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "douyin_engagement.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_douyin_export",
+                "retrieved_at": "2026-06-14T10:00:00+08:00",
+                "videos": [
+                    {
+                        "video_id": "video-001",
+                        "title": "早C晚A翻车自查",
+                        "comments": [
+                            {
+                                "comment_id": "c1",
+                                "text": "敏感肌用了会不会烂脸？",
+                                "likes": 18,
+                            },
+                            {
+                                "comment_id": "c2",
+                                "text": "求平价替代",
+                                "likes": 9,
+                            },
+                        ],
+                    }
+                ],
+                "live_sessions": [
+                    {
+                        "session_id": "live-001",
+                        "messages": [
+                            {
+                                "message_id": "l1",
+                                "text": "刷酸爆皮了还能叠加这个吗？",
+                                "likes": 3,
+                            }
+                        ],
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_run_feishu_entry_hotspot_routes_to_orchestrator(tmp_workspace):
@@ -382,6 +427,29 @@ def test_run_feishu_entry_airtable_routes_to_orchestrator(tmp_workspace):
     assert result["card"]["type"] == "report"
     assert result["card"]["result"]["workflow"] == "airtable"
     assert result["card"]["result"]["result"]["base"]["name"] == "Venus Ops"
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_douyin_routes_to_engagement_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-douyin",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:39:00+08:00",
+            "text": "/venus douyin",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "douyin"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "douyin"
+    assert result["card"]["result"]["result"]["summary"]["comment_count"] == 2
+    assert result["card"]["result"]["result"]["summary"]["live_message_count"] == 1
+    assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 
 

@@ -7,6 +7,7 @@ from venus.approvals import create_approval_record, requires_manual_approval
 from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
 from venus.content import generate_hotspot_brief
+from venus.douyin_engagement import build_douyin_engagement_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_research import build_product_research_card
@@ -98,6 +99,7 @@ def build_agent_run_plan(
     hotspots = list(safe_payload.get("hotspots") or [])
     products = list(safe_payload.get("products") or [])
     comments = list(safe_payload.get("comments") or [])
+    douyin_engagement = safe_payload.get("douyin_engagement")
     competitors = _competitor_payload(safe_payload.get("competitors"))
 
     if hotspots:
@@ -127,6 +129,15 @@ def build_agent_run_plan(
             "total": result["summary"]["total"],
             "high_risk": result["summary"]["high_risk"],
             "approval_gated": result["summary"]["approval_gated"],
+        }
+
+    if isinstance(douyin_engagement, dict):
+        result = build_douyin_engagement_report(douyin_engagement)
+        executed_workflows.append("douyin")
+        workflow_summaries["douyin"] = {
+            "comment_count": result["summary"]["comment_count"],
+            "live_message_count": result["summary"]["live_message_count"],
+            "approval_gated_reply_count": result["summary"]["approval_gated_reply_count"],
         }
 
     if competitors.get("competitors"):

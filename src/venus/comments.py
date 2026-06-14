@@ -19,7 +19,12 @@ def analyze_comments(comments: list[dict[str, Any]], profile: PersonaProfile) ->
         items.append(
             {
                 "id": comment.get("id"),
+                "comment_id": comment.get("comment_id") or comment.get("id"),
+                "video_id": comment.get("video_id"),
+                "video_title": comment.get("video_title"),
                 "text": text,
+                "likes": comment.get("likes"),
+                "created_at": comment.get("created_at"),
                 "intent": intent,
                 "risk": risk,
                 "approval_level": approval_level,

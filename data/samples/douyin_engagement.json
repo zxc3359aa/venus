@@ -1,0 +1,42 @@
+{
+  "source": "manual_douyin_export",
+  "retrieved_at": "2026-06-14T10:00:00+08:00",
+  "persona_samples": [
+    "姐妹们，先看屏障状态，证据和体验都要说清楚。"
+  ],
+  "videos": [
+    {
+      "video_id": "video-001",
+      "title": "早C晚A翻车自查",
+      "published_at": "2026-06-13T20:00:00+08:00",
+      "comments": [
+        {
+          "comment_id": "c1",
+          "text": "敏感肌用了会不会烂脸？",
+          "likes": 18,
+          "created_at": "2026-06-14T09:10:00+08:00"
+        },
+        {
+          "comment_id": "c2",
+          "text": "求平价替代，学生党能不能用？",
+          "likes": 9,
+          "created_at": "2026-06-14T09:30:00+08:00"
+        }
+      ]
+    }
+  ],
+  "live_sessions": [
+    {
+      "session_id": "live-001",
+      "started_at": "2026-06-14T08:00:00+08:00",
+      "messages": [
+        {
+          "message_id": "l1",
+          "text": "刷酸爆皮了还能叠加这个吗？",
+          "likes": 3,
+          "created_at": "2026-06-14T08:20:00+08:00"
+        }
+      ]
+    }
+  ]
+}

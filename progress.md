@@ -84,3 +84,13 @@
 - Added CLI command: `venus agent-run data/samples/agent_run.json`.
 - Added Feishu dry-run command: `/venus agent-run`.
 - Preserved Venus/Xiaolongxia isolation, dry-run enforcement, and secret-like payload redaction.
+
+## Douyin Engagement Progress
+
+- Added the Douyin engagement design spec and implementation plan.
+- Added a local dry-run `douyin` workflow for imported video comments and live messages.
+- Added comment reply queues, live-message reply queues, per-video summaries, approval records, and source/safety notes.
+- Added CLI command: `venus douyin data/samples/douyin_engagement.json`.
+- Added Feishu dry-run command: `/venus douyin`.
+- Integrated Douyin engagement summaries into Agent Run when `douyin_engagement` data is present.
+- Preserved safety boundaries: no Douyin reply, live interaction, pinning, publishing, or user interaction is executed, and `external_actions: []` remains enforced.

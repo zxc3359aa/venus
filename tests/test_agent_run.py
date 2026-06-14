@@ -43,6 +43,27 @@ def _agent_run_payload():
             {"id": "c1", "text": "敏感肌用了会不会烂脸？"},
             {"id": "c2", "text": "求平价替代！"},
         ],
+        "douyin_engagement": {
+            "source": "manual_douyin_export",
+            "retrieved_at": "2026-06-14T10:00:00+08:00",
+            "videos": [
+                {
+                    "video_id": "video-001",
+                    "title": "早C晚A翻车自查",
+                    "comments": [
+                        {"comment_id": "dc1", "text": "敏感肌用了会不会烂脸？", "likes": 18}
+                    ],
+                }
+            ],
+            "live_sessions": [
+                {
+                    "session_id": "live-001",
+                    "messages": [
+                        {"message_id": "dl1", "text": "刷酸爆皮了还能叠加这个吗？", "likes": 3}
+                    ],
+                }
+            ],
+        },
         "competitors": {
             "competitors": [
                 {
@@ -77,10 +98,18 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["dry_run"] is True
     assert plan["approval_mode"] == "manual"
     assert plan["external_actions"] == []
-    assert plan["executed_workflows"] == ["hotspot", "product", "comments", "monitoring", "airtable"]
+    assert plan["executed_workflows"] == [
+        "hotspot",
+        "product",
+        "comments",
+        "douyin",
+        "monitoring",
+        "airtable",
+    ]
     assert plan["workflow_summaries"]["hotspot"]["top_topic"] == "早C晚A翻车"
     assert plan["workflow_summaries"]["product"]["risk_level"] == "high"
     assert plan["workflow_summaries"]["comments"]["approval_gated"] == 1
+    assert plan["workflow_summaries"]["douyin"]["approval_gated_reply_count"] == 2
     assert plan["workflow_summaries"]["monitoring"]["top_account"] == "成分党A"
     assert plan["workflow_summaries"]["airtable"]["table_count"] == 6
 

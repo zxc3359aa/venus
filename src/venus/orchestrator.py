@@ -6,6 +6,7 @@ from venus.agent_run import build_agent_run_plan
 from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
 from venus.content import generate_hotspot_brief
+from venus.douyin_engagement import build_douyin_engagement_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_research import build_product_research_card
@@ -32,6 +33,8 @@ class VenusOrchestrator:
             result = build_airtable_sync_package(payload)
         elif workflow == "agent_run":
             result = build_agent_run_plan(payload)
+        elif workflow == "douyin":
+            result = build_douyin_engagement_report(payload)
         else:
             raise ValueError(f"Unsupported Venus workflow: {workflow}")
 

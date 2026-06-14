@@ -46,6 +46,27 @@
     {"id": "c1", "text": "敏感肌用了会不会烂脸？"},
     {"id": "c2", "text": "求平价替代！"}
   ],
+  "douyin_engagement": {
+    "source": "manual_douyin_export",
+    "retrieved_at": "2026-06-14T10:00:00+08:00",
+    "videos": [
+      {
+        "video_id": "video-001",
+        "title": "早C晚A翻车自查",
+        "comments": [
+          {"comment_id": "dc1", "text": "敏感肌用了会不会烂脸？", "likes": 18}
+        ]
+      }
+    ],
+    "live_sessions": [
+      {
+        "session_id": "live-001",
+        "messages": [
+          {"message_id": "dl1", "text": "刷酸爆皮了还能叠加这个吗？", "likes": 3}
+        ]
+      }
+    ]
+  },
   "competitors": {
     "competitors": [
       {
