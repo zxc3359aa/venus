@@ -15,8 +15,28 @@ pytest
 
 ## Smoke Commands
 
+Run all tests:
+
+```bash
+pytest -v
+```
+
+Generate a hotspot brief:
+
 ```bash
 venus hotspot data/samples/hotspots.json
+```
+
+Generate a product research card:
+
+```bash
 venus product data/samples/products.json
+```
+
+Analyze comments and draft approval-gated replies:
+
+```bash
 venus comments data/samples/comments.json
 ```
+
+The local MVP never performs external actions. Public replies, publishing, lead routing, and ad spend remain approval-gated future integrations.
