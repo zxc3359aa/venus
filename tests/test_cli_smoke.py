@@ -375,6 +375,60 @@ def test_cli_approval_ledger_outputs_decision_ledger_draft():
     assert output["result"]["duplicate_intents"][0]["action_type"] == "feishu_mobile_report"
 
 
+def test_cli_approval_archive_persists_to_tmp_workspace(tmp_path):
+    payload = {
+        "source": "manual_approval_archive",
+        "recorded_at": "2026-06-14T23:20:00+08:00",
+        "workspace_root": str(tmp_path),
+        "archive_requested": True,
+        "approved_ledger_write_review": True,
+        "write_requested": True,
+        "approval_records": [
+            {
+                "action_type": "douyin_comment_reply_queue",
+                "approval_level": 3,
+                "draft": "Review high-risk Douyin reply drafts.",
+                "evidence_ids": ["comment-001"],
+                "status": "pending",
+                "reviewer": "owner",
+                "created_at": "2026-06-14T21:10:00+08:00",
+            }
+        ],
+        "requested_decisions": [
+            {
+                "action_type": "douyin_comment_reply_queue",
+                "decision": "reject",
+                "reason": "回复语气还需要更克制。",
+                "reviewer": "owner",
+            }
+        ],
+        "existing_ledger_entries": [],
+    }
+    input_file = tmp_path / "approval_archive.json"
+    input_file.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "approval-archive",
+            str(input_file),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "approval_archive"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["archived_count"] == 1
+    stored_file = tmp_path / "data" / "venus" / "approval_decision_ledger.json"
+    assert stored_file.exists()
+    assert "douyin_comment_reply_queue" in stored_file.read_text(encoding="utf-8")
+
+
 def test_cli_trend_scan_outputs_douyin_beauty_signal_report():
     completed = subprocess.run(
         [

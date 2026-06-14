@@ -242,3 +242,12 @@
 - Added CLI command: `venus approval-ledger data/samples/approval_ledger.json`.
 - Added Feishu dry-run command: `/venus approval-ledger`.
 - Preserved safety boundaries: no approval status, local storage, Feishu message, Douyin reply, publishing action, ad spend, brand task, WeChat contact, memory state, backup state, or platform state is changed.
+
+## Approval Archive Progress
+
+- Added the approval archive design spec and implementation plan.
+- Added a controlled local `approval_archive` workflow for persisting approved, low-risk approval ledger decisions into the isolated Venus JSON store.
+- Added idempotency, high-risk second-review skipping, blocked write states, rollback plans, and storage-path reporting.
+- Added CLI command: `venus approval-archive data/samples/approval_archive.json`.
+- Added Feishu dry-run command: `/venus approval-archive`.
+- Preserved safety boundaries: no source approval record, Feishu message, Douyin reply, publishing action, ad spend, brand task, WeChat contact, memory state, backup state, or external platform state is changed.
