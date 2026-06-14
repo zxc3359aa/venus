@@ -35,6 +35,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         config.default_input_paths["monitoring"]
         == tmp_workspace / "data" / "samples" / "competitors.json"
     )
+    assert (
+        config.default_input_paths["airtable"]
+        == tmp_workspace / "data" / "samples" / "airtable_export.json"
+    )
 
 
 def test_feishu_config_rejects_xiaolongxia_namespace(tmp_workspace):
@@ -104,6 +108,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert result["card"]["type"] == "status"
     assert "/venus hotspot" in result["card"]["summary"]
     assert "/venus monitoring" in result["card"]["summary"]
+    assert "/venus airtable" in result["card"]["summary"]
 
 
 def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
@@ -217,6 +222,28 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "airtable_export.json").write_text(
+        json.dumps(
+            {
+                "hotspots": [
+                    {
+                        "topic": "早C晚A翻车",
+                        "type": "controversy",
+                        "freshness": 9,
+                        "relevance": 10,
+                        "controversy": 8,
+                        "evidence": ["douyin-export-001"],
+                    }
+                ],
+                "products": [],
+                "comments": [],
+                "competitors": {"competitors": []},
+                "approvals": [],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_run_feishu_entry_hotspot_routes_to_orchestrator(tmp_workspace):
@@ -300,6 +327,27 @@ def test_run_feishu_entry_monitoring_routes_to_orchestrator(tmp_workspace):
     assert result["card"]["type"] == "report"
     assert result["card"]["result"]["workflow"] == "monitoring"
     assert result["card"]["result"]["result"]["summary"]["top_account"] == "成分党A"
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_airtable_routes_to_orchestrator(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-airtable",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:37:45+08:00",
+            "text": "/venus airtable",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "airtable"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "airtable"
+    assert result["card"]["result"]["result"]["base"]["name"] == "Venus Ops"
     assert result["external_actions"] == []
 
 

@@ -17,6 +17,7 @@ COMMAND_APPROVAL_LEVELS = {
     "product": 1,
     "comments": 1,
     "monitoring": 1,
+    "airtable": 1,
     "approve": 2,
 }
 
@@ -45,6 +46,7 @@ class FeishuConfig:
                 "product": root / "data" / "samples" / "products.json",
                 "comments": root / "data" / "samples" / "comments.json",
                 "monitoring": root / "data" / "samples" / "competitors.json",
+                "airtable": root / "data" / "samples" / "airtable_export.json",
             },
         )
         self.validate_isolation()
@@ -152,7 +154,7 @@ def run_feishu_entry(
     if command.name == "help":
         card = _status_card(
             "Venus command help",
-            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus comments, /venus monitoring, /venus approve <id> <decision>",
+            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus comments, /venus monitoring, /venus airtable, /venus approve <id> <decision>",
             active_config,
         )
     elif command.name == "status":
@@ -166,7 +168,7 @@ def run_feishu_entry(
             "Unsupported Venus command",
             "Unsupported Venus command. Send /venus help to see available commands.",
         )
-    elif command.name in {"hotspot", "product", "comments", "monitoring"}:
+    elif command.name in {"hotspot", "product", "comments", "monitoring", "airtable"}:
         card = _workflow_report_card(command, active_config)
     elif command.name == "approve":
         approval = create_approval_record(
@@ -257,8 +259,9 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
         "product": "products",
         "comments": "comments",
         "monitoring": "competitors",
+        "airtable": "airtable",
     }[command.name]
-    payload = records if command.name == "monitoring" else {payload_key: records}
+    payload = records if command.name in {"monitoring", "airtable"} else {payload_key: records}
     result = VenusOrchestrator().run(command.name, payload)
     result = _normalize_report_result(command.name, result)
     return {
@@ -301,6 +304,8 @@ def _report_summary(command_name: str, result: dict[str, Any]) -> str:
         return f"Approval-gated replies: {data['approval_gated']}"
     if command_name == "monitoring":
         return f"Top monitored account: {data['summary']['top_account']}"
+    if command_name == "airtable":
+        return f"Airtable-ready tables: {data['summary']['table_count']}"
     return "Venus report generated."
 
 

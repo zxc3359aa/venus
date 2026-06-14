@@ -45,6 +45,12 @@ Build a local competitor monitoring report:
 venus monitoring data/samples/competitors.json
 ```
 
+Build a local Airtable-ready operations export:
+
+```bash
+venus airtable data/samples/airtable_export.json
+```
+
 Run the local Feishu dry-run entry:
 
 ```bash
@@ -54,5 +60,6 @@ venus feishu data/samples/feishu_message.json
 This command parses a Feishu-like `/venus` message and returns a card-ready JSON draft. It does not send Feishu messages or perform external actions.
 
 The Feishu dry-run entry also supports `/venus monitoring` when the local `data/samples/competitors.json` sample is present.
+It also supports `/venus airtable` to preview the Airtable-ready operations package without writing to Airtable.
 
 The local MVP never performs external actions. Public replies, publishing, lead routing, and ad spend remain approval-gated future integrations.

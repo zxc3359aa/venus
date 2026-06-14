@@ -6,7 +6,7 @@ Build "Venus", a beauty and skincare agent system that helps the user's Douyin s
 
 ## Current Phase
 
-Phase 8 is in progress: the first local Venus MVP and dry-run Feishu mobile entry are implemented and verified. A local competitor monitoring workflow is now being added before live Douyin, Qianchuan, Xingtu, or BI connectors are enabled.
+Phase 8 is in progress: the first local Venus MVP, dry-run Feishu mobile entry, competitor monitoring workflow, and Airtable-ready operations export are implemented before live Douyin, Qianchuan, Xingtu, BI, or Airtable writes are enabled.
 
 ## Phases
 
@@ -33,9 +33,9 @@ Phase 8 is in progress: the first local Venus MVP and dry-run Feishu mobile entr
 
 ## Immediate Next Steps
 
-1. Finish the local analytics monitoring slice with tests, CLI smoke, Feishu dry-run access, and docs.
-2. Choose the next connector slice: Airtable sync, Douyin comment connector, richer OpenAI Agents SDK orchestration, or a dashboard artifact.
-3. Keep external actions disabled until permissions, logs, and approval gates are verified.
+1. Decide whether the next slice should be a dashboard artifact, real Airtable write connector, Douyin comment connector, or richer OpenAI Agents SDK orchestration.
+2. Keep external actions disabled until permissions, logs, and approval gates are verified.
+3. Preserve Venus/Xiaolongxia isolation in every connector and mobile command.
 
 ## Errors Encountered
 

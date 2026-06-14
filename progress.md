@@ -38,7 +38,7 @@
 
 ## Next
 
-- Finish the local analytics monitoring slice, then choose the next integration slice: Airtable sync, Douyin comment connector, richer OpenAI Agents SDK orchestration, or dashboard artifact.
+- Choose the next integration slice: dashboard artifact, real Airtable write connector, Douyin comment connector, richer OpenAI Agents SDK orchestration, or WeChat private-domain skeleton.
 
 ## Feishu Entry Progress
 
@@ -57,3 +57,12 @@
 - Added leaderboard, hero metrics, risk watchlist, source coverage, and action opportunities.
 - Routed monitoring through the Venus orchestrator, CLI, and Feishu dry-run `/venus monitoring` command.
 - Preserved the safety boundary: monitoring output is internal analysis only and returns `external_actions: []`.
+
+## Airtable Export Progress
+
+- Added the Airtable export design spec and implementation plan.
+- Added a local `airtable` workflow that packages Venus outputs into Airtable-ready base, table, field, view, and record structures.
+- Added `data/samples/airtable_export.json` as a deterministic export sample.
+- Added tables for Hotspots, Products, Comments, Competitors, Monitoring Opportunities, and Approvals.
+- Routed Airtable export through the Venus orchestrator, CLI, and Feishu dry-run `/venus airtable` command.
+- Kept the workflow dry-run only: no Airtable base, table, record, automation, or interface is created, and `external_actions: []` is preserved.

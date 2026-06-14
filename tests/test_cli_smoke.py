@@ -59,6 +59,33 @@ def test_orchestrator_routes_monitoring_workflow():
     assert result["result"]["summary"]["top_account"] == "成分党A"
 
 
+def test_orchestrator_routes_airtable_workflow():
+    orchestrator = VenusOrchestrator()
+    result = orchestrator.run(
+        "airtable",
+        {
+            "hotspots": [
+                {
+                    "topic": "早C晚A翻车",
+                    "type": "controversy",
+                    "freshness": 9,
+                    "relevance": 10,
+                    "controversy": 8,
+                    "evidence": ["douyin-export-001"],
+                }
+            ],
+            "products": [],
+            "comments": [],
+            "competitors": {"competitors": []},
+            "approvals": [],
+        },
+    )
+
+    assert result["workflow"] == "airtable"
+    assert result["external_actions"] == []
+    assert result["result"]["base"]["namespace"] == "venus_airtable"
+
+
 def test_cli_hotspot_outputs_json(tmp_path):
     payload = [
         {
@@ -103,6 +130,26 @@ def test_cli_monitoring_outputs_json():
     assert output["workflow"] == "monitoring"
     assert output["external_actions"] == []
     assert output["result"]["summary"]["top_account"] == "成分党A"
+
+
+def test_cli_airtable_outputs_json():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "airtable",
+            "data/samples/airtable_export.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "airtable"
+    assert output["external_actions"] == []
+    assert output["result"]["base"]["name"] == "Venus Ops"
 
 
 def test_cli_feishu_outputs_dry_run_card():

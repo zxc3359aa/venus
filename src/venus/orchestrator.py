@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
 from venus.content import generate_hotspot_brief
 from venus.monitoring import build_monitoring_report
@@ -26,6 +27,8 @@ class VenusOrchestrator:
             result = analyze_comments(list(payload["comments"]), profile)
         elif workflow == "monitoring":
             result = build_monitoring_report(payload)
+        elif workflow == "airtable":
+            result = build_airtable_sync_package(payload)
         else:
             raise ValueError(f"Unsupported Venus workflow: {workflow}")
 
