@@ -20,6 +20,7 @@ COMMAND_APPROVAL_LEVELS = {
     "monitoring": 1,
     "airtable": 1,
     "douyin": 1,
+    "ecommerce": 1,
     "wechat": 1,
     "commercial": 1,
     "improvement": 1,
@@ -57,6 +58,7 @@ class FeishuConfig:
                 "monitoring": root / "data" / "samples" / "competitors.json",
                 "airtable": root / "data" / "samples" / "airtable_export.json",
                 "douyin": root / "data" / "samples" / "douyin_engagement.json",
+                "ecommerce": root / "data" / "samples" / "ecommerce.json",
                 "wechat": root / "data" / "samples" / "wechat_private_domain.json",
                 "commercial": root / "data" / "samples" / "commercial_strategy.json",
                 "improvement": root / "data" / "samples" / "self_improvement.json",
@@ -170,7 +172,7 @@ def run_feishu_entry(
     if command.name == "help":
         card = _status_card(
             "Venus command help",
-            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus product-intel, /venus comments, /venus monitoring, /venus airtable, /venus douyin, /venus wechat, /venus commercial, /venus improvement, /venus production, /venus trend-scan, /venus agent-run, /venus approve <id> <decision>",
+            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus product-intel, /venus comments, /venus monitoring, /venus airtable, /venus douyin, /venus ecommerce, /venus wechat, /venus commercial, /venus improvement, /venus production, /venus trend-scan, /venus agent-run, /venus approve <id> <decision>",
             active_config,
         )
     elif command.name == "status":
@@ -184,7 +186,7 @@ def run_feishu_entry(
             "Unsupported Venus command",
             "Unsupported Venus command. Send /venus help to see available commands.",
         )
-    elif command.name in {"hotspot", "product", "product-intel", "comments", "monitoring", "airtable", "douyin", "wechat", "commercial", "improvement", "production", "trend-scan", "agent-run"}:
+    elif command.name in {"hotspot", "product", "product-intel", "comments", "monitoring", "airtable", "douyin", "ecommerce", "wechat", "commercial", "improvement", "production", "trend-scan", "agent-run"}:
         card = _workflow_report_card(command, active_config)
     elif command.name == "approve":
         approval = create_approval_record(
@@ -278,6 +280,7 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
         "monitoring": "competitors",
         "airtable": "airtable",
         "douyin": "douyin",
+        "ecommerce": "ecommerce",
         "wechat": "wechat",
         "commercial": "commercial",
         "improvement": "improvement",
@@ -285,7 +288,7 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
         "trend-scan": "trend_scan",
         "agent-run": "agent_run",
     }[command.name]
-    payload = records if command.name in {"monitoring", "airtable", "douyin", "wechat", "commercial", "improvement", "production", "trend-scan", "product-intel", "agent-run"} else {payload_key: records}
+    payload = records if command.name in {"monitoring", "airtable", "douyin", "ecommerce", "wechat", "commercial", "improvement", "production", "trend-scan", "product-intel", "agent-run"} else {payload_key: records}
     workflow = _workflow_name_for_command(command.name)
     result = VenusOrchestrator().run(workflow, payload)
     result = _normalize_report_result(command.name, result)
@@ -343,6 +346,8 @@ def _report_summary(command_name: str, result: dict[str, Any]) -> str:
         return f"Airtable-ready tables: {data['summary']['table_count']}"
     if command_name == "douyin":
         return f"Douyin approval-gated replies: {data['summary']['approval_gated_reply_count']}"
+    if command_name == "ecommerce":
+        return f"Ecommerce products: {data['summary']['product_count']}"
     if command_name == "wechat":
         return f"WeChat handoffs: {data['summary']['enterprise_wechat_handoff_count']}"
     if command_name == "commercial":

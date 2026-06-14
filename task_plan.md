@@ -6,7 +6,7 @@ Build "Venus", a beauty and skincare agent system that helps the user's Douyin s
 
 ## Current Phase
 
-Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mobile entry, Douyin beauty trend-scan contract, product-intelligence dossier contract, competitor monitoring workflow, Airtable-ready operations export, static operations dashboard, local Agent Run orchestration layer, dry-run video-production package, dry-run Douyin engagement connector, dry-run WeChat private-domain connector, dry-run Qianchuan/Xingtu commercial strategy connector, and dry-run self-improvement/backup verification workflow are implemented before live Douyin, WeChat, Qianchuan, Xingtu, BI, Airtable writes, product-data connector reads, media rendering, video publishing, or autonomous memory changes are enabled.
+Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mobile entry, Douyin beauty trend-scan contract, product-intelligence dossier contract, competitor monitoring workflow, Airtable-ready operations export, static operations dashboard, local Agent Run orchestration layer, dry-run video-production package, dry-run Douyin engagement connector, dry-run Douyin ecommerce operations connector, dry-run WeChat private-domain connector, dry-run Qianchuan/Xingtu commercial strategy connector, and dry-run self-improvement/backup verification workflow are implemented before live Douyin, WeChat, Qianchuan, Xingtu, BI, Airtable writes, product-data connector reads, shop/order changes, media rendering, video publishing, or autonomous memory changes are enabled.
 
 ## Phases
 
@@ -33,7 +33,7 @@ Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mo
 
 ## Immediate Next Steps
 
-1. Decide whether the next slice should be real Airtable write connector, live Douyin/WeChat/Qianchuan/Xingtu permission adapter, OpenAI Agents SDK runner/evals, e-commerce skeleton, or versioned memory/eval automation.
+1. Decide whether the next slice should be real Airtable write connector, live Douyin/WeChat/Qianchuan/Xingtu permission adapter, OpenAI Agents SDK runner/evals, ecommerce permission/audit adapter, or versioned memory/eval automation.
 2. Keep external actions disabled until permissions, logs, and approval gates are verified.
 3. Preserve Venus/Xiaolongxia isolation in every connector and mobile command.
 

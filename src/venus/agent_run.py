@@ -9,6 +9,7 @@ from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
+from venus.ecommerce import build_ecommerce_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_intelligence import build_product_intelligence_report
@@ -109,6 +110,7 @@ def build_agent_run_plan(
     comments = list(safe_payload.get("comments") or [])
     video_production = safe_payload.get("video_production")
     douyin_engagement = safe_payload.get("douyin_engagement")
+    ecommerce = safe_payload.get("ecommerce")
     wechat_private_domain = safe_payload.get("wechat_private_domain")
     commercial_strategy = safe_payload.get("commercial_strategy")
     self_improvement = safe_payload.get("self_improvement")
@@ -184,6 +186,18 @@ def build_agent_run_plan(
             "live_message_count": result["summary"]["live_message_count"],
             "approval_gated_reply_count": result["summary"]["approval_gated_reply_count"],
         }
+
+    if isinstance(ecommerce, dict):
+        result = build_ecommerce_report(ecommerce)
+        executed_workflows.append("ecommerce")
+        workflow_summaries["ecommerce"] = {
+            "product_count": result["summary"]["product_count"],
+            "low_stock_count": result["summary"]["low_stock_count"],
+            "high_return_product_count": result["summary"]["high_return_product_count"],
+            "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
+        }
+        for item in result["catalog_checks"]:
+            evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
 
     if isinstance(wechat_private_domain, dict):
         result = build_wechat_private_domain_report(wechat_private_domain)

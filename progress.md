@@ -95,6 +95,16 @@
 - Integrated Douyin engagement summaries into Agent Run when `douyin_engagement` data is present.
 - Preserved safety boundaries: no Douyin reply, live interaction, pinning, publishing, or user interaction is executed, and `external_actions: []` remains enforced.
 
+## Ecommerce Progress
+
+- Added the ecommerce operations design spec and implementation plan.
+- Added a local dry-run `ecommerce` workflow for Douyin Shop-style product catalog checks, inventory alerts, live product-card planning, promotion/price review, after-sales watchlists, and conversion recommendations.
+- Added approval records for live ecommerce connector enablement, product-card updates, and promotion or price changes.
+- Added CLI command: `venus ecommerce data/samples/ecommerce.json`.
+- Added Feishu dry-run command: `/venus ecommerce`.
+- Integrated ecommerce summaries into Agent Run when `ecommerce` data is present.
+- Preserved safety boundaries: no product-card update, price/coupon change, inventory write, order action, refund action, after-sales action, live shop connector call, or external platform action is executed, and `external_actions: []` remains enforced.
+
 ## WeChat Private-Domain Progress
 
 - Added the WeChat private-domain design spec and implementation plan.

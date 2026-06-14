@@ -8,6 +8,7 @@ from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
+from venus.ecommerce import build_ecommerce_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_intelligence import build_product_intelligence_report
@@ -43,6 +44,8 @@ class VenusOrchestrator:
             result = build_agent_run_plan(payload)
         elif workflow == "douyin":
             result = build_douyin_engagement_report(payload)
+        elif workflow == "ecommerce":
+            result = build_ecommerce_report(payload)
         elif workflow == "wechat":
             result = build_wechat_private_domain_report(payload)
         elif workflow == "commercial":

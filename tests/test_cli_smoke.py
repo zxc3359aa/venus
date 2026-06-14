@@ -313,6 +313,29 @@ def test_cli_product_intel_outputs_precise_research_dossier():
     assert output["result"]["claim_risk"]["risk_level"] == "high"
 
 
+def test_cli_ecommerce_outputs_shop_operations_report():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "ecommerce",
+            "data/samples/ecommerce.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "ecommerce"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["product_count"] == 2
+    assert output["result"]["summary"]["low_stock_count"] == 1
+    assert output["result"]["summary"]["approval_gated_action_count"] == 3
+    assert output["result"]["live_product_card_plan"][0]["execution_state"] == "blocked_until_approved"
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [

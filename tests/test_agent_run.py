@@ -157,6 +157,60 @@ def _agent_run_payload():
                 }
             ],
         },
+        "ecommerce": {
+            "source": "manual_douyin_shop_export",
+            "retrieved_at": "2026-06-14T17:00:00+08:00",
+            "live_connector_requested": True,
+            "shop": {"shop_id": "shop-001", "name": "维纳斯护肤小店", "channel": "douyin_shop"},
+            "products": [
+                {
+                    "product_id": "sku-001",
+                    "title": "屏障修护精华",
+                    "price": 199,
+                    "sale_price": 169,
+                    "stock": 36,
+                    "target_stock": 120,
+                    "margin_rate": 0.42,
+                    "commission_rate": 0.18,
+                    "conversion_rate": 0.032,
+                    "return_rate": 0.06,
+                    "claim_risk": "high",
+                    "evidence": ["shop-product-001"],
+                },
+                {
+                    "product_id": "sku-002",
+                    "title": "温和洁面",
+                    "price": 89,
+                    "sale_price": 79,
+                    "stock": 320,
+                    "target_stock": 80,
+                    "margin_rate": 0.35,
+                    "commission_rate": 0.12,
+                    "conversion_rate": 0.018,
+                    "return_rate": 0.18,
+                    "claim_risk": "medium",
+                    "evidence": ["shop-product-002"],
+                },
+            ],
+            "live_rooms": [
+                {
+                    "session_id": "live-001",
+                    "title": "屏障护理专场",
+                    "planned_products": ["sku-001", "sku-002"],
+                    "viewers": 18000,
+                    "gmv": 128000,
+                    "product_card_click_rate": 0.21,
+                    "conversion_rate": 0.026,
+                }
+            ],
+            "promotions": [
+                {"promotion_id": "promo-001", "product_id": "sku-001", "type": "coupon", "discount": 30, "budget": 3000}
+            ],
+            "after_sales": [
+                {"product_id": "sku-001", "issue": "敏感肌刺痛咨询", "severity": "medium"},
+                {"product_id": "sku-002", "issue": "退货率偏高", "severity": "high"},
+            ],
+        },
         "wechat_private_domain": {
             "source": "mini_program_export",
             "retrieved_at": "2026-06-14T11:00:00+08:00",
@@ -286,6 +340,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "comments",
         "production",
         "douyin",
+        "ecommerce",
         "wechat",
         "commercial",
         "improvement",
@@ -305,6 +360,9 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["workflow_summaries"]["production"]["subtitle_card_count"] == 5
     assert plan["workflow_summaries"]["production"]["approval_gated_action_count"] == 2
     assert plan["workflow_summaries"]["douyin"]["approval_gated_reply_count"] == 2
+    assert plan["workflow_summaries"]["ecommerce"]["product_count"] == 2
+    assert plan["workflow_summaries"]["ecommerce"]["low_stock_count"] == 1
+    assert plan["workflow_summaries"]["ecommerce"]["approval_gated_action_count"] == 3
     assert plan["workflow_summaries"]["wechat"]["enterprise_wechat_handoff_count"] == 1
     assert plan["workflow_summaries"]["commercial"]["approval_gated_action_count"] == 3
     assert plan["workflow_summaries"]["improvement"]["learning_candidate_count"] == 2

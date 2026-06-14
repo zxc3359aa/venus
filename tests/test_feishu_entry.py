@@ -52,6 +52,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "douyin_engagement.json"
     )
     assert (
+        config.default_input_paths["ecommerce"]
+        == tmp_workspace / "data" / "samples" / "ecommerce.json"
+    )
+    assert (
         config.default_input_paths["wechat"]
         == tmp_workspace / "data" / "samples" / "wechat_private_domain.json"
     )
@@ -143,6 +147,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus airtable" in result["card"]["summary"]
     assert "/venus agent-run" in result["card"]["summary"]
     assert "/venus douyin" in result["card"]["summary"]
+    assert "/venus ecommerce" in result["card"]["summary"]
     assert "/venus wechat" in result["card"]["summary"]
     assert "/venus commercial" in result["card"]["summary"]
     assert "/venus improvement" in result["card"]["summary"]
@@ -400,6 +405,66 @@ def _write_sample_inputs(root: Path) -> None:
                             }
                         ],
                     }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (samples / "ecommerce.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_douyin_shop_export",
+                "retrieved_at": "2026-06-14T17:00:00+08:00",
+                "live_connector_requested": True,
+                "shop": {"shop_id": "shop-001", "name": "维纳斯护肤小店", "channel": "douyin_shop"},
+                "products": [
+                    {
+                        "product_id": "sku-001",
+                        "title": "屏障修护精华",
+                        "price": 199,
+                        "sale_price": 169,
+                        "stock": 36,
+                        "target_stock": 120,
+                        "margin_rate": 0.42,
+                        "commission_rate": 0.18,
+                        "conversion_rate": 0.032,
+                        "return_rate": 0.06,
+                        "claim_risk": "high",
+                        "evidence": ["shop-product-001"],
+                    },
+                    {
+                        "product_id": "sku-002",
+                        "title": "温和洁面",
+                        "price": 89,
+                        "sale_price": 79,
+                        "stock": 320,
+                        "target_stock": 80,
+                        "margin_rate": 0.35,
+                        "commission_rate": 0.12,
+                        "conversion_rate": 0.018,
+                        "return_rate": 0.18,
+                        "claim_risk": "medium",
+                        "evidence": ["shop-product-002"],
+                    },
+                ],
+                "live_rooms": [
+                    {
+                        "session_id": "live-001",
+                        "title": "屏障护理专场",
+                        "planned_products": ["sku-001", "sku-002"],
+                        "viewers": 18000,
+                        "gmv": 128000,
+                        "product_card_click_rate": 0.21,
+                        "conversion_rate": 0.026,
+                    }
+                ],
+                "promotions": [
+                    {"promotion_id": "promo-001", "product_id": "sku-001", "type": "coupon", "discount": 30, "budget": 3000}
+                ],
+                "after_sales": [
+                    {"product_id": "sku-001", "issue": "敏感肌刺痛咨询", "severity": "medium"},
+                    {"product_id": "sku-002", "issue": "退货率偏高", "severity": "high"},
                 ],
             },
             ensure_ascii=False,
@@ -717,6 +782,29 @@ def test_run_feishu_entry_douyin_routes_to_engagement_report(tmp_workspace):
     assert result["card"]["result"]["workflow"] == "douyin"
     assert result["card"]["result"]["result"]["summary"]["comment_count"] == 2
     assert result["card"]["result"]["result"]["summary"]["live_message_count"] == 1
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_ecommerce_routes_to_shop_operations_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-ecommerce",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:39:10+08:00",
+            "text": "/venus ecommerce",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "ecommerce"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "ecommerce"
+    assert result["card"]["result"]["result"]["summary"]["product_count"] == 2
+    assert result["card"]["result"]["result"]["summary"]["approval_gated_action_count"] == 3
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

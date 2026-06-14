@@ -69,6 +69,12 @@ Build a local Douyin comment and live-message engagement report:
 venus douyin data/samples/douyin_engagement.json
 ```
 
+Build a local Douyin ecommerce operations report:
+
+```bash
+venus ecommerce data/samples/ecommerce.json
+```
+
 Build a local WeChat Mini Program Q&A and Enterprise WeChat handoff report:
 
 ```bash
@@ -117,6 +123,7 @@ The Feishu dry-run entry also supports `/venus monitoring` when the local `data/
 It also supports `/venus airtable` to preview the Airtable-ready operations package without writing to Airtable.
 It also supports `/venus product-intel` to preview brand backing, filing checks, ingredient risk, supplier documents, test reports, controversies, and product retrieval tasks without live product-data reads.
 It also supports `/venus douyin` to preview comment and live-message reply queues without touching Douyin.
+It also supports `/venus ecommerce` to preview product catalog checks, inventory alerts, live product-card plans, promotions, and after-sales risk without touching shop, order, price, coupon, or inventory state.
 It also supports `/venus wechat` to preview Mini Program answer and Enterprise WeChat handoff queues without touching WeChat.
 It also supports `/venus commercial` to preview Qianchuan budget guardrails and Xingtu brief reviews without touching ad accounts or brand tasks.
 It also supports `/venus improvement` to preview learning candidates, defect guardrails, and backup verification tasks without changing memory, code, or backups.
