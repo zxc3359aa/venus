@@ -109,6 +109,48 @@ def _agent_run_payload():
                 "deliverables": ["60秒短视频"],
             },
         },
+        "self_improvement": {
+            "source": "manual_learning_export",
+            "retrieved_at": "2026-06-14T13:00:00+08:00",
+            "feedback_events": [
+                {
+                    "event_id": "fb-001",
+                    "workflow": "comments",
+                    "decision": "edited",
+                    "original": "这个产品一定能修复屏障",
+                    "final": "这个产品可以作为屏障护理参考，但要看肤质和耐受。",
+                    "reason": "去掉绝对功效承诺",
+                    "metric": {"comments": 42, "follows": 12},
+                },
+                {
+                    "event_id": "fb-002",
+                    "workflow": "content",
+                    "decision": "approved",
+                    "original": "早C晚A翻车自查",
+                    "final": "姐妹们，先看屏障状态，再谈早C晚A。",
+                    "reason": "开头更像我的口语",
+                    "metric": {"completion_rate": 0.74},
+                },
+            ],
+            "defect_reports": [
+                {
+                    "defect_id": "bug-001",
+                    "workflow": "douyin",
+                    "severity": "high",
+                    "description": "直播弹幕回复没有强调先停刺激组合",
+                    "expected_guardrail": "高风险直播弹幕必须提醒暂停叠加刺激组合",
+                }
+            ],
+            "backup_checks": [
+                {
+                    "target": "local-json-store",
+                    "schedule": "daily",
+                    "last_backup_at": "2026-06-14T08:00:00+08:00",
+                    "last_verified_at": "",
+                    "status": "missing_verification",
+                }
+            ],
+        },
         "competitors": {
             "competitors": [
                 {
@@ -150,6 +192,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "douyin",
         "wechat",
         "commercial",
+        "improvement",
         "monitoring",
         "airtable",
     ]
@@ -159,6 +202,9 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["workflow_summaries"]["douyin"]["approval_gated_reply_count"] == 2
     assert plan["workflow_summaries"]["wechat"]["enterprise_wechat_handoff_count"] == 1
     assert plan["workflow_summaries"]["commercial"]["approval_gated_action_count"] == 3
+    assert plan["workflow_summaries"]["improvement"]["learning_candidate_count"] == 2
+    assert plan["workflow_summaries"]["improvement"]["backup_issue_count"] == 1
+    assert plan["workflow_summaries"]["improvement"]["approval_gated_action_count"] == 4
     assert plan["workflow_summaries"]["monitoring"]["top_account"] == "成分党A"
     assert plan["workflow_summaries"]["airtable"]["table_count"] == 6
 

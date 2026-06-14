@@ -221,6 +221,29 @@ def test_cli_commercial_outputs_ad_strategy_report():
     assert output["result"]["qianchuan_recommendations"][0]["execution_state"] == "blocked_until_approved"
 
 
+def test_cli_improvement_outputs_self_improvement_report():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "improvement",
+            "data/samples/self_improvement.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "improvement"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["learning_candidate_count"] == 2
+    assert output["result"]["summary"]["backup_issue_count"] == 1
+    assert output["result"]["summary"]["approval_gated_action_count"] == 4
+    assert output["result"]["backup_tasks"][0]["execution_state"] == "blocked_until_approved"
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [

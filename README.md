@@ -69,6 +69,12 @@ Build a local Qianchuan and Xingtu commercial strategy report:
 venus commercial data/samples/commercial_strategy.json
 ```
 
+Build a local self-improvement, regression, and backup verification report:
+
+```bash
+venus improvement data/samples/self_improvement.json
+```
+
 Build a local approval-gated Agent Run plan:
 
 ```bash
@@ -94,6 +100,7 @@ It also supports `/venus airtable` to preview the Airtable-ready operations pack
 It also supports `/venus douyin` to preview comment and live-message reply queues without touching Douyin.
 It also supports `/venus wechat` to preview Mini Program answer and Enterprise WeChat handoff queues without touching WeChat.
 It also supports `/venus commercial` to preview Qianchuan budget guardrails and Xingtu brief reviews without touching ad accounts or brand tasks.
+It also supports `/venus improvement` to preview learning candidates, defect guardrails, and backup verification tasks without changing memory, code, or backups.
 It also supports `/venus agent-run` to preview the next Venus operating cycle and pending approval records.
 
 The local MVP never performs external actions. Public replies, publishing, lead routing, and ad spend remain approval-gated future integrations.

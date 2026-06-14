@@ -114,3 +114,13 @@
 - Added Feishu dry-run command: `/venus commercial`.
 - Integrated commercial strategy summaries into Agent Run when `commercial_strategy` data is present.
 - Preserved safety boundaries: no budget change, campaign edit, audience edit, Xingtu task decision, quote, brand commitment, or publishing promise is executed, and `external_actions: []` remains enforced.
+
+## Self-Improvement Progress
+
+- Added the self-improvement design spec and implementation plan.
+- Added a local dry-run `improvement` workflow for feedback-based learning candidates, defect guardrail regression checks, and backup verification tasks.
+- Added approval records for persona/style learning, claim-safety rules, high-risk guardrails, and backup verification.
+- Added CLI command: `venus improvement data/samples/self_improvement.json`.
+- Added Feishu dry-run command: `/venus improvement`.
+- Integrated self-improvement summaries into Agent Run when `self_improvement` data is present.
+- Preserved safety boundaries: no memory update, system prompt change, code change, backup restore, backup upload, external service write, or platform action is executed, and `external_actions: []` remains enforced.

@@ -12,6 +12,7 @@ from venus.douyin_engagement import build_douyin_engagement_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_research import build_product_research_card
+from venus.self_improvement import build_self_improvement_report
 from venus.wechat_private_domain import build_wechat_private_domain_report
 
 
@@ -104,6 +105,7 @@ def build_agent_run_plan(
     douyin_engagement = safe_payload.get("douyin_engagement")
     wechat_private_domain = safe_payload.get("wechat_private_domain")
     commercial_strategy = safe_payload.get("commercial_strategy")
+    self_improvement = safe_payload.get("self_improvement")
     competitors = _competitor_payload(safe_payload.get("competitors"))
 
     if hotspots:
@@ -159,6 +161,16 @@ def build_agent_run_plan(
         workflow_summaries["commercial"] = {
             "budget_recommendation_count": result["summary"]["budget_recommendation_count"],
             "high_risk_brief_count": result["summary"]["high_risk_brief_count"],
+            "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
+        }
+
+    if isinstance(self_improvement, dict):
+        result = build_self_improvement_report(self_improvement)
+        executed_workflows.append("improvement")
+        workflow_summaries["improvement"] = {
+            "learning_candidate_count": result["summary"]["learning_candidate_count"],
+            "defect_count": result["summary"]["defect_count"],
+            "backup_issue_count": result["summary"]["backup_issue_count"],
             "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
         }
 

@@ -6,7 +6,7 @@ Build "Venus", a beauty and skincare agent system that helps the user's Douyin s
 
 ## Current Phase
 
-Phase 8/9 bridge is in progress: the first local Venus MVP, dry-run Feishu mobile entry, competitor monitoring workflow, Airtable-ready operations export, static operations dashboard, local Agent Run orchestration layer, dry-run Douyin engagement connector, dry-run WeChat private-domain connector, and dry-run Qianchuan/Xingtu commercial strategy connector are implemented before live Douyin, WeChat, Qianchuan, Xingtu, BI, or Airtable writes are enabled.
+Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mobile entry, competitor monitoring workflow, Airtable-ready operations export, static operations dashboard, local Agent Run orchestration layer, dry-run Douyin engagement connector, dry-run WeChat private-domain connector, dry-run Qianchuan/Xingtu commercial strategy connector, and dry-run self-improvement/backup verification workflow are implemented before live Douyin, WeChat, Qianchuan, Xingtu, BI, Airtable writes, or autonomous memory changes are enabled.
 
 ## Phases
 
@@ -21,7 +21,7 @@ Phase 8/9 bridge is in progress: the first local Venus MVP, dry-run Feishu mobil
 | 7. Feishu mobile entry | Complete | Add a Feishu interface isolated from the existing "Xiaolongxia" agent. | Local dry-run Feishu entry parses `/venus` commands, routes safe workflows, and returns card-ready drafts with no external actions. |
 | 8. Analytics and monitoring | In Progress | Add dashboards for competitors, videos, comments, product risk, content performance, and growth loops. | Monitoring reports can be refreshed and inspected. |
 | 9. Platform integrations | In Progress | Add Douyin comments, livestream, e-commerce, Qianchuan, Xingtu, WeChat mini-program, and enterprise WeChat flows as approved connectors. | Each connector has permissions, logs, and rollback controls. |
-| 10. Self-improvement and backup | Pending | Add evals, feedback loops, audit logs, safe learning, backups, and recovery. | Recurring improvement and backup checks are verified. |
+| 10. Self-improvement and backup | In Progress | Add evals, feedback loops, audit logs, safe learning, backups, and recovery. | Recurring improvement and backup checks are verified. |
 
 ## Non-Negotiables
 
@@ -33,7 +33,7 @@ Phase 8/9 bridge is in progress: the first local Venus MVP, dry-run Feishu mobil
 
 ## Immediate Next Steps
 
-1. Decide whether the next slice should be real Airtable write connector, live Douyin/WeChat/Qianchuan/Xingtu permission adapter, OpenAI Agents SDK runner/evals, e-commerce skeleton, or self-improvement evals.
+1. Decide whether the next slice should be real Airtable write connector, live Douyin/WeChat/Qianchuan/Xingtu permission adapter, OpenAI Agents SDK runner/evals, e-commerce skeleton, or versioned memory/eval automation.
 2. Keep external actions disabled until permissions, logs, and approval gates are verified.
 3. Preserve Venus/Xiaolongxia isolation in every connector and mobile command.
 
