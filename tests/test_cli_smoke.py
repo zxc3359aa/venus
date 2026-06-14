@@ -354,6 +354,27 @@ def test_cli_approvals_outputs_manual_review_inbox():
     assert output["result"]["priority_queue"][0]["action_type"] == "venus_autopilot_enablement_review"
 
 
+def test_cli_approval_ledger_outputs_decision_ledger_draft():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "approval-ledger",
+            "data/samples/approval_ledger.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "approval_ledger"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["new_entry_count"] == 2
+    assert output["result"]["duplicate_intents"][0]["action_type"] == "feishu_mobile_report"
+
+
 def test_cli_trend_scan_outputs_douyin_beauty_signal_report():
     completed = subprocess.run(
         [

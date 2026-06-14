@@ -22,6 +22,7 @@ def main(argv: list[str] | None = None) -> int:
             "monitoring",
             "airtable",
             "approvals",
+            "approval-ledger",
             "douyin",
             "ecommerce",
             "evals",
@@ -73,6 +74,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
         return records
     if workflow == "approvals":
         return records
+    if workflow == "approval-ledger":
+        return records
     if workflow == "douyin":
         return records
     if workflow == "ecommerce":
@@ -107,6 +110,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
 def _orchestrator_workflow(workflow: str) -> str:
     if workflow == "agent-run":
         return "agent_run"
+    if workflow == "approval-ledger":
+        return "approval_ledger"
     if workflow == "trend-scan":
         return "trend_scan"
     if workflow == "product-intel":

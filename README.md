@@ -69,6 +69,12 @@ Build a local approval inbox:
 venus approvals data/samples/approvals.json
 ```
 
+Build a local approval decision ledger draft:
+
+```bash
+venus approval-ledger data/samples/approval_ledger.json
+```
+
 Build a local Douyin comment and live-message engagement report:
 
 ```bash
@@ -164,6 +170,7 @@ This command parses a Feishu-like `/venus` message and returns a card-ready JSON
 The Feishu dry-run entry also supports `/venus monitoring` when the local `data/samples/competitors.json` sample is present.
 It also supports `/venus airtable` to preview the Airtable-ready operations package without writing to Airtable.
 It also supports `/venus approvals` to preview the pending approval inbox and recorded-only decision intents without applying approvals.
+It also supports `/venus approval-ledger` to preview deduplicated approval decision ledger entries, write plans, and rollback plans without writing storage.
 It also supports `/venus product-intel` to preview brand backing, filing checks, ingredient risk, supplier documents, test reports, controversies, and product retrieval tasks without live product-data reads.
 It also supports `/venus douyin` to preview comment and live-message reply queues without touching Douyin.
 It also supports `/venus ecommerce` to preview product catalog checks, inventory alerts, live product-card plans, promotions, and after-sales risk without touching shop, order, price, coupon, or inventory state.

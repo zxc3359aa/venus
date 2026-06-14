@@ -100,6 +100,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "approvals.json"
     )
     assert (
+        config.default_input_paths["approval-ledger"]
+        == tmp_workspace / "data" / "samples" / "approval_ledger.json"
+    )
+    assert (
         config.default_input_paths["trend-scan"]
         == tmp_workspace / "data" / "samples" / "trend_scan.json"
     )
@@ -187,6 +191,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus performance" in result["card"]["summary"]
     assert "/venus evals" in result["card"]["summary"]
     assert "/venus approvals" in result["card"]["summary"]
+    assert "/venus approval-ledger" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
 
@@ -1139,6 +1144,75 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "approval_ledger.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_approval_ledger",
+                "recorded_at": "2026-06-14T23:00:00+08:00",
+                "write_requested": True,
+                "approval_records": [
+                    {
+                        "action_type": "qianchuan_budget_review",
+                        "approval_level": 4,
+                        "draft": "Review budget before changing spend.",
+                        "evidence_ids": ["qianchuan-app-001"],
+                        "status": "pending",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T21:30:00+08:00",
+                    },
+                    {
+                        "action_type": "douyin_comment_reply_queue",
+                        "approval_level": 3,
+                        "draft": "Review high-risk Douyin reply drafts.",
+                        "evidence_ids": ["comment-001"],
+                        "status": "pending",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T21:10:00+08:00",
+                    },
+                    {
+                        "action_type": "feishu_mobile_report",
+                        "approval_level": 2,
+                        "draft": "Send private Feishu summary.",
+                        "evidence_ids": ["run-001"],
+                        "status": "approved",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T20:00:00+08:00",
+                    },
+                ],
+                "requested_decisions": [
+                    {
+                        "action_type": "qianchuan_budget_review",
+                        "decision": "approve",
+                        "reason": "预算建议合理，但仍需二次确认。",
+                        "reviewer": "owner",
+                    },
+                    {
+                        "action_type": "douyin_comment_reply_queue",
+                        "decision": "reject",
+                        "reason": "回复语气还需要更克制。",
+                        "reviewer": "owner",
+                    },
+                    {
+                        "action_type": "feishu_mobile_report",
+                        "decision": "needs_changes",
+                        "reason": "摘要需要更短。",
+                        "reviewer": "owner",
+                    },
+                ],
+                "existing_ledger_entries": [
+                    {
+                        "decision_id": "feishu_mobile_report-needs_changes-owner-feishu_mobile_report-20260614-2000000800",
+                        "action_type": "feishu_mobile_report",
+                        "decision": "needs_changes",
+                        "reviewer": "owner",
+                        "matched_approval_id": "feishu_mobile_report-20260614-2000000800",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "trend_scan.json").write_text(
         json.dumps(
             {
@@ -1608,6 +1682,32 @@ def test_run_feishu_entry_approvals_routes_to_manual_review_inbox(tmp_workspace)
     assert (
         result["card"]["result"]["result"]["priority_queue"][0]["action_type"]
         == "venus_autopilot_enablement_review"
+    )
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_approval_ledger_routes_to_decision_ledger_draft(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-approval-ledger",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:41:15+08:00",
+            "text": "/venus approval-ledger",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "approval-ledger"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "approval_ledger"
+    assert result["card"]["result"]["result"]["summary"]["new_entry_count"] == 2
+    assert (
+        result["card"]["result"]["result"]["duplicate_intents"][0]["action_type"]
+        == "feishu_mobile_report"
     )
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
