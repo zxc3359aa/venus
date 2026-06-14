@@ -298,3 +298,13 @@
 - Added CLI command: `venus delivery-status data/samples/delivery_status.json`.
 - Added Feishu dry-run command: `/venus delivery-status`.
 - Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, publishing action, ad spend, brand task, WeChat contact, memory state, backup state, external delivery confirmation, or platform state is changed.
+
+## Connector Execution Gateway Progress
+
+- Added the connector execution gateway design spec and implementation plan.
+- Added a local `connector_execution` workflow that turns approved delivery drafts and connector readiness records into platform-specific execution manifests.
+- Added readiness blocking for unsupported surfaces, missing connector reviews, missing permissions, missing audit/rollback readiness, external drafts, external overrides, and high-risk level-4 connector actions.
+- Added local manifest persistence under the isolated Venus JSON store while keeping every manifest blocked until live connectors are enabled.
+- Added CLI command: `venus connector-execution data/samples/connector_execution.json`.
+- Added Feishu dry-run command: `/venus connector-execution`.
+- Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, Douyin publish, ad spend, Xingtu commitment, WeChat contact, OpenAI model call, memory write, backup upload, or external platform state is changed.

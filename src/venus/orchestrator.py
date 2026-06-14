@@ -14,6 +14,7 @@ from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
 from venus.content_eval import build_content_eval_report
 from venus.connector_audit import build_connector_audit_report
+from venus.connector_execution import build_connector_execution_plan
 from venus.content import generate_hotspot_brief
 from venus.delivery_drafts import build_delivery_drafts
 from venus.delivery_status import build_delivery_status
@@ -70,6 +71,8 @@ class VenusOrchestrator:
             result = build_delivery_status(payload)
         elif workflow == "connectors":
             result = build_connector_audit_report(payload)
+        elif workflow == "connector_execution":
+            result = build_connector_execution_plan(payload)
         elif workflow == "agent_run":
             result = build_agent_run_plan(payload)
         elif workflow == "agents_sdk":

@@ -414,6 +414,29 @@ def test_cli_agents_sdk_outputs_runtime_manifest():
     assert output["result"]["deployment_readiness"]["status"] == "blocked_by_sdk_readiness"
 
 
+def test_cli_connector_execution_outputs_execution_gateway_plan():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "connector-execution",
+            "data/samples/connector_execution.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "connector_execution"
+    assert output["external_actions"] == []
+    assert output["result"]["execution_state"] == "blocked_execution_not_requested"
+    assert output["result"]["summary"]["draft_count"] == 5
+    assert output["result"]["summary"]["execution_record_count"] == 0
+    assert output["result"]["external_actions"] == []
+
+
 def test_cli_approvals_outputs_manual_review_inbox():
     completed = subprocess.run(
         [

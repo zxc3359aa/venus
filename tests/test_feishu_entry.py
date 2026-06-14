@@ -104,6 +104,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "agents_sdk.json"
     )
     assert (
+        config.default_input_paths["connector-execution"]
+        == tmp_workspace / "data" / "samples" / "connector_execution.json"
+    )
+    assert (
         config.default_input_paths["approvals"]
         == tmp_workspace / "data" / "samples" / "approvals.json"
     )
@@ -216,6 +220,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus performance" in result["card"]["summary"]
     assert "/venus evals" in result["card"]["summary"]
     assert "/venus agents-sdk" in result["card"]["summary"]
+    assert "/venus connector-execution" in result["card"]["summary"]
     assert "/venus approvals" in result["card"]["summary"]
     assert "/venus approval-ledger" in result["card"]["summary"]
     assert "/venus approval-archive" in result["card"]["summary"]
@@ -1170,6 +1175,49 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "connector_execution.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_connector_execution_review",
+                "workspace_root": str(root),
+                "executed_at": "2026-06-15T14:00:00+08:00",
+                "execution_requested": True,
+                "approved_execution_review": True,
+                "live_dispatch_requested": False,
+                "draft_records": [
+                    {
+                        "draft_id": "draft-feishu-report-001",
+                        "outbox_id": "outbox-feishu-report-001",
+                        "action_id": "feishu-report-001",
+                        "action_type": "feishu_mobile_report",
+                        "artifact_type": "feishu_card_draft",
+                        "target_surface": "feishu",
+                        "dispatch_state": "local_review_required",
+                        "approval_level": 2,
+                        "external_action_enabled": False,
+                    }
+                ],
+                "connector_reviews": [
+                    {
+                        "connector_id": "feishu-bot",
+                        "surface": "feishu",
+                        "connector_type": "feishu_bot",
+                        "ready_for_launch": True,
+                        "missing_permissions": [],
+                        "permissions_required": ["send_private_card"],
+                        "permissions_granted": ["send_private_card"],
+                        "secret_refs": ["VENUS_FEISHU_APP_ID"],
+                        "audit_ready": True,
+                        "rollback_ready": True,
+                        "approval_level": 2,
+                    }
+                ],
+                "execution_overrides": [],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "approvals.json").write_text(
         json.dumps(
             {
@@ -1951,6 +1999,29 @@ def test_run_feishu_entry_agents_sdk_routes_to_runtime_manifest(tmp_workspace):
         result["card"]["result"]["result"]["deployment_readiness"]["status"]
         == "blocked_by_sdk_readiness"
     )
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_connector_execution_routes_to_gateway_plan(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-connector-execution",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-15T14:01:00+08:00",
+            "text": "/venus connector-execution",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "connector-execution"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "connector_execution"
+    assert result["card"]["result"]["result"]["summary"]["execution_record_count"] == 1
+    assert result["card"]["result"]["result"]["execution_state"] == "local_manifests_written"
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 
