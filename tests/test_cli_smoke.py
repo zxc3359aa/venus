@@ -437,6 +437,29 @@ def test_cli_connector_execution_outputs_execution_gateway_plan():
     assert output["result"]["external_actions"] == []
 
 
+def test_cli_connector_dispatch_outputs_dispatch_rehearsal_plan():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "connector-dispatch",
+            "data/samples/connector_dispatch.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "connector_dispatch"
+    assert output["external_actions"] == []
+    assert output["result"]["dispatch_state"] == "blocked_dispatch_not_requested"
+    assert output["result"]["summary"]["execution_count"] == 5
+    assert output["result"]["summary"]["rehearsal_record_count"] == 0
+    assert output["result"]["external_actions"] == []
+
+
 def test_cli_approvals_outputs_manual_review_inbox():
     completed = subprocess.run(
         [

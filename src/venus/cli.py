@@ -44,6 +44,7 @@ def main(argv: list[str] | None = None) -> int:
             "agent-run",
             "agents-sdk",
             "connector-execution",
+            "connector-dispatch",
             "dashboard",
             "feishu",
         ],
@@ -135,6 +136,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
         return records
     if workflow == "connector-execution":
         return records
+    if workflow == "connector-dispatch":
+        return records
     raise ValueError(f"Unsupported Venus workflow: {workflow}")
 
 
@@ -145,6 +148,8 @@ def _orchestrator_workflow(workflow: str) -> str:
         return "agents_sdk"
     if workflow == "connector-execution":
         return "connector_execution"
+    if workflow == "connector-dispatch":
+        return "connector_dispatch"
     if workflow == "airtable-sync":
         return "airtable_sync_plan"
     if workflow == "approval-ledger":

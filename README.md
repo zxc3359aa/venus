@@ -111,6 +111,12 @@ Preview the local connector execution gateway:
 venus connector-execution data/samples/connector_execution.json
 ```
 
+Preview the local connector dispatch rehearsal:
+
+```bash
+venus connector-dispatch data/samples/connector_dispatch.json
+```
+
 Build a local Douyin comment and live-message engagement report:
 
 ```bash
@@ -219,6 +225,7 @@ It also supports `/venus action-outbox` to preview approval-driven local action 
 It also supports `/venus delivery-drafts` to preview local Feishu card and Airtable record-package drafts without sending or syncing anything.
 It also supports `/venus delivery-status` to preview local manual delivery status records without confirming or changing any external platform state.
 It also supports `/venus connector-execution` to preview platform-specific execution manifests without dispatching to Feishu, Airtable, Douyin, WeChat, Qianchuan, Xingtu, OpenAI, or backups.
+It also supports `/venus connector-dispatch` to preview request envelopes, credential-readiness checks, audit packets, and rollback packets without calling any live connector.
 It also supports `/venus product-intel` to preview brand backing, filing checks, ingredient risk, supplier documents, test reports, controversies, and product retrieval tasks without live product-data reads.
 It also supports `/venus douyin` to preview comment and live-message reply queues without touching Douyin.
 It also supports `/venus ecommerce` to preview product catalog checks, inventory alerts, live product-card plans, promotions, and after-sales risk without touching shop, order, price, coupon, or inventory state.

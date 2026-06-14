@@ -308,3 +308,13 @@
 - Added CLI command: `venus connector-execution data/samples/connector_execution.json`.
 - Added Feishu dry-run command: `/venus connector-execution`.
 - Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, Douyin publish, ad spend, Xingtu commitment, WeChat contact, OpenAI model call, memory write, backup upload, or external platform state is changed.
+
+## Connector Dispatch Rehearsal Progress
+
+- Added the connector dispatch rehearsal design spec and implementation plan.
+- Added a local `connector_dispatch` workflow that turns connector execution manifests into platform request envelopes, credential-readiness checks, audit packets, and rollback packets.
+- Added blocking for missing credential refs, non-ready executions, external executions, external overrides, unsupported surfaces, and high-risk level-4 dispatch candidates.
+- Added local rehearsal persistence under the isolated Venus JSON store while keeping every request envelope blocked until live dispatch is explicitly enabled.
+- Added CLI command: `venus connector-dispatch data/samples/connector_dispatch.json`.
+- Added Feishu dry-run command: `/venus connector-dispatch`.
+- Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, Douyin publish, ad spend, Xingtu commitment, WeChat contact, OpenAI model call, backup write, memory write, or external platform state is changed.
