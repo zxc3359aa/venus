@@ -76,6 +76,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "scheduler.json"
     )
     assert (
+        config.default_input_paths["connectors"]
+        == tmp_workspace / "data" / "samples" / "connectors.json"
+    )
+    assert (
         config.default_input_paths["production"]
         == tmp_workspace / "data" / "samples" / "video_production.json"
     )
@@ -161,6 +165,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus improvement" in result["card"]["summary"]
     assert "/venus memory" in result["card"]["summary"]
     assert "/venus scheduler" in result["card"]["summary"]
+    assert "/venus connectors" in result["card"]["summary"]
     assert "/venus production" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
@@ -628,6 +633,94 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "connectors.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_connector_review",
+                "reviewed_at": "2026-06-14T19:00:00+08:00",
+                "live_connector_requested": True,
+                "connectors": [
+                    {
+                        "connector_id": "douyin-open",
+                        "surface": "douyin",
+                        "connector_type": "douyin_open_api",
+                        "desired_workflows": ["trend_scan", "douyin"],
+                        "status": "missing_permission",
+                        "permissions_required": ["video_comment_read", "live_message_read"],
+                        "permissions_granted": ["basic_profile"],
+                        "secret_refs": ["VENUS_DOUYIN_CLIENT_ID"],
+                        "audit_log": "missing",
+                        "rollback": "not_configured",
+                        "data_classes": ["public_comments", "creator_metrics"],
+                        "approval_level": 3,
+                        "evidence": ["douyin-app-001"],
+                    },
+                    {
+                        "connector_id": "feishu-bot",
+                        "surface": "feishu",
+                        "connector_type": "feishu_bot",
+                        "desired_workflows": ["feishu"],
+                        "status": "ready",
+                        "permissions_required": ["receive_message", "send_private_card"],
+                        "permissions_granted": ["receive_message", "send_private_card"],
+                        "secret_refs": ["VENUS_FEISHU_APP_ID"],
+                        "audit_log": "ready",
+                        "rollback": "configured",
+                        "data_classes": ["private_operator_reports"],
+                        "approval_level": 2,
+                        "evidence": ["feishu-app-001"],
+                    },
+                    {
+                        "connector_id": "qianchuan-ads",
+                        "surface": "qianchuan",
+                        "connector_type": "oceanengine_marketing_api",
+                        "desired_workflows": ["commercial"],
+                        "status": "missing_permission",
+                        "permissions_required": ["ad_account_read", "budget_write"],
+                        "permissions_granted": ["ad_account_read"],
+                        "secret_refs": ["VENUS_QIANCHUAN_APP_ID"],
+                        "audit_log": "ready",
+                        "rollback": "not_configured",
+                        "data_classes": ["ad_budget", "audience_segments"],
+                        "approval_level": 4,
+                        "evidence": ["qianchuan-app-001"],
+                    },
+                    {
+                        "connector_id": "airtable-ops",
+                        "surface": "airtable",
+                        "connector_type": "airtable_api",
+                        "desired_workflows": ["airtable"],
+                        "status": "ready",
+                        "permissions_required": ["base_read", "record_write"],
+                        "permissions_granted": ["base_read", "record_write"],
+                        "secret_refs": ["VENUS_AIRTABLE_BASE_ID"],
+                        "audit_log": "ready",
+                        "rollback": "configured",
+                        "data_classes": ["operations_records"],
+                        "approval_level": 2,
+                        "evidence": ["airtable-base-001"],
+                    },
+                    {
+                        "connector_id": "backup-store",
+                        "surface": "backup",
+                        "connector_type": "local_backup",
+                        "desired_workflows": ["improvement", "memory"],
+                        "status": "missing_verification",
+                        "permissions_required": ["local_write", "restore_read"],
+                        "permissions_granted": ["local_write", "restore_read"],
+                        "secret_refs": [],
+                        "audit_log": "ready",
+                        "rollback": "configured",
+                        "data_classes": ["local_memory_snapshots"],
+                        "approval_level": 2,
+                        "evidence": ["backup-store-001"],
+                    },
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "commercial_strategy.json").write_text(
         json.dumps(
             {
@@ -1011,6 +1104,29 @@ def test_run_feishu_entry_scheduler_routes_to_24h_run_plan(tmp_workspace):
     assert result["card"]["result"]["workflow"] == "scheduler"
     assert result["card"]["result"]["result"]["summary"]["due_job_count"] == 3
     assert result["card"]["result"]["result"]["summary"]["blocked_job_count"] == 2
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_connectors_routes_to_connector_audit_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-connectors",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:39:50+08:00",
+            "text": "/venus connectors",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "connectors"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "connectors"
+    assert result["card"]["result"]["result"]["summary"]["ready_connector_count"] == 2
+    assert result["card"]["result"]["result"]["summary"]["blocked_connector_count"] == 3
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

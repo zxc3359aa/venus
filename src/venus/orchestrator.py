@@ -6,6 +6,7 @@ from venus.agent_run import build_agent_run_plan
 from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
+from venus.connector_audit import build_connector_audit_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.ecommerce import build_ecommerce_report
@@ -42,6 +43,8 @@ class VenusOrchestrator:
             result = build_monitoring_report(payload)
         elif workflow == "airtable":
             result = build_airtable_sync_package(payload)
+        elif workflow == "connectors":
+            result = build_connector_audit_report(payload)
         elif workflow == "agent_run":
             result = build_agent_run_plan(payload)
         elif workflow == "douyin":

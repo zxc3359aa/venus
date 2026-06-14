@@ -95,6 +95,16 @@
 - Integrated scheduler summaries into Agent Run when `scheduler` data is present.
 - Preserved safety boundaries: no timer, cron job, platform read, platform write, Feishu message, ad spend, reply, memory write, backup write, or external action is executed, and `external_actions: []` remains enforced.
 
+## Connector Audit Progress
+
+- Added the connector audit design spec and implementation plan.
+- Added a local dry-run `connectors` workflow for live integration readiness review across Douyin, Feishu, Qianchuan, Airtable, and backup surfaces.
+- Added permission matrices, missing-permission checks, audit-log checks, rollback checks, readiness gaps, launch sequence, and approval records.
+- Added CLI command: `venus connectors data/samples/connectors.json`.
+- Added Feishu dry-run command: `/venus connectors`.
+- Integrated connector readiness summaries into Agent Run when `connectors` data is present.
+- Preserved safety boundaries: no credential exchange, platform read, platform write, app configuration, token refresh, or external action is executed, and `external_actions: []` remains enforced.
+
 ## Douyin Engagement Progress
 
 - Added the Douyin engagement design spec and implementation plan.

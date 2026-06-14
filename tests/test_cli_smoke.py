@@ -382,6 +382,29 @@ def test_cli_scheduler_outputs_24h_run_plan():
     assert output["result"]["run_queue"][0]["workflow"] == "trend_scan"
 
 
+def test_cli_connectors_outputs_connector_audit_report():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "connectors",
+            "data/samples/connectors.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "connectors"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["connector_count"] == 5
+    assert output["result"]["summary"]["missing_permission_count"] == 2
+    assert output["result"]["summary"]["high_risk_connector_count"] == 1
+    assert len(output["result"]["launch_sequence"]) == 2
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [

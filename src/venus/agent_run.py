@@ -7,6 +7,7 @@ from venus.approvals import create_approval_record, requires_manual_approval
 from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
+from venus.connector_audit import build_connector_audit_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.ecommerce import build_ecommerce_report
@@ -118,6 +119,7 @@ def build_agent_run_plan(
     self_improvement = safe_payload.get("self_improvement")
     memory = safe_payload.get("memory")
     scheduler = safe_payload.get("scheduler")
+    connectors = safe_payload.get("connectors")
     competitors = _competitor_payload(safe_payload.get("competitors"))
 
     if isinstance(trend_scan, dict):
@@ -255,6 +257,19 @@ def build_agent_run_plan(
             "approval_record_count": result["summary"]["approval_record_count"],
         }
         for item in result["run_queue"]:
+            evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
+
+    if isinstance(connectors, dict):
+        result = build_connector_audit_report(connectors)
+        executed_workflows.append("connectors")
+        workflow_summaries["connectors"] = {
+            "ready_connector_count": result["summary"]["ready_connector_count"],
+            "blocked_connector_count": result["summary"]["blocked_connector_count"],
+            "missing_permission_count": result["summary"]["missing_permission_count"],
+            "high_risk_connector_count": result["summary"]["high_risk_connector_count"],
+            "approval_record_count": result["summary"]["approval_record_count"],
+        }
+        for item in result["connector_reviews"]:
             evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
 
     if competitors.get("competitors"):

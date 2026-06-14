@@ -412,6 +412,88 @@ def _agent_run_payload():
                 },
             ],
         },
+        "connectors": {
+            "source": "manual_connector_review",
+            "reviewed_at": "2026-06-14T19:00:00+08:00",
+            "live_connector_requested": True,
+            "connectors": [
+                {
+                    "connector_id": "douyin-open",
+                    "surface": "douyin",
+                    "connector_type": "douyin_open_api",
+                    "desired_workflows": ["trend_scan", "douyin"],
+                    "status": "missing_permission",
+                    "permissions_required": ["video_comment_read", "live_message_read"],
+                    "permissions_granted": ["basic_profile"],
+                    "secret_refs": ["VENUS_DOUYIN_CLIENT_ID"],
+                    "audit_log": "missing",
+                    "rollback": "not_configured",
+                    "data_classes": ["public_comments", "creator_metrics"],
+                    "approval_level": 3,
+                    "evidence": ["douyin-app-001"],
+                },
+                {
+                    "connector_id": "feishu-bot",
+                    "surface": "feishu",
+                    "connector_type": "feishu_bot",
+                    "desired_workflows": ["feishu"],
+                    "status": "ready",
+                    "permissions_required": ["receive_message", "send_private_card"],
+                    "permissions_granted": ["receive_message", "send_private_card"],
+                    "secret_refs": ["VENUS_FEISHU_APP_ID"],
+                    "audit_log": "ready",
+                    "rollback": "configured",
+                    "data_classes": ["private_operator_reports"],
+                    "approval_level": 2,
+                    "evidence": ["feishu-app-001"],
+                },
+                {
+                    "connector_id": "qianchuan-ads",
+                    "surface": "qianchuan",
+                    "connector_type": "oceanengine_marketing_api",
+                    "desired_workflows": ["commercial"],
+                    "status": "missing_permission",
+                    "permissions_required": ["ad_account_read", "budget_write"],
+                    "permissions_granted": ["ad_account_read"],
+                    "secret_refs": ["VENUS_QIANCHUAN_APP_ID"],
+                    "audit_log": "ready",
+                    "rollback": "not_configured",
+                    "data_classes": ["ad_budget", "audience_segments"],
+                    "approval_level": 4,
+                    "evidence": ["qianchuan-app-001"],
+                },
+                {
+                    "connector_id": "airtable-ops",
+                    "surface": "airtable",
+                    "connector_type": "airtable_api",
+                    "desired_workflows": ["airtable"],
+                    "status": "ready",
+                    "permissions_required": ["base_read", "record_write"],
+                    "permissions_granted": ["base_read", "record_write"],
+                    "secret_refs": ["VENUS_AIRTABLE_BASE_ID"],
+                    "audit_log": "ready",
+                    "rollback": "configured",
+                    "data_classes": ["operations_records"],
+                    "approval_level": 2,
+                    "evidence": ["airtable-base-001"],
+                },
+                {
+                    "connector_id": "backup-store",
+                    "surface": "backup",
+                    "connector_type": "local_backup",
+                    "desired_workflows": ["improvement", "memory"],
+                    "status": "missing_verification",
+                    "permissions_required": ["local_write", "restore_read"],
+                    "permissions_granted": ["local_write", "restore_read"],
+                    "secret_refs": [],
+                    "audit_log": "ready",
+                    "rollback": "configured",
+                    "data_classes": ["local_memory_snapshots"],
+                    "approval_level": 2,
+                    "evidence": ["backup-store-001"],
+                },
+            ],
+        },
         "competitors": {
             "competitors": [
                 {
@@ -460,6 +542,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "improvement",
         "memory",
         "scheduler",
+        "connectors",
         "monitoring",
         "airtable",
     ]
@@ -490,6 +573,9 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["workflow_summaries"]["scheduler"]["due_job_count"] == 3
     assert plan["workflow_summaries"]["scheduler"]["blocked_job_count"] == 2
     assert plan["workflow_summaries"]["scheduler"]["approval_gated_job_count"] == 1
+    assert plan["workflow_summaries"]["connectors"]["ready_connector_count"] == 2
+    assert plan["workflow_summaries"]["connectors"]["blocked_connector_count"] == 3
+    assert plan["workflow_summaries"]["connectors"]["high_risk_connector_count"] == 1
     assert plan["workflow_summaries"]["monitoring"]["top_account"] == "成分党A"
     assert plan["workflow_summaries"]["airtable"]["table_count"] == 6
 
