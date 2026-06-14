@@ -104,6 +104,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "approval_ledger.json"
     )
     assert (
+        config.default_input_paths["approval-archive"]
+        == tmp_workspace / "data" / "samples" / "approval_archive.json"
+    )
+    assert (
         config.default_input_paths["trend-scan"]
         == tmp_workspace / "data" / "samples" / "trend_scan.json"
     )
@@ -192,6 +196,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus evals" in result["card"]["summary"]
     assert "/venus approvals" in result["card"]["summary"]
     assert "/venus approval-ledger" in result["card"]["summary"]
+    assert "/venus approval-archive" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
 
@@ -1213,6 +1218,40 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "approval_archive.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_approval_archive",
+                "recorded_at": "2026-06-14T23:20:00+08:00",
+                "workspace_root": str(root),
+                "archive_requested": False,
+                "approved_ledger_write_review": False,
+                "write_requested": True,
+                "approval_records": [
+                    {
+                        "action_type": "douyin_comment_reply_queue",
+                        "approval_level": 3,
+                        "draft": "Review high-risk Douyin reply drafts.",
+                        "evidence_ids": ["comment-001"],
+                        "status": "pending",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T21:10:00+08:00",
+                    }
+                ],
+                "requested_decisions": [
+                    {
+                        "action_type": "douyin_comment_reply_queue",
+                        "decision": "reject",
+                        "reason": "回复语气还需要更克制。",
+                        "reviewer": "owner",
+                    }
+                ],
+                "existing_ledger_entries": [],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "trend_scan.json").write_text(
         json.dumps(
             {
@@ -1711,6 +1750,33 @@ def test_run_feishu_entry_approval_ledger_routes_to_decision_ledger_draft(tmp_wo
     )
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_approval_archive_routes_to_local_archive_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-approval-archive",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:41:25+08:00",
+            "text": "/venus approval-archive",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "approval-archive"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "approval_archive"
+    assert result["card"]["result"]["result"]["summary"]["archived_count"] == 0
+    assert (
+        result["card"]["result"]["result"]["archive_state"]
+        == "blocked_archive_not_requested"
+    )
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+    assert not (tmp_workspace / "data" / "venus" / "approval_decision_ledger.json").exists()
 
 
 def test_run_feishu_entry_trend_scan_routes_to_douyin_signal_report(tmp_workspace):
