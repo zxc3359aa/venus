@@ -5,6 +5,7 @@ from typing import Any
 from venus.agent_run import build_agent_run_plan
 from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
+from venus.commercial_strategy import build_commercial_strategy_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.monitoring import build_monitoring_report
@@ -38,6 +39,8 @@ class VenusOrchestrator:
             result = build_douyin_engagement_report(payload)
         elif workflow == "wechat":
             result = build_wechat_private_domain_report(payload)
+        elif workflow == "commercial":
+            result = build_commercial_strategy_report(payload)
         else:
             raise ValueError(f"Unsupported Venus workflow: {workflow}")
 

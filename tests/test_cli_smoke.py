@@ -198,6 +198,29 @@ def test_cli_wechat_outputs_private_domain_handoff_report():
     assert output["result"]["handoff_queue"][0]["execution_state"] == "blocked_until_approved"
 
 
+def test_cli_commercial_outputs_ad_strategy_report():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "commercial",
+            "data/samples/commercial_strategy.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "commercial"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["qianchuan_campaign_count"] == 1
+    assert output["result"]["summary"]["xingtu_brief_count"] == 1
+    assert output["result"]["summary"]["approval_gated_action_count"] == 3
+    assert output["result"]["qianchuan_recommendations"][0]["execution_state"] == "blocked_until_approved"
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [

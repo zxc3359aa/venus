@@ -104,3 +104,13 @@
 - Added Feishu dry-run command: `/venus wechat`.
 - Integrated WeChat private-domain summaries into Agent Run when `wechat_private_domain` data is present.
 - Preserved safety boundaries: no Mini Program answer, Enterprise WeChat message, contact add, group invite, customer route, or lead handoff is executed, and `external_actions: []` remains enforced.
+
+## Commercial Strategy Progress
+
+- Added the commercial strategy design spec and implementation plan.
+- Added a local dry-run `commercial` workflow for Qianchuan budget guardrails and Xingtu brief review.
+- Added Qianchuan recommendations, creative diagnostics, Xingtu risk review, commercial script recommendations, approval records, and source/safety notes.
+- Added CLI command: `venus commercial data/samples/commercial_strategy.json`.
+- Added Feishu dry-run command: `/venus commercial`.
+- Integrated commercial strategy summaries into Agent Run when `commercial_strategy` data is present.
+- Preserved safety boundaries: no budget change, campaign edit, audience edit, Xingtu task decision, quote, brand commitment, or publishing promise is executed, and `external_actions: []` remains enforced.

@@ -20,6 +20,7 @@ COMMAND_APPROVAL_LEVELS = {
     "airtable": 1,
     "douyin": 1,
     "wechat": 1,
+    "commercial": 1,
     "agent-run": 1,
     "approve": 2,
 }
@@ -52,6 +53,7 @@ class FeishuConfig:
                 "airtable": root / "data" / "samples" / "airtable_export.json",
                 "douyin": root / "data" / "samples" / "douyin_engagement.json",
                 "wechat": root / "data" / "samples" / "wechat_private_domain.json",
+                "commercial": root / "data" / "samples" / "commercial_strategy.json",
                 "agent-run": root / "data" / "samples" / "agent_run.json",
             },
         )
@@ -160,7 +162,7 @@ def run_feishu_entry(
     if command.name == "help":
         card = _status_card(
             "Venus command help",
-            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus comments, /venus monitoring, /venus airtable, /venus douyin, /venus wechat, /venus agent-run, /venus approve <id> <decision>",
+            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus comments, /venus monitoring, /venus airtable, /venus douyin, /venus wechat, /venus commercial, /venus agent-run, /venus approve <id> <decision>",
             active_config,
         )
     elif command.name == "status":
@@ -174,7 +176,7 @@ def run_feishu_entry(
             "Unsupported Venus command",
             "Unsupported Venus command. Send /venus help to see available commands.",
         )
-    elif command.name in {"hotspot", "product", "comments", "monitoring", "airtable", "douyin", "wechat", "agent-run"}:
+    elif command.name in {"hotspot", "product", "comments", "monitoring", "airtable", "douyin", "wechat", "commercial", "agent-run"}:
         card = _workflow_report_card(command, active_config)
     elif command.name == "approve":
         approval = create_approval_record(
@@ -268,9 +270,10 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
         "airtable": "airtable",
         "douyin": "douyin",
         "wechat": "wechat",
+        "commercial": "commercial",
         "agent-run": "agent_run",
     }[command.name]
-    payload = records if command.name in {"monitoring", "airtable", "douyin", "wechat", "agent-run"} else {payload_key: records}
+    payload = records if command.name in {"monitoring", "airtable", "douyin", "wechat", "commercial", "agent-run"} else {payload_key: records}
     workflow = "agent_run" if command.name == "agent-run" else command.name
     result = VenusOrchestrator().run(workflow, payload)
     result = _normalize_report_result(command.name, result)
@@ -320,6 +323,8 @@ def _report_summary(command_name: str, result: dict[str, Any]) -> str:
         return f"Douyin approval-gated replies: {data['summary']['approval_gated_reply_count']}"
     if command_name == "wechat":
         return f"WeChat handoffs: {data['summary']['enterprise_wechat_handoff_count']}"
+    if command_name == "commercial":
+        return f"Commercial approvals: {data['summary']['approval_gated_action_count']}"
     if command_name == "agent-run":
         return f"Agent run approval records: {len(data['approval_records'])}"
     return "Venus report generated."

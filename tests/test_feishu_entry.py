@@ -51,6 +51,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         config.default_input_paths["wechat"]
         == tmp_workspace / "data" / "samples" / "wechat_private_domain.json"
     )
+    assert (
+        config.default_input_paths["commercial"]
+        == tmp_workspace / "data" / "samples" / "commercial_strategy.json"
+    )
 
 
 def test_feishu_config_rejects_xiaolongxia_namespace(tmp_workspace):
@@ -124,6 +128,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus agent-run" in result["card"]["summary"]
     assert "/venus douyin" in result["card"]["summary"]
     assert "/venus wechat" in result["card"]["summary"]
+    assert "/venus commercial" in result["card"]["summary"]
 
 
 def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
@@ -348,6 +353,43 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "commercial_strategy.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_commercial_brief",
+                "retrieved_at": "2026-06-14T12:00:00+08:00",
+                "qianchuan": {
+                    "campaign_id": "qc-001",
+                    "objective": "直播间成交",
+                    "daily_budget": 3000,
+                    "spent_today": 1800,
+                    "roi": 1.4,
+                    "target_roi": 2.0,
+                    "audiences": ["敏感肌", "屏障修护"],
+                    "creatives": [
+                        {
+                            "creative_id": "ad-001",
+                            "title": "早C晚A翻车自查",
+                            "completion_rate": 0.72,
+                            "ctr": 0.035,
+                            "conversion_rate": 0.018,
+                        }
+                    ],
+                },
+                "xingtu": {
+                    "brief_id": "xt-001",
+                    "brand": "示例品牌",
+                    "product": "屏障修护精华",
+                    "budget": 50000,
+                    "requirements": ["突出100%修复屏障"],
+                    "forbidden_claims": ["100%修复屏障"],
+                    "deliverables": ["60秒短视频"],
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_run_feishu_entry_hotspot_routes_to_orchestrator(tmp_workspace):
@@ -497,6 +539,28 @@ def test_run_feishu_entry_wechat_routes_to_private_domain_report(tmp_workspace):
     assert result["card"]["result"]["workflow"] == "wechat"
     assert result["card"]["result"]["result"]["summary"]["question_count"] == 2
     assert result["card"]["result"]["result"]["summary"]["enterprise_wechat_handoff_count"] == 1
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_commercial_routes_to_ad_strategy_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-commercial",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:39:45+08:00",
+            "text": "/venus commercial",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "commercial"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "commercial"
+    assert result["card"]["result"]["result"]["summary"]["approval_gated_action_count"] == 3
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

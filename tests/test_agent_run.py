@@ -78,6 +78,37 @@ def _agent_run_payload():
                 }
             ],
         },
+        "commercial_strategy": {
+            "source": "manual_commercial_brief",
+            "retrieved_at": "2026-06-14T12:00:00+08:00",
+            "qianchuan": {
+                "campaign_id": "qc-001",
+                "objective": "直播间成交",
+                "daily_budget": 3000,
+                "spent_today": 1800,
+                "roi": 1.4,
+                "target_roi": 2.0,
+                "audiences": ["敏感肌", "屏障修护"],
+                "creatives": [
+                    {
+                        "creative_id": "ad-001",
+                        "title": "早C晚A翻车自查",
+                        "completion_rate": 0.72,
+                        "ctr": 0.035,
+                        "conversion_rate": 0.018,
+                    }
+                ],
+            },
+            "xingtu": {
+                "brief_id": "xt-001",
+                "brand": "示例品牌",
+                "product": "屏障修护精华",
+                "budget": 50000,
+                "requirements": ["突出100%修复屏障"],
+                "forbidden_claims": ["100%修复屏障"],
+                "deliverables": ["60秒短视频"],
+            },
+        },
         "competitors": {
             "competitors": [
                 {
@@ -118,6 +149,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "comments",
         "douyin",
         "wechat",
+        "commercial",
         "monitoring",
         "airtable",
     ]
@@ -126,6 +158,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["workflow_summaries"]["comments"]["approval_gated"] == 1
     assert plan["workflow_summaries"]["douyin"]["approval_gated_reply_count"] == 2
     assert plan["workflow_summaries"]["wechat"]["enterprise_wechat_handoff_count"] == 1
+    assert plan["workflow_summaries"]["commercial"]["approval_gated_action_count"] == 3
     assert plan["workflow_summaries"]["monitoring"]["top_account"] == "成分党A"
     assert plan["workflow_summaries"]["airtable"]["table_count"] == 6
 

@@ -6,6 +6,7 @@ from typing import Any
 from venus.approvals import create_approval_record, requires_manual_approval
 from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
+from venus.commercial_strategy import build_commercial_strategy_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.monitoring import build_monitoring_report
@@ -102,6 +103,7 @@ def build_agent_run_plan(
     comments = list(safe_payload.get("comments") or [])
     douyin_engagement = safe_payload.get("douyin_engagement")
     wechat_private_domain = safe_payload.get("wechat_private_domain")
+    commercial_strategy = safe_payload.get("commercial_strategy")
     competitors = _competitor_payload(safe_payload.get("competitors"))
 
     if hotspots:
@@ -148,6 +150,15 @@ def build_agent_run_plan(
         workflow_summaries["wechat"] = {
             "question_count": result["summary"]["question_count"],
             "enterprise_wechat_handoff_count": result["summary"]["enterprise_wechat_handoff_count"],
+            "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
+        }
+
+    if isinstance(commercial_strategy, dict):
+        result = build_commercial_strategy_report(commercial_strategy)
+        executed_workflows.append("commercial")
+        workflow_summaries["commercial"] = {
+            "budget_recommendation_count": result["summary"]["budget_recommendation_count"],
+            "high_risk_brief_count": result["summary"]["high_risk_brief_count"],
             "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
         }
 
