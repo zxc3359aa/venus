@@ -74,3 +74,13 @@
 - Added CLI command: `venus dashboard data/samples/airtable_export.json reports/venus-dashboard.html`.
 - Dashboard includes KPI cards, signal bars, detail tables, source notes, and dry-run safety boundary.
 - Kept the dashboard portable and local: no external scripts, no external CSS, no live platform reads, and `external_actions: []`.
+
+## Agent Run Orchestration Progress
+
+- Added the Agent Run orchestration design spec and implementation plan.
+- Added a local `agent_run` workflow that composes hotspot, product, comments, monitoring, and Airtable summaries into one operating cycle.
+- Added action-plan templates for Feishu private reports, Airtable sync review, Douyin comment reply queues, Qianchuan budget review, Xingtu brief response, and WeChat private-domain handoff.
+- Added approval records for level 2-4 surfaces while keeping every external action disabled.
+- Added CLI command: `venus agent-run data/samples/agent_run.json`.
+- Added Feishu dry-run command: `/venus agent-run`.
+- Preserved Venus/Xiaolongxia isolation, dry-run enforcement, and secret-like payload redaction.

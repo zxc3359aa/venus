@@ -14,7 +14,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="venus")
     parser.add_argument(
         "workflow",
-        choices=["hotspot", "product", "comments", "monitoring", "airtable", "dashboard", "feishu"],
+        choices=[
+            "hotspot",
+            "product",
+            "comments",
+            "monitoring",
+            "airtable",
+            "agent-run",
+            "dashboard",
+            "feishu",
+        ],
     )
     parser.add_argument("input", help="Path to a JSON input file")
     parser.add_argument("output", nargs="?", help="Optional output path for dashboard HTML")
@@ -28,7 +37,8 @@ def main(argv: list[str] | None = None) -> int:
         result = _run_dashboard(records, args.output)
     else:
         payload = _payload_for(args.workflow, records)
-        result = VenusOrchestrator().run(args.workflow, payload)
+        orchestrator_workflow = "agent_run" if args.workflow == "agent-run" else args.workflow
+        result = VenusOrchestrator().run(orchestrator_workflow, payload)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
@@ -43,6 +53,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
     if workflow == "monitoring":
         return records
     if workflow == "airtable":
+        return records
+    if workflow == "agent-run":
         return records
     raise ValueError(f"Unsupported Venus workflow: {workflow}")
 

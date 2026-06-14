@@ -39,6 +39,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         config.default_input_paths["airtable"]
         == tmp_workspace / "data" / "samples" / "airtable_export.json"
     )
+    assert (
+        config.default_input_paths["agent-run"]
+        == tmp_workspace / "data" / "samples" / "agent_run.json"
+    )
 
 
 def test_feishu_config_rejects_xiaolongxia_namespace(tmp_workspace):
@@ -109,6 +113,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus hotspot" in result["card"]["summary"]
     assert "/venus monitoring" in result["card"]["summary"]
     assert "/venus airtable" in result["card"]["summary"]
+    assert "/venus agent-run" in result["card"]["summary"]
 
 
 def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
@@ -244,6 +249,35 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "agent_run.json").write_text(
+        json.dumps(
+            {
+                "run_id": "venus-run-sample-001",
+                "trigger": "feishu_dry_run",
+                "requested_at": "2026-06-14T09:00:00+08:00",
+                "requested_surfaces": [
+                    "feishu_mobile_report",
+                    "airtable_sync_review",
+                    "douyin_comment_reply_queue",
+                ],
+                "hotspots": [
+                    {
+                        "topic": "早C晚A翻车",
+                        "type": "controversy",
+                        "freshness": 9,
+                        "relevance": 10,
+                        "controversy": 8,
+                        "evidence": ["douyin-export-001"],
+                    }
+                ],
+                "products": [],
+                "comments": [{"id": "c1", "text": "敏感肌用了会不会烂脸？"}],
+                "competitors": {"competitors": []},
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_run_feishu_entry_hotspot_routes_to_orchestrator(tmp_workspace):
@@ -348,6 +382,29 @@ def test_run_feishu_entry_airtable_routes_to_orchestrator(tmp_workspace):
     assert result["card"]["type"] == "report"
     assert result["card"]["result"]["workflow"] == "airtable"
     assert result["card"]["result"]["result"]["base"]["name"] == "Venus Ops"
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_agent_run_returns_approval_gated_plan(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-agent-run",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:40:00+08:00",
+            "text": "/venus agent-run",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "agent-run"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "agent_run"
+    assert result["card"]["result"]["result"]["run_id"] == "venus-run-sample-001"
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["card"]["result"]["result"]["approval_records"]
     assert result["external_actions"] == []
 
 

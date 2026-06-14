@@ -152,6 +152,32 @@ def test_cli_airtable_outputs_json():
     assert output["result"]["base"]["name"] == "Venus Ops"
 
 
+def test_cli_agent_run_outputs_approval_gated_plan():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "agent-run",
+            "data/samples/agent_run.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "agent_run"
+    assert output["external_actions"] == []
+    assert output["result"]["run_id"] == "venus-run-sample-001"
+    assert output["result"]["workflow_summaries"]["hotspot"]["top_topic"] == "早C晚A翻车"
+    assert output["result"]["approval_records"]
+    assert all(
+        action["execution_state"] != "executed"
+        for action in output["result"]["action_plan"]
+    )
+
+
 def test_cli_dashboard_writes_html_file(tmp_path):
     output_file = tmp_path / "venus-dashboard.html"
 

@@ -51,6 +51,12 @@ Build a local Airtable-ready operations export:
 venus airtable data/samples/airtable_export.json
 ```
 
+Build a local approval-gated Agent Run plan:
+
+```bash
+venus agent-run data/samples/agent_run.json
+```
+
 Build a local static operations dashboard:
 
 ```bash
@@ -67,5 +73,6 @@ This command parses a Feishu-like `/venus` message and returns a card-ready JSON
 
 The Feishu dry-run entry also supports `/venus monitoring` when the local `data/samples/competitors.json` sample is present.
 It also supports `/venus airtable` to preview the Airtable-ready operations package without writing to Airtable.
+It also supports `/venus agent-run` to preview the next Venus operating cycle and pending approval records.
 
 The local MVP never performs external actions. Public replies, publishing, lead routing, and ad spend remain approval-gated future integrations.
