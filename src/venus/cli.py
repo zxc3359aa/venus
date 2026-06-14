@@ -17,6 +17,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=[
             "hotspot",
             "product",
+            "product-intel",
             "comments",
             "monitoring",
             "airtable",
@@ -54,6 +55,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
         return {"hotspots": records}
     if workflow == "product":
         return {"products": records}
+    if workflow == "product-intel":
+        return records
     if workflow == "comments":
         return {"comments": records}
     if workflow == "monitoring":
@@ -82,6 +85,8 @@ def _orchestrator_workflow(workflow: str) -> str:
         return "agent_run"
     if workflow == "trend-scan":
         return "trend_scan"
+    if workflow == "product-intel":
+        return "product_intel"
     return workflow
 
 

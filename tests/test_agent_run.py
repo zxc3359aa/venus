@@ -73,6 +73,53 @@ def _agent_run_payload():
                 "evidence": [{"id": "nmpa-001", "type": "regulator", "title": "备案查询", "confidence": "high"}],
             }
         ],
+        "product_intelligence": {
+            "source": "manual_product_dossier",
+            "retrieved_at": "2026-06-14T16:00:00+08:00",
+            "live_connector_requested": True,
+            "product": {
+                "brand": "示例品牌",
+                "name": "屏障修护精华",
+                "filing_id": "国妆网备字20260001",
+                "manufacturer": "示例化妆品有限公司",
+                "claims": ["舒缓", "100%修复屏障"],
+                "brand_backing": [
+                    {"type": "dermatologist_quote", "source": "品牌手册", "status": "unverified"},
+                    {"type": "lab_collaboration", "source": "品牌发布会", "status": "verified"},
+                ],
+                "ingredients": [
+                    {
+                        "name": "烟酰胺",
+                        "role": "brightening",
+                        "risk": "medium",
+                        "supplier": "原料商A",
+                        "coa": "coa-niacinamide-001",
+                        "test_report": "test-niacinamide-001",
+                    },
+                    {
+                        "name": "视黄醇",
+                        "role": "renewal",
+                        "risk": "high",
+                        "supplier": "原料商B",
+                        "coa": "",
+                        "test_report": "",
+                    },
+                ],
+                "supplier_documents": [
+                    {"supplier": "原料商A", "document": "coa-niacinamide-001", "status": "provided"},
+                    {"supplier": "原料商B", "document": "", "status": "missing"},
+                ],
+                "test_reports": [
+                    {"report_id": "test-niacinamide-001", "scope": "烟酰胺纯度", "status": "provided"},
+                    {"report_id": "", "scope": "视黄醇稳定性", "status": "missing"},
+                ],
+                "controversies": [
+                    {"source": "douyin_comment", "issue": "用户反馈刺痛", "severity": "medium"},
+                    {"source": "creator_video", "issue": "达人质疑夸大修复", "severity": "high"},
+                ],
+                "evidence": [{"id": "nmpa-001", "type": "filing", "title": "备案查询"}],
+            },
+        },
         "comments": [
             {"id": "c1", "text": "敏感肌用了会不会烂脸？"},
             {"id": "c2", "text": "求平价替代！"},
@@ -235,6 +282,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "trend_scan",
         "hotspot",
         "product",
+        "product_intel",
         "comments",
         "production",
         "douyin",
@@ -249,6 +297,9 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["workflow_summaries"]["trend_scan"]["top_signal"] == "早C晚A翻车"
     assert plan["workflow_summaries"]["trend_scan"]["refresh_interval_minutes"] == 15
     assert plan["workflow_summaries"]["product"]["risk_level"] == "high"
+    assert plan["workflow_summaries"]["product_intel"]["risk_level"] == "high"
+    assert plan["workflow_summaries"]["product_intel"]["retrieval_task_count"] == 5
+    assert plan["workflow_summaries"]["product_intel"]["missing_supplier_document_count"] == 1
     assert plan["workflow_summaries"]["comments"]["approval_gated"] == 1
     assert plan["workflow_summaries"]["production"]["scene_count"] == 5
     assert plan["workflow_summaries"]["production"]["subtitle_card_count"] == 5

@@ -11,6 +11,7 @@ from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
+from venus.product_intelligence import build_product_intelligence_report
 from venus.product_research import build_product_research_card
 from venus.self_improvement import build_self_improvement_report
 from venus.trend_scan import build_trend_scan_report
@@ -104,6 +105,7 @@ def build_agent_run_plan(
     trend_scan = safe_payload.get("trend_scan")
     hotspots = list(safe_payload.get("hotspots") or [])
     products = list(safe_payload.get("products") or [])
+    product_intelligence = safe_payload.get("product_intelligence")
     comments = list(safe_payload.get("comments") or [])
     video_production = safe_payload.get("video_production")
     douyin_engagement = safe_payload.get("douyin_engagement")
@@ -142,6 +144,17 @@ def build_agent_run_plan(
             "product": result["product"],
             "risk_level": result["risk_level"],
             "forbidden_claim_count": len(result["forbidden_claims"]),
+        }
+        evidence_ids.extend(_product_evidence_ids(result))
+
+    if isinstance(product_intelligence, dict):
+        result = build_product_intelligence_report(product_intelligence)
+        executed_workflows.append("product_intel")
+        workflow_summaries["product_intel"] = {
+            "risk_level": result["claim_risk"]["risk_level"],
+            "retrieval_task_count": result["summary"]["retrieval_task_count"],
+            "missing_supplier_document_count": result["summary"]["missing_supplier_document_count"],
+            "missing_test_report_count": result["summary"]["missing_test_report_count"],
         }
         evidence_ids.extend(_product_evidence_ids(result))
 

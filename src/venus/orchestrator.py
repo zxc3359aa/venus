@@ -10,6 +10,7 @@ from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
+from venus.product_intelligence import build_product_intelligence_report
 from venus.product_research import build_product_research_card
 from venus.self_improvement import build_self_improvement_report
 from venus.trend_scan import build_trend_scan_report
@@ -30,6 +31,8 @@ class VenusOrchestrator:
         elif workflow == "product":
             products = list(payload["products"])
             result = build_product_research_card(products[0])
+        elif workflow == "product_intel":
+            result = build_product_intelligence_report(payload)
         elif workflow == "comments":
             result = analyze_comments(list(payload["comments"]), profile)
         elif workflow == "monitoring":

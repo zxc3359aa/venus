@@ -28,6 +28,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "products.json"
     )
     assert (
+        config.default_input_paths["product-intel"]
+        == tmp_workspace / "data" / "samples" / "product_intelligence.json"
+    )
+    assert (
         config.default_input_paths["comments"]
         == tmp_workspace / "data" / "samples" / "comments.json"
     )
@@ -144,6 +148,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus improvement" in result["card"]["summary"]
     assert "/venus production" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
+    assert "/venus product-intel" in result["card"]["summary"]
 
 
 def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
@@ -217,6 +222,59 @@ def _write_sample_inputs(root: Path) -> None:
                     "controversies": ["达人质疑夸大修复"],
                 }
             ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (samples / "product_intelligence.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_product_dossier",
+                "retrieved_at": "2026-06-14T16:00:00+08:00",
+                "live_connector_requested": True,
+                "product": {
+                    "brand": "示例品牌",
+                    "name": "屏障修护精华",
+                    "filing_id": "国妆网备字20260001",
+                    "manufacturer": "示例化妆品有限公司",
+                    "claims": ["舒缓", "100%修复屏障"],
+                    "brand_backing": [
+                        {"type": "dermatologist_quote", "source": "品牌手册", "status": "unverified"},
+                        {"type": "lab_collaboration", "source": "品牌发布会", "status": "verified"},
+                    ],
+                    "ingredients": [
+                        {
+                            "name": "烟酰胺",
+                            "role": "brightening",
+                            "risk": "medium",
+                            "supplier": "原料商A",
+                            "coa": "coa-niacinamide-001",
+                            "test_report": "test-niacinamide-001",
+                        },
+                        {
+                            "name": "视黄醇",
+                            "role": "renewal",
+                            "risk": "high",
+                            "supplier": "原料商B",
+                            "coa": "",
+                            "test_report": "",
+                        },
+                    ],
+                    "supplier_documents": [
+                        {"supplier": "原料商A", "document": "coa-niacinamide-001", "status": "provided"},
+                        {"supplier": "原料商B", "document": "", "status": "missing"},
+                    ],
+                    "test_reports": [
+                        {"report_id": "test-niacinamide-001", "scope": "烟酰胺纯度", "status": "provided"},
+                        {"report_id": "", "scope": "视黄醇稳定性", "status": "missing"},
+                    ],
+                    "controversies": [
+                        {"source": "douyin_comment", "issue": "用户反馈刺痛", "severity": "medium"},
+                        {"source": "creator_video", "issue": "达人质疑夸大修复", "severity": "high"},
+                    ],
+                    "evidence": [{"id": "nmpa-001", "type": "filing", "title": "备案查询"}],
+                },
+            },
             ensure_ascii=False,
         ),
         encoding="utf-8",
@@ -551,6 +609,29 @@ def test_run_feishu_entry_product_routes_to_orchestrator(tmp_workspace):
     assert result["card"]["type"] == "report"
     assert result["card"]["result"]["workflow"] == "product"
     assert "100%修复屏障" in result["card"]["result"]["result"]["forbidden_claims"]
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_product_intel_routes_to_precise_research_dossier(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-product-intel",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:36:30+08:00",
+            "text": "/venus product-intel",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "product-intel"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "product_intel"
+    assert result["card"]["result"]["result"]["summary"]["retrieval_task_count"] == 5
+    assert result["card"]["result"]["result"]["claim_risk"]["risk_level"] == "high"
+    assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 
 

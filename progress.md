@@ -145,3 +145,13 @@
 - Added Feishu dry-run command: `/venus trend-scan`.
 - Integrated trend-scan summaries into Agent Run when `trend_scan` data is present.
 - Preserved safety boundaries: no live Douyin search, scrape, login, API call, browser automation, platform read, or external action is executed, and `external_actions: []` remains enforced.
+
+## Product Intelligence Progress
+
+- Added the product intelligence design spec and implementation plan.
+- Added a local dry-run `product_intel` workflow for brand backing, filing status, ingredient matrix, supplier documents, test reports, historical controversies, claim risk, and retrieval tasks.
+- Added approval records for live product-data connector enablement and product claim review.
+- Added CLI command: `venus product-intel data/samples/product_intelligence.json`.
+- Added Feishu dry-run command: `/venus product-intel`.
+- Integrated product-intel summaries into Agent Run when `product_intelligence` data is present.
+- Preserved safety boundaries: no filing query, supplier request, brand contact, crawler, social search, customer message, or publishing action is executed, and `external_actions: []` remains enforced.

@@ -33,6 +33,12 @@ Generate a product research card:
 venus product data/samples/products.json
 ```
 
+Build a deep product intelligence dossier:
+
+```bash
+venus product-intel data/samples/product_intelligence.json
+```
+
 Analyze comments and draft approval-gated replies:
 
 ```bash
@@ -109,6 +115,7 @@ This command parses a Feishu-like `/venus` message and returns a card-ready JSON
 
 The Feishu dry-run entry also supports `/venus monitoring` when the local `data/samples/competitors.json` sample is present.
 It also supports `/venus airtable` to preview the Airtable-ready operations package without writing to Airtable.
+It also supports `/venus product-intel` to preview brand backing, filing checks, ingredient risk, supplier documents, test reports, controversies, and product retrieval tasks without live product-data reads.
 It also supports `/venus douyin` to preview comment and live-message reply queues without touching Douyin.
 It also supports `/venus wechat` to preview Mini Program answer and Enterprise WeChat handoff queues without touching WeChat.
 It also supports `/venus commercial` to preview Qianchuan budget guardrails and Xingtu brief reviews without touching ad accounts or brand tasks.

@@ -290,6 +290,29 @@ def test_cli_trend_scan_outputs_douyin_beauty_signal_report():
     assert output["result"]["watch_plan"]["refresh_interval_minutes"] == 15
 
 
+def test_cli_product_intel_outputs_precise_research_dossier():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "product-intel",
+            "data/samples/product_intelligence.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "product_intel"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["ingredient_count"] == 2
+    assert output["result"]["summary"]["missing_supplier_document_count"] == 1
+    assert output["result"]["summary"]["retrieval_task_count"] == 5
+    assert output["result"]["claim_risk"]["risk_level"] == "high"
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [

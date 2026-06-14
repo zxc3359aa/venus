@@ -15,6 +15,7 @@ COMMAND_APPROVAL_LEVELS = {
     "status": 0,
     "hotspot": 1,
     "product": 1,
+    "product-intel": 1,
     "comments": 1,
     "monitoring": 1,
     "airtable": 1,
@@ -51,6 +52,7 @@ class FeishuConfig:
             {
                 "hotspot": root / "data" / "samples" / "hotspots.json",
                 "product": root / "data" / "samples" / "products.json",
+                "product-intel": root / "data" / "samples" / "product_intelligence.json",
                 "comments": root / "data" / "samples" / "comments.json",
                 "monitoring": root / "data" / "samples" / "competitors.json",
                 "airtable": root / "data" / "samples" / "airtable_export.json",
@@ -168,7 +170,7 @@ def run_feishu_entry(
     if command.name == "help":
         card = _status_card(
             "Venus command help",
-            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus comments, /venus monitoring, /venus airtable, /venus douyin, /venus wechat, /venus commercial, /venus improvement, /venus production, /venus trend-scan, /venus agent-run, /venus approve <id> <decision>",
+            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus product-intel, /venus comments, /venus monitoring, /venus airtable, /venus douyin, /venus wechat, /venus commercial, /venus improvement, /venus production, /venus trend-scan, /venus agent-run, /venus approve <id> <decision>",
             active_config,
         )
     elif command.name == "status":
@@ -182,7 +184,7 @@ def run_feishu_entry(
             "Unsupported Venus command",
             "Unsupported Venus command. Send /venus help to see available commands.",
         )
-    elif command.name in {"hotspot", "product", "comments", "monitoring", "airtable", "douyin", "wechat", "commercial", "improvement", "production", "trend-scan", "agent-run"}:
+    elif command.name in {"hotspot", "product", "product-intel", "comments", "monitoring", "airtable", "douyin", "wechat", "commercial", "improvement", "production", "trend-scan", "agent-run"}:
         card = _workflow_report_card(command, active_config)
     elif command.name == "approve":
         approval = create_approval_record(
@@ -271,6 +273,7 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
     payload_key = {
         "hotspot": "hotspots",
         "product": "products",
+        "product-intel": "product_intel",
         "comments": "comments",
         "monitoring": "competitors",
         "airtable": "airtable",
@@ -282,7 +285,7 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
         "trend-scan": "trend_scan",
         "agent-run": "agent_run",
     }[command.name]
-    payload = records if command.name in {"monitoring", "airtable", "douyin", "wechat", "commercial", "improvement", "production", "trend-scan", "agent-run"} else {payload_key: records}
+    payload = records if command.name in {"monitoring", "airtable", "douyin", "wechat", "commercial", "improvement", "production", "trend-scan", "product-intel", "agent-run"} else {payload_key: records}
     workflow = _workflow_name_for_command(command.name)
     result = VenusOrchestrator().run(workflow, payload)
     result = _normalize_report_result(command.name, result)
@@ -300,6 +303,8 @@ def _workflow_name_for_command(command_name: str) -> str:
         return "agent_run"
     if command_name == "trend-scan":
         return "trend_scan"
+    if command_name == "product-intel":
+        return "product_intel"
     return command_name
 
 
@@ -348,6 +353,8 @@ def _report_summary(command_name: str, result: dict[str, Any]) -> str:
         return f"Production scenes: {data['summary']['scene_count']}"
     if command_name == "trend-scan":
         return f"Trend signals: {data['summary']['signal_count']}"
+    if command_name == "product-intel":
+        return f"Product intel retrieval tasks: {data['summary']['retrieval_task_count']}"
     if command_name == "agent-run":
         return f"Agent run approval records: {len(data['approval_records'])}"
     return "Venus report generated."
