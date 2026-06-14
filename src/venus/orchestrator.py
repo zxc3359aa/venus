@@ -8,6 +8,7 @@ from venus.approval_archive import build_approval_archive
 from venus.approval_inbox import build_approval_inbox
 from venus.approval_ledger import build_approval_ledger
 from venus.airtable_export import build_airtable_sync_package
+from venus.airtable_sync import build_airtable_sync_plan
 from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
 from venus.content_eval import build_content_eval_report
@@ -52,6 +53,8 @@ class VenusOrchestrator:
             result = build_monitoring_report(payload)
         elif workflow == "airtable":
             result = build_airtable_sync_package(payload)
+        elif workflow == "airtable_sync_plan":
+            result = build_airtable_sync_plan(payload)
         elif workflow == "approvals":
             result = build_approval_inbox(payload)
         elif workflow == "approval_ledger":

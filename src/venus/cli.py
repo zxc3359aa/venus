@@ -21,6 +21,7 @@ def main(argv: list[str] | None = None) -> int:
             "comments",
             "monitoring",
             "airtable",
+            "airtable-sync",
             "approvals",
             "approval-ledger",
             "approval-archive",
@@ -76,6 +77,10 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
         return records
     if workflow == "airtable":
         return records
+    if workflow == "airtable-sync":
+        payload = dict(records)
+        payload.setdefault("workspace_root", str(Path.cwd()))
+        return payload
     if workflow == "approvals":
         return records
     if workflow == "approval-ledger":
@@ -130,6 +135,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
 def _orchestrator_workflow(workflow: str) -> str:
     if workflow == "agent-run":
         return "agent_run"
+    if workflow == "airtable-sync":
+        return "airtable_sync_plan"
     if workflow == "approval-ledger":
         return "approval_ledger"
     if workflow == "approval-archive":

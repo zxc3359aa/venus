@@ -44,6 +44,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "airtable_export.json"
     )
     assert (
+        config.default_input_paths["airtable-sync"]
+        == tmp_workspace / "data" / "samples" / "airtable_sync_plan.json"
+    )
+    assert (
         config.default_input_paths["agent-run"]
         == tmp_workspace / "data" / "samples" / "agent_run.json"
     )
@@ -193,6 +197,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus hotspot" in result["card"]["summary"]
     assert "/venus monitoring" in result["card"]["summary"]
     assert "/venus airtable" in result["card"]["summary"]
+    assert "/venus airtable-sync" in result["card"]["summary"]
     assert "/venus agent-run" in result["card"]["summary"]
     assert "/venus douyin" in result["card"]["summary"]
     assert "/venus ecommerce" in result["card"]["summary"]
@@ -397,6 +402,45 @@ def _write_sample_inputs(root: Path) -> None:
                 "comments": [],
                 "competitors": {"competitors": []},
                 "approvals": [],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (samples / "airtable_sync_plan.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_airtable_sync_plan",
+                "workspace_root": str(root),
+                "planned_at": "2026-06-15T11:20:00+08:00",
+                "sync_requested": False,
+                "approved_sync_review": False,
+                "airtable_package": {
+                    "base": {"name": "Venus Ops", "namespace": "venus_airtable"},
+                    "tables": [
+                        {
+                            "name": "Hotspots",
+                            "fields": [
+                                {"name": "Name", "type": "singleLineText"},
+                                {"name": "Topic", "type": "singleLineText"},
+                            ],
+                            "records": [
+                                {"fields": {"Name": "早C晚A翻车", "Topic": "早C晚A翻车"}}
+                            ],
+                        }
+                    ],
+                },
+                "connector_reviews": [
+                    {
+                        "connector_id": "airtable-ops",
+                        "surface": "airtable",
+                        "status": "ready",
+                        "permissions_granted": ["base_read", "record_write"],
+                        "audit_ready": True,
+                        "rollback_ready": True,
+                        "external_action_enabled": False,
+                    }
+                ],
             },
             ensure_ascii=False,
         ),
@@ -1536,6 +1580,33 @@ def test_run_feishu_entry_airtable_routes_to_orchestrator(tmp_workspace):
     assert result["card"]["result"]["workflow"] == "airtable"
     assert result["card"]["result"]["result"]["base"]["name"] == "Venus Ops"
     assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_airtable_sync_routes_to_local_sync_plan(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-airtable-sync",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-15T11:21:00+08:00",
+            "text": "/venus airtable-sync",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "airtable-sync"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "airtable_sync_plan"
+    assert result["card"]["result"]["result"]["summary"]["planned_count"] == 0
+    assert (
+        result["card"]["result"]["result"]["sync_state"]
+        == "blocked_sync_not_requested"
+    )
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+    assert not (tmp_workspace / "data" / "venus" / "airtable_sync_plans.json").exists()
 
 
 def test_run_feishu_entry_douyin_routes_to_engagement_report(tmp_workspace):

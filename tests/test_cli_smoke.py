@@ -152,6 +152,65 @@ def test_cli_airtable_outputs_json():
     assert output["result"]["base"]["name"] == "Venus Ops"
 
 
+def test_cli_airtable_sync_persists_to_tmp_workspace(tmp_path):
+    payload = {
+        "source": "manual_airtable_sync_plan",
+        "workspace_root": str(tmp_path),
+        "planned_at": "2026-06-15T11:20:00+08:00",
+        "sync_requested": True,
+        "approved_sync_review": True,
+        "airtable_package": {
+            "base": {"name": "Venus Ops", "namespace": "venus_airtable"},
+            "tables": [
+                {
+                    "name": "Hotspots",
+                    "fields": [
+                        {"name": "Name", "type": "singleLineText"},
+                        {"name": "Topic", "type": "singleLineText"},
+                    ],
+                    "records": [
+                        {"fields": {"Name": "早C晚A翻车", "Topic": "早C晚A翻车"}}
+                    ],
+                }
+            ],
+        },
+        "connector_reviews": [
+            {
+                "connector_id": "airtable-ops",
+                "surface": "airtable",
+                "status": "ready",
+                "permissions_granted": ["base_read", "record_write"],
+                "audit_ready": True,
+                "rollback_ready": True,
+                "external_action_enabled": False,
+            }
+        ],
+    }
+    input_file = tmp_path / "airtable_sync_plan.json"
+    input_file.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "airtable-sync",
+            str(input_file),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "airtable_sync_plan"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["planned_count"] == 1
+    stored_file = tmp_path / "data" / "venus" / "airtable_sync_plans.json"
+    assert stored_file.exists()
+    assert "Hotspots" in stored_file.read_text(encoding="utf-8")
+
+
 def test_cli_douyin_outputs_approval_gated_engagement_report():
     completed = subprocess.run(
         [

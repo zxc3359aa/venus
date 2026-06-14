@@ -63,6 +63,12 @@ Build a local Airtable-ready operations export:
 venus airtable data/samples/airtable_export.json
 ```
 
+Preview the local Airtable sync plan gate:
+
+```bash
+venus airtable-sync data/samples/airtable_sync_plan.json
+```
+
 Build a local approval inbox:
 
 ```bash
@@ -193,6 +199,7 @@ This command parses a Feishu-like `/venus` message and returns a card-ready JSON
 
 The Feishu dry-run entry also supports `/venus monitoring` when the local `data/samples/competitors.json` sample is present.
 It also supports `/venus airtable` to preview the Airtable-ready operations package without writing to Airtable.
+It also supports `/venus airtable-sync` to preview approved local Airtable sync plans without writing any Airtable records.
 It also supports `/venus approvals` to preview the pending approval inbox and recorded-only decision intents without applying approvals.
 It also supports `/venus approval-ledger` to preview deduplicated approval decision ledger entries, write plans, and rollback plans without writing storage.
 It also supports `/venus approval-archive` to preview the local approval archive gate; approved low-risk entries can be persisted only through the isolated Venus JSON store, with no platform actions.

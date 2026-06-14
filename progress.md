@@ -67,6 +67,15 @@
 - Routed Airtable export through the Venus orchestrator, CLI, and Feishu dry-run `/venus airtable` command.
 - Kept the workflow dry-run only: no Airtable base, table, record, automation, or interface is created, and `external_actions: []` is preserved.
 
+## Airtable Sync Plan Progress
+
+- Added the Airtable sync plan design spec and implementation plan.
+- Added a local `airtable_sync_plan` workflow for validating Airtable-ready packages, connector readiness, schema alignment, approvals, and rollback requirements before any live Airtable write.
+- Added idempotent local sync-plan persistence, connector readiness blocking, schema mismatch blocking, external-table blocking, rollback plans, and storage-path reporting.
+- Added CLI command: `venus airtable-sync data/samples/airtable_sync_plan.json`.
+- Added Feishu dry-run command: `/venus airtable-sync`.
+- Preserved safety boundaries: no Airtable base, table, field, view, automation, interface, record, Feishu message, Douyin reply, publishing action, ad spend, WeChat contact, memory state, backup state, or external platform state is changed.
+
 ## Dashboard Export Progress
 
 - Added the dashboard export design spec and implementation plan.
