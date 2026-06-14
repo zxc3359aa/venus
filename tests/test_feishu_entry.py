@@ -88,6 +88,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "content_eval.json"
     )
     assert (
+        config.default_input_paths["performance"]
+        == tmp_workspace / "data" / "samples" / "performance.json"
+    )
+    assert (
         config.default_input_paths["trend-scan"]
         == tmp_workspace / "data" / "samples" / "trend_scan.json"
     )
@@ -172,6 +176,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus connectors" in result["card"]["summary"]
     assert "/venus production" in result["card"]["summary"]
     assert "/venus content-eval" in result["card"]["summary"]
+    assert "/venus performance" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
 
@@ -877,6 +882,82 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "performance.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_douyin_video_metrics",
+                "analyzed_at": "2026-06-14T21:00:00+08:00",
+                "live_metrics_requested": True,
+                "targets": {
+                    "completion_rate": 0.65,
+                    "comment_rate": 0.03,
+                    "follow_rate": 0.008,
+                    "negative_feedback_rate": 0.015,
+                },
+                "videos": [
+                    {
+                        "video_id": "video-001",
+                        "title": "早C晚A翻车自查",
+                        "topic": "早C晚A翻车",
+                        "published_at": "2026-06-14T10:00:00+08:00",
+                        "views": 120000,
+                        "completion_rate": 0.72,
+                        "comment_rate": 0.042,
+                        "follow_rate": 0.011,
+                        "share_rate": 0.018,
+                        "negative_feedback_rate": 0.006,
+                        "content_eval_score": 87,
+                        "content_eval_status": "blocked_by_claim_risk",
+                        "hook_type": "controversy_self_check",
+                        "cta_type": "skin_product_frequency_comment",
+                        "persona_fit": 0.92,
+                        "claim_risk": "medium",
+                        "evidence": ["video-metric-001"],
+                    },
+                    {
+                        "video_id": "video-002",
+                        "title": "温和洁面怎么选",
+                        "topic": "温和洁面",
+                        "published_at": "2026-06-13T10:00:00+08:00",
+                        "views": 68000,
+                        "completion_rate": 0.54,
+                        "comment_rate": 0.017,
+                        "follow_rate": 0.004,
+                        "share_rate": 0.006,
+                        "negative_feedback_rate": 0.021,
+                        "content_eval_score": 76,
+                        "content_eval_status": "needs_revision",
+                        "hook_type": "generic_tips",
+                        "cta_type": "generic",
+                        "persona_fit": 0.71,
+                        "claim_risk": "low",
+                        "evidence": ["video-metric-002"],
+                    },
+                    {
+                        "video_id": "video-003",
+                        "title": "屏障修护精华备案拆解",
+                        "topic": "屏障修护精华",
+                        "published_at": "2026-06-12T10:00:00+08:00",
+                        "views": 92000,
+                        "completion_rate": 0.68,
+                        "comment_rate": 0.036,
+                        "follow_rate": 0.009,
+                        "share_rate": 0.014,
+                        "negative_feedback_rate": 0.011,
+                        "content_eval_score": 83,
+                        "content_eval_status": "ready_for_manual_publish_review",
+                        "hook_type": "evidence_breakdown",
+                        "cta_type": "product_name_comment",
+                        "persona_fit": 0.88,
+                        "claim_risk": "low",
+                        "evidence": ["video-metric-003"],
+                    },
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "trend_scan.json").write_text(
         json.dumps(
             {
@@ -1272,6 +1353,29 @@ def test_run_feishu_entry_content_eval_routes_to_growth_and_safety_gate(tmp_work
     assert result["card"]["result"]["workflow"] == "content_eval"
     assert result["card"]["result"]["result"]["summary"]["overall_score"] == 87
     assert result["card"]["result"]["result"]["publish_readiness"]["status"] == "blocked_by_claim_risk"
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_performance_routes_to_content_calibration_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-performance",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:40:30+08:00",
+            "text": "/venus performance",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "performance"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "performance"
+    assert result["card"]["result"]["result"]["summary"]["winner_count"] == 2
+    assert result["card"]["result"]["result"]["leaderboard"][0]["video_id"] == "video-001"
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

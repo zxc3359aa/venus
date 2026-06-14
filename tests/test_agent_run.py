@@ -179,6 +179,76 @@ def _agent_run_payload():
             "risk_notes": ["避免100%修复屏障这类绝对功效承诺"],
             "forbidden_claims": ["100%修复屏障"],
         },
+        "performance": {
+            "source": "manual_douyin_video_metrics",
+            "analyzed_at": "2026-06-14T21:00:00+08:00",
+            "live_metrics_requested": True,
+            "targets": {
+                "completion_rate": 0.65,
+                "comment_rate": 0.03,
+                "follow_rate": 0.008,
+                "negative_feedback_rate": 0.015,
+            },
+            "videos": [
+                {
+                    "video_id": "video-001",
+                    "title": "早C晚A翻车自查",
+                    "topic": "早C晚A翻车",
+                    "published_at": "2026-06-14T10:00:00+08:00",
+                    "views": 120000,
+                    "completion_rate": 0.72,
+                    "comment_rate": 0.042,
+                    "follow_rate": 0.011,
+                    "share_rate": 0.018,
+                    "negative_feedback_rate": 0.006,
+                    "content_eval_score": 87,
+                    "content_eval_status": "blocked_by_claim_risk",
+                    "hook_type": "controversy_self_check",
+                    "cta_type": "skin_product_frequency_comment",
+                    "persona_fit": 0.92,
+                    "claim_risk": "medium",
+                    "evidence": ["video-metric-001"],
+                },
+                {
+                    "video_id": "video-002",
+                    "title": "温和洁面怎么选",
+                    "topic": "温和洁面",
+                    "published_at": "2026-06-13T10:00:00+08:00",
+                    "views": 68000,
+                    "completion_rate": 0.54,
+                    "comment_rate": 0.017,
+                    "follow_rate": 0.004,
+                    "share_rate": 0.006,
+                    "negative_feedback_rate": 0.021,
+                    "content_eval_score": 76,
+                    "content_eval_status": "needs_revision",
+                    "hook_type": "generic_tips",
+                    "cta_type": "generic",
+                    "persona_fit": 0.71,
+                    "claim_risk": "low",
+                    "evidence": ["video-metric-002"],
+                },
+                {
+                    "video_id": "video-003",
+                    "title": "屏障修护精华备案拆解",
+                    "topic": "屏障修护精华",
+                    "published_at": "2026-06-12T10:00:00+08:00",
+                    "views": 92000,
+                    "completion_rate": 0.68,
+                    "comment_rate": 0.036,
+                    "follow_rate": 0.009,
+                    "share_rate": 0.014,
+                    "negative_feedback_rate": 0.011,
+                    "content_eval_score": 83,
+                    "content_eval_status": "ready_for_manual_publish_review",
+                    "hook_type": "evidence_breakdown",
+                    "cta_type": "product_name_comment",
+                    "persona_fit": 0.88,
+                    "claim_risk": "low",
+                    "evidence": ["video-metric-003"],
+                },
+            ],
+        },
         "douyin_engagement": {
             "source": "manual_douyin_export",
             "retrieved_at": "2026-06-14T10:00:00+08:00",
@@ -579,6 +649,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "comments",
         "production",
         "content_eval",
+        "performance",
         "douyin",
         "ecommerce",
         "wechat",
@@ -605,6 +676,10 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["workflow_summaries"]["content_eval"]["overall_score"] == 87
     assert plan["workflow_summaries"]["content_eval"]["publish_readiness_status"] == "blocked_by_claim_risk"
     assert plan["workflow_summaries"]["content_eval"]["high_priority_revision_count"] == 2
+    assert plan["workflow_summaries"]["performance"]["winner_count"] == 2
+    assert plan["workflow_summaries"]["performance"]["underperformer_count"] == 1
+    assert plan["workflow_summaries"]["performance"]["top_video"] == "早C晚A翻车自查"
+    assert plan["workflow_summaries"]["performance"]["calibration_rule_count"] == 3
     assert plan["workflow_summaries"]["douyin"]["approval_gated_reply_count"] == 2
     assert plan["workflow_summaries"]["ecommerce"]["product_count"] == 2
     assert plan["workflow_summaries"]["ecommerce"]["low_stock_count"] == 1

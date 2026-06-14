@@ -15,6 +15,7 @@ from venus.ecommerce import build_ecommerce_report
 from venus.memory import build_memory_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
+from venus.performance import build_performance_report
 from venus.product_intelligence import build_product_intelligence_report
 from venus.product_research import build_product_research_card
 from venus.scheduler import build_scheduler_plan
@@ -114,6 +115,7 @@ def build_agent_run_plan(
     comments = list(safe_payload.get("comments") or [])
     video_production = safe_payload.get("video_production")
     content_eval = safe_payload.get("content_eval")
+    performance = safe_payload.get("performance")
     douyin_engagement = safe_payload.get("douyin_engagement")
     ecommerce = safe_payload.get("ecommerce")
     wechat_private_domain = safe_payload.get("wechat_private_domain")
@@ -197,6 +199,20 @@ def build_agent_run_plan(
             "approval_record_count": result["summary"]["approval_record_count"],
         }
         for item in result["revision_queue"]:
+            evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
+
+    if isinstance(performance, dict):
+        result = build_performance_report(performance)
+        executed_workflows.append("performance")
+        workflow_summaries["performance"] = {
+            "video_count": result["summary"]["video_count"],
+            "winner_count": result["summary"]["winner_count"],
+            "underperformer_count": result["summary"]["underperformer_count"],
+            "top_video": result["leaderboard"][0]["title"] if result["leaderboard"] else "",
+            "calibration_rule_count": result["summary"]["calibration_rule_count"],
+            "approval_record_count": result["summary"]["approval_record_count"],
+        }
+        for item in result["video_reviews"]:
             evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
 
     if isinstance(douyin_engagement, dict):

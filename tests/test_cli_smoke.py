@@ -290,6 +290,28 @@ def test_cli_content_eval_outputs_growth_and_safety_gate():
     assert output["result"]["scorecard"]["comment_score"]["score"] >= 90
 
 
+def test_cli_performance_outputs_content_calibration_report():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "performance",
+            "data/samples/performance.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "performance"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["winner_count"] == 2
+    assert output["result"]["summary"]["underperformer_count"] == 1
+    assert output["result"]["leaderboard"][0]["video_id"] == "video-001"
+
+
 def test_cli_trend_scan_outputs_douyin_beauty_signal_report():
     completed = subprocess.run(
         [

@@ -29,6 +29,7 @@ COMMAND_APPROVAL_LEVELS = {
     "connectors": 1,
     "production": 1,
     "content-eval": 1,
+    "performance": 1,
     "trend-scan": 1,
     "agent-run": 1,
     "approve": 2,
@@ -71,6 +72,7 @@ class FeishuConfig:
                 "connectors": root / "data" / "samples" / "connectors.json",
                 "production": root / "data" / "samples" / "video_production.json",
                 "content-eval": root / "data" / "samples" / "content_eval.json",
+                "performance": root / "data" / "samples" / "performance.json",
                 "trend-scan": root / "data" / "samples" / "trend_scan.json",
                 "agent-run": root / "data" / "samples" / "agent_run.json",
             },
@@ -180,7 +182,7 @@ def run_feishu_entry(
     if command.name == "help":
         card = _status_card(
             "Venus command help",
-            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus product-intel, /venus comments, /venus monitoring, /venus airtable, /venus douyin, /venus ecommerce, /venus wechat, /venus commercial, /venus improvement, /venus memory, /venus scheduler, /venus connectors, /venus production, /venus content-eval, /venus trend-scan, /venus agent-run, /venus approve <id> <decision>",
+            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus product-intel, /venus comments, /venus monitoring, /venus airtable, /venus douyin, /venus ecommerce, /venus wechat, /venus commercial, /venus improvement, /venus memory, /venus scheduler, /venus connectors, /venus production, /venus content-eval, /venus performance, /venus trend-scan, /venus agent-run, /venus approve <id> <decision>",
             active_config,
         )
     elif command.name == "status":
@@ -194,7 +196,7 @@ def run_feishu_entry(
             "Unsupported Venus command",
             "Unsupported Venus command. Send /venus help to see available commands.",
         )
-    elif command.name in {"hotspot", "product", "product-intel", "comments", "monitoring", "airtable", "douyin", "ecommerce", "wechat", "commercial", "improvement", "memory", "scheduler", "connectors", "production", "content-eval", "trend-scan", "agent-run"}:
+    elif command.name in {"hotspot", "product", "product-intel", "comments", "monitoring", "airtable", "douyin", "ecommerce", "wechat", "commercial", "improvement", "memory", "scheduler", "connectors", "production", "content-eval", "performance", "trend-scan", "agent-run"}:
         card = _workflow_report_card(command, active_config)
     elif command.name == "approve":
         approval = create_approval_record(
@@ -297,10 +299,11 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
         "connectors": "connectors",
         "production": "production",
         "content-eval": "content_eval",
+        "performance": "performance",
         "trend-scan": "trend_scan",
         "agent-run": "agent_run",
     }[command.name]
-    payload = records if command.name in {"monitoring", "airtable", "douyin", "ecommerce", "wechat", "commercial", "improvement", "memory", "scheduler", "connectors", "production", "content-eval", "trend-scan", "product-intel", "agent-run"} else {payload_key: records}
+    payload = records if command.name in {"monitoring", "airtable", "douyin", "ecommerce", "wechat", "commercial", "improvement", "memory", "scheduler", "connectors", "production", "content-eval", "performance", "trend-scan", "product-intel", "agent-run"} else {payload_key: records}
     workflow = _workflow_name_for_command(command.name)
     result = VenusOrchestrator().run(workflow, payload)
     result = _normalize_report_result(command.name, result)
@@ -378,6 +381,8 @@ def _report_summary(command_name: str, result: dict[str, Any]) -> str:
         return f"Production scenes: {data['summary']['scene_count']}"
     if command_name == "content-eval":
         return f"Content eval score: {data['summary']['overall_score']} ({data['publish_readiness']['status']})"
+    if command_name == "performance":
+        return f"Performance winners: {data['summary']['winner_count']}/{data['summary']['video_count']}"
     if command_name == "trend-scan":
         return f"Trend signals: {data['summary']['signal_count']}"
     if command_name == "product-intel":

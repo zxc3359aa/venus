@@ -205,3 +205,13 @@
 - Added Feishu dry-run command: `/venus product-intel`.
 - Integrated product-intel summaries into Agent Run when `product_intelligence` data is present.
 - Preserved safety boundaries: no filing query, supplier request, brand contact, crawler, social search, customer message, or publishing action is executed, and `external_actions: []` remains enforced.
+
+## Performance Calibration Progress
+
+- Added the performance calibration design spec and implementation plan.
+- Added a local dry-run `performance` workflow for imported video metric review, winner/underperformer classification, growth scoring, KPI definitions, calibration rules, and next-content actions.
+- Added approval records for performance learning review and next-content review.
+- Added CLI command: `venus performance data/samples/performance.json`.
+- Added Feishu dry-run command: `/venus performance`.
+- Integrated performance summaries into Agent Run when `performance` data is present.
+- Preserved safety boundaries: no live Douyin metric read, Feishu send, memory write, video draft execution, publish, reply, paid traffic action, or external platform action is executed, and `external_actions: []` remains enforced.

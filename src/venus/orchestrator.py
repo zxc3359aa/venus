@@ -14,6 +14,7 @@ from venus.ecommerce import build_ecommerce_report
 from venus.memory import build_memory_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
+from venus.performance import build_performance_report
 from venus.product_intelligence import build_product_intelligence_report
 from venus.product_research import build_product_research_card
 from venus.scheduler import build_scheduler_plan
@@ -66,6 +67,8 @@ class VenusOrchestrator:
             result = build_video_production_package(payload)
         elif workflow == "content_eval":
             result = build_content_eval_report(payload)
+        elif workflow == "performance":
+            result = build_performance_report(payload)
         elif workflow == "trend_scan":
             result = build_trend_scan_report(payload)
         else:
