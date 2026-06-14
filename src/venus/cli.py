@@ -25,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
             "approval-ledger",
             "approval-archive",
             "action-outbox",
+            "delivery-drafts",
             "douyin",
             "ecommerce",
             "evals",
@@ -86,6 +87,10 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
         payload = dict(records)
         payload.setdefault("workspace_root", str(Path.cwd()))
         return payload
+    if workflow == "delivery-drafts":
+        payload = dict(records)
+        payload.setdefault("workspace_root", str(Path.cwd()))
+        return payload
     if workflow == "douyin":
         return records
     if workflow == "ecommerce":
@@ -126,6 +131,8 @@ def _orchestrator_workflow(workflow: str) -> str:
         return "approval_archive"
     if workflow == "action-outbox":
         return "action_outbox"
+    if workflow == "delivery-drafts":
+        return "delivery_drafts"
     if workflow == "trend-scan":
         return "trend_scan"
     if workflow == "product-intel":

@@ -112,6 +112,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "action_outbox.json"
     )
     assert (
+        config.default_input_paths["delivery-drafts"]
+        == tmp_workspace / "data" / "samples" / "delivery_drafts.json"
+    )
+    assert (
         config.default_input_paths["trend-scan"]
         == tmp_workspace / "data" / "samples" / "trend_scan.json"
     )
@@ -202,6 +206,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus approval-ledger" in result["card"]["summary"]
     assert "/venus approval-archive" in result["card"]["summary"]
     assert "/venus action-outbox" in result["card"]["summary"]
+    assert "/venus delivery-drafts" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
 
@@ -1292,6 +1297,36 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "delivery_drafts.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_delivery_drafts",
+                "workspace_root": str(root),
+                "drafted_at": "2026-06-15T09:10:00+08:00",
+                "delivery_requested": False,
+                "approved_delivery_review": False,
+                "outbox_items": [
+                    {
+                        "outbox_id": "outbox-feishu_mobile_report-feishu-report-001-decision-001",
+                        "action_id": "feishu-report-001",
+                        "action_type": "feishu_mobile_report",
+                        "surface": "feishu",
+                        "approval_level": 2,
+                        "decision_id": "decision-001",
+                        "matched_approval_id": "feishu_mobile_report-20260614-2000000800",
+                        "reviewer": "owner",
+                        "draft": "Prepare a private Feishu card summary.",
+                        "queued_at": "2026-06-14T23:40:00+08:00",
+                        "execution_state": "queued_local_outbox",
+                        "delivery_state": "local_manual_dispatch_required",
+                        "external_action_enabled": False,
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "trend_scan.json").write_text(
         json.dumps(
             {
@@ -1844,6 +1879,33 @@ def test_run_feishu_entry_action_outbox_routes_to_local_outbox_report(tmp_worksp
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
     assert not (tmp_workspace / "data" / "venus" / "action_outbox.json").exists()
+
+
+def test_run_feishu_entry_delivery_drafts_routes_to_local_delivery_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-delivery-drafts",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-15T09:11:00+08:00",
+            "text": "/venus delivery-drafts",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "delivery-drafts"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "delivery_drafts"
+    assert result["card"]["result"]["result"]["summary"]["drafted_count"] == 0
+    assert (
+        result["card"]["result"]["result"]["delivery_state"]
+        == "blocked_delivery_not_requested"
+    )
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+    assert not (tmp_workspace / "data" / "venus" / "delivery_drafts.json").exists()
 
 
 def test_run_feishu_entry_trend_scan_routes_to_douyin_signal_report(tmp_workspace):

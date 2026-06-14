@@ -484,6 +484,56 @@ def test_cli_action_outbox_persists_to_tmp_workspace(tmp_path):
     assert "feishu_mobile_report" in stored_file.read_text(encoding="utf-8")
 
 
+def test_cli_delivery_drafts_persists_to_tmp_workspace(tmp_path):
+    payload = {
+        "source": "manual_delivery_drafts",
+        "workspace_root": str(tmp_path),
+        "drafted_at": "2026-06-15T09:10:00+08:00",
+        "delivery_requested": True,
+        "approved_delivery_review": True,
+        "outbox_items": [
+            {
+                "outbox_id": "outbox-feishu_mobile_report-feishu-report-001-decision-001",
+                "action_id": "feishu-report-001",
+                "action_type": "feishu_mobile_report",
+                "surface": "feishu",
+                "approval_level": 2,
+                "decision_id": "decision-001",
+                "matched_approval_id": "feishu_mobile_report-20260614-2000000800",
+                "reviewer": "owner",
+                "draft": "Prepare a private Feishu card summary.",
+                "queued_at": "2026-06-14T23:40:00+08:00",
+                "execution_state": "queued_local_outbox",
+                "delivery_state": "local_manual_dispatch_required",
+                "external_action_enabled": False,
+            }
+        ],
+    }
+    input_file = tmp_path / "delivery_drafts.json"
+    input_file.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "delivery-drafts",
+            str(input_file),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "delivery_drafts"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["drafted_count"] == 1
+    stored_file = tmp_path / "data" / "venus" / "delivery_drafts.json"
+    assert stored_file.exists()
+    assert "feishu_card_draft" in stored_file.read_text(encoding="utf-8")
+
+
 def test_cli_trend_scan_outputs_douyin_beauty_signal_report():
     completed = subprocess.run(
         [

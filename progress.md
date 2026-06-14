@@ -261,3 +261,12 @@
 - Added CLI command: `venus action-outbox data/samples/action_outbox.json`.
 - Added Feishu dry-run command: `/venus action-outbox`.
 - Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, publishing action, ad spend, brand task, WeChat contact, memory state, backup state, or external platform state is changed.
+
+## Delivery Drafts Progress
+
+- Added the delivery drafts design spec and implementation plan.
+- Added a local `delivery_drafts` workflow for turning action outbox items into reviewable Feishu card drafts and Airtable record-package drafts.
+- Added idempotent local draft persistence, unsupported/high-risk item blocking, rollback plans, and storage-path reporting.
+- Added CLI command: `venus delivery-drafts data/samples/delivery_drafts.json`.
+- Added Feishu dry-run command: `/venus delivery-drafts`.
+- Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, publishing action, ad spend, brand task, WeChat contact, memory state, backup state, or external platform state is changed.

@@ -23,6 +23,7 @@ COMMAND_APPROVAL_LEVELS = {
     "approval-ledger": 1,
     "approval-archive": 1,
     "action-outbox": 1,
+    "delivery-drafts": 1,
     "douyin": 1,
     "ecommerce": 1,
     "evals": 1,
@@ -71,6 +72,7 @@ class FeishuConfig:
                 "approval-ledger": root / "data" / "samples" / "approval_ledger.json",
                 "approval-archive": root / "data" / "samples" / "approval_archive.json",
                 "action-outbox": root / "data" / "samples" / "action_outbox.json",
+                "delivery-drafts": root / "data" / "samples" / "delivery_drafts.json",
                 "douyin": root / "data" / "samples" / "douyin_engagement.json",
                 "ecommerce": root / "data" / "samples" / "ecommerce.json",
                 "evals": root / "data" / "samples" / "evals.json",
@@ -192,7 +194,7 @@ def run_feishu_entry(
     if command.name == "help":
         card = _status_card(
             "Venus command help",
-            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus product-intel, /venus comments, /venus monitoring, /venus airtable, /venus approvals, /venus approval-ledger, /venus approval-archive, /venus action-outbox, /venus douyin, /venus ecommerce, /venus evals, /venus wechat, /venus commercial, /venus improvement, /venus memory, /venus scheduler, /venus connectors, /venus production, /venus content-eval, /venus performance, /venus trend-scan, /venus agent-run, /venus approve <id> <decision>",
+            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus product-intel, /venus comments, /venus monitoring, /venus airtable, /venus approvals, /venus approval-ledger, /venus approval-archive, /venus action-outbox, /venus delivery-drafts, /venus douyin, /venus ecommerce, /venus evals, /venus wechat, /venus commercial, /venus improvement, /venus memory, /venus scheduler, /venus connectors, /venus production, /venus content-eval, /venus performance, /venus trend-scan, /venus agent-run, /venus approve <id> <decision>",
             active_config,
         )
     elif command.name == "status":
@@ -206,7 +208,7 @@ def run_feishu_entry(
             "Unsupported Venus command",
             "Unsupported Venus command. Send /venus help to see available commands.",
         )
-    elif command.name in {"hotspot", "product", "product-intel", "comments", "monitoring", "airtable", "approvals", "approval-ledger", "approval-archive", "action-outbox", "douyin", "ecommerce", "evals", "wechat", "commercial", "improvement", "memory", "scheduler", "connectors", "production", "content-eval", "performance", "trend-scan", "agent-run"}:
+    elif command.name in {"hotspot", "product", "product-intel", "comments", "monitoring", "airtable", "approvals", "approval-ledger", "approval-archive", "action-outbox", "delivery-drafts", "douyin", "ecommerce", "evals", "wechat", "commercial", "improvement", "memory", "scheduler", "connectors", "production", "content-eval", "performance", "trend-scan", "agent-run"}:
         card = _workflow_report_card(command, active_config)
     elif command.name == "approve":
         approval = create_approval_record(
@@ -303,6 +305,7 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
         "approval-ledger": "approval_ledger",
         "approval-archive": "approval_archive",
         "action-outbox": "action_outbox",
+        "delivery-drafts": "delivery_drafts",
         "douyin": "douyin",
         "ecommerce": "ecommerce",
         "evals": "evals",
@@ -318,7 +321,7 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
         "trend-scan": "trend_scan",
         "agent-run": "agent_run",
     }[command.name]
-    payload = records if command.name in {"monitoring", "airtable", "approvals", "approval-ledger", "approval-archive", "action-outbox", "douyin", "ecommerce", "evals", "wechat", "commercial", "improvement", "memory", "scheduler", "connectors", "production", "content-eval", "performance", "trend-scan", "product-intel", "agent-run"} else {payload_key: records}
+    payload = records if command.name in {"monitoring", "airtable", "approvals", "approval-ledger", "approval-archive", "action-outbox", "delivery-drafts", "douyin", "ecommerce", "evals", "wechat", "commercial", "improvement", "memory", "scheduler", "connectors", "production", "content-eval", "performance", "trend-scan", "product-intel", "agent-run"} else {payload_key: records}
     workflow = _workflow_name_for_command(command.name)
     result = VenusOrchestrator().run(workflow, payload)
     result = _normalize_report_result(command.name, result)
@@ -340,6 +343,8 @@ def _workflow_name_for_command(command_name: str) -> str:
         return "approval_archive"
     if command_name == "action-outbox":
         return "action_outbox"
+    if command_name == "delivery-drafts":
+        return "delivery_drafts"
     if command_name == "trend-scan":
         return "trend_scan"
     if command_name == "product-intel":
@@ -390,6 +395,8 @@ def _report_summary(command_name: str, result: dict[str, Any]) -> str:
         return f"Approval archive stored: {data['summary']['archived_count']}"
     if command_name == "action-outbox":
         return f"Action outbox queued: {data['summary']['queued_count']}"
+    if command_name == "delivery-drafts":
+        return f"Delivery drafts: {data['summary']['drafted_count']}"
     if command_name == "douyin":
         return f"Douyin approval-gated replies: {data['summary']['approval_gated_reply_count']}"
     if command_name == "ecommerce":
