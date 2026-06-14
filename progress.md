@@ -251,3 +251,13 @@
 - Added CLI command: `venus approval-archive data/samples/approval_archive.json`.
 - Added Feishu dry-run command: `/venus approval-archive`.
 - Preserved safety boundaries: no source approval record, Feishu message, Douyin reply, publishing action, ad spend, brand task, WeChat contact, memory state, backup state, or external platform state is changed.
+
+## Action Outbox Progress
+
+- Added the action outbox design spec and implementation plan.
+- Added a local `action_outbox` workflow for converting archived approvals into idempotent local execution queue records.
+- Added queueing for approved low-risk local actions and explicit blocking for high-risk or external actions.
+- Added rollback plans, duplicate detection, missing-decision reporting, and local storage path reporting.
+- Added CLI command: `venus action-outbox data/samples/action_outbox.json`.
+- Added Feishu dry-run command: `/venus action-outbox`.
+- Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, publishing action, ad spend, brand task, WeChat contact, memory state, backup state, or external platform state is changed.

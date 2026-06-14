@@ -1,0 +1,29 @@
+{
+  "source": "manual_action_outbox",
+  "workspace_root": ".",
+  "queued_at": "2026-06-14T23:40:00+08:00",
+  "execution_requested": false,
+  "approved_execution_review": false,
+  "action_plan": [
+    {
+      "action_id": "feishu-report-001",
+      "action_type": "feishu_mobile_report",
+      "surface": "feishu",
+      "approval_level": 2,
+      "draft": "Prepare a private Feishu card summary.",
+      "external_action_enabled": false
+    }
+  ],
+  "archived_decisions": [
+    {
+      "decision_id": "feishu_mobile_report-approve-owner-feishu_mobile_report-20260614-2000000800",
+      "action_type": "feishu_mobile_report",
+      "decision": "approve",
+      "reviewer": "owner",
+      "approval_level": 2,
+      "matched_approval_id": "feishu_mobile_report-20260614-2000000800",
+      "archive_state": "archived",
+      "record_state": "ready_for_local_ledger_review"
+    }
+  ]
+}

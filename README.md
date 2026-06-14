@@ -81,6 +81,12 @@ Preview the local approval decision archive gate:
 venus approval-archive data/samples/approval_archive.json
 ```
 
+Preview the local approval-driven action outbox gate:
+
+```bash
+venus action-outbox data/samples/action_outbox.json
+```
+
 Build a local Douyin comment and live-message engagement report:
 
 ```bash
@@ -178,6 +184,7 @@ It also supports `/venus airtable` to preview the Airtable-ready operations pack
 It also supports `/venus approvals` to preview the pending approval inbox and recorded-only decision intents without applying approvals.
 It also supports `/venus approval-ledger` to preview deduplicated approval decision ledger entries, write plans, and rollback plans without writing storage.
 It also supports `/venus approval-archive` to preview the local approval archive gate; approved low-risk entries can be persisted only through the isolated Venus JSON store, with no platform actions.
+It also supports `/venus action-outbox` to preview approval-driven local action queueing while keeping every platform delivery disabled.
 It also supports `/venus product-intel` to preview brand backing, filing checks, ingredient risk, supplier documents, test reports, controversies, and product retrieval tasks without live product-data reads.
 It also supports `/venus douyin` to preview comment and live-message reply queues without touching Douyin.
 It also supports `/venus ecommerce` to preview product catalog checks, inventory alerts, live product-card plans, promotions, and after-sales risk without touching shop, order, price, coupon, or inventory state.
