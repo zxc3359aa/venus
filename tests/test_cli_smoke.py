@@ -152,6 +152,32 @@ def test_cli_airtable_outputs_json():
     assert output["result"]["base"]["name"] == "Venus Ops"
 
 
+def test_cli_dashboard_writes_html_file(tmp_path):
+    output_file = tmp_path / "venus-dashboard.html"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "dashboard",
+            "data/samples/airtable_export.json",
+            str(output_file),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "dashboard"
+    assert output["external_actions"] == []
+    assert output["result"]["output_path"] == str(output_file)
+    assert output["result"]["summary"]["table_count"] == 6
+    assert output_file.exists()
+    assert "Venus Operations Dashboard" in output_file.read_text(encoding="utf-8")
+
+
 def test_cli_feishu_outputs_dry_run_card():
     completed = subprocess.run(
         [

@@ -51,6 +51,12 @@ Build a local Airtable-ready operations export:
 venus airtable data/samples/airtable_export.json
 ```
 
+Build a local static operations dashboard:
+
+```bash
+venus dashboard data/samples/airtable_export.json reports/venus-dashboard.html
+```
+
 Run the local Feishu dry-run entry:
 
 ```bash

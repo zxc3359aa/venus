@@ -38,7 +38,7 @@
 
 ## Next
 
-- Choose the next integration slice: dashboard artifact, real Airtable write connector, Douyin comment connector, richer OpenAI Agents SDK orchestration, or WeChat private-domain skeleton.
+- Choose the next integration slice: real Airtable write connector, Douyin comment connector, richer OpenAI Agents SDK orchestration, or WeChat private-domain skeleton.
 
 ## Feishu Entry Progress
 
@@ -66,3 +66,11 @@
 - Added tables for Hotspots, Products, Comments, Competitors, Monitoring Opportunities, and Approvals.
 - Routed Airtable export through the Venus orchestrator, CLI, and Feishu dry-run `/venus airtable` command.
 - Kept the workflow dry-run only: no Airtable base, table, record, automation, or interface is created, and `external_actions: []` is preserved.
+
+## Dashboard Export Progress
+
+- Added the dashboard export design spec and implementation plan.
+- Added a static HTML operations dashboard generator built from the local Airtable-ready data package.
+- Added CLI command: `venus dashboard data/samples/airtable_export.json reports/venus-dashboard.html`.
+- Dashboard includes KPI cards, signal bars, detail tables, source notes, and dry-run safety boundary.
+- Kept the dashboard portable and local: no external scripts, no external CSS, no live platform reads, and `external_actions: []`.
