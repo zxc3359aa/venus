@@ -1,0 +1,18 @@
+[
+  {
+    "topic": "早C晚A翻车",
+    "type": "controversy",
+    "freshness": 9,
+    "relevance": 10,
+    "controversy": 8,
+    "evidence": ["douyin-export-001"]
+  },
+  {
+    "topic": "夏季防晒补涂",
+    "type": "routine",
+    "freshness": 7,
+    "relevance": 8,
+    "controversy": 3,
+    "evidence": ["manual-note-002"]
+  }
+]
