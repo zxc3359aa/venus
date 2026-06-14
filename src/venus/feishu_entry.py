@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import json
 import shlex
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
+
+from venus.approvals import create_approval_record
+from venus.orchestrator import VenusOrchestrator
 
 
 COMMAND_APPROVAL_LEVELS = {
@@ -160,6 +164,28 @@ def run_feishu_entry(
             "Unsupported Venus command",
             "Unsupported Venus command. Send /venus help to see available commands.",
         )
+    elif command.name in {"hotspot", "product", "comments"}:
+        card = _workflow_report_card(command, active_config)
+    elif command.name == "approve":
+        approval = create_approval_record(
+            action_type="feishu_approval_intent",
+            approval_level=2,
+            draft=" ".join(command.args) or "approval intent from Feishu",
+            evidence_ids=[command.source_message_id],
+            reviewer=message.sender_id,
+            created_at=message.timestamp,
+        )
+        card = {
+            "type": "approval_request",
+            "title": "Approval intent recorded",
+            "summary": "Venus recorded this approval intent locally. No external action was executed.",
+            "approval_level": 2,
+            "risk_notes": [
+                "Dry-run mode is active.",
+                "Live Feishu sending and public platform actions remain disabled.",
+            ],
+        }
+        return _base_response(command, active_config, card, approval_records=[approval])
     else:
         card = _error_card(
             "Workflow unavailable",
@@ -219,6 +245,57 @@ def _redact_payload(payload: dict[str, Any]) -> dict[str, Any]:
         else:
             redacted[key] = value
     return redacted
+
+
+def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[str, Any]:
+    input_path = _resolve_input_path(command, config)
+    records = json.loads(input_path.read_text(encoding="utf-8"))
+    payload_key = {
+        "hotspot": "hotspots",
+        "product": "products",
+        "comments": "comments",
+    }[command.name]
+    result = VenusOrchestrator().run(command.name, {payload_key: records})
+    result = _normalize_report_result(command.name, result)
+    return {
+        "type": "report",
+        "title": f"Venus {command.name} report",
+        "summary": _report_summary(command.name, result),
+        "result": result,
+        "source_path": str(input_path),
+    }
+
+
+def _resolve_input_path(command: FeishuCommand, config: FeishuConfig) -> Path:
+    if command.args:
+        candidate = Path(command.args[0])
+        if not candidate.is_absolute():
+            candidate = config.workspace_root / candidate
+        return candidate
+    return config.default_input_paths[command.name]
+
+
+def _normalize_report_result(command_name: str, result: dict[str, Any]) -> dict[str, Any]:
+    if command_name != "comments":
+        return result
+    data = dict(result["result"])
+    summary = data.get("summary", {})
+    if "approval_gated" not in data and isinstance(summary, dict):
+        data["approval_gated"] = summary.get("approval_gated", 0)
+    normalized = dict(result)
+    normalized["result"] = data
+    return normalized
+
+
+def _report_summary(command_name: str, result: dict[str, Any]) -> str:
+    data = result["result"]
+    if command_name == "hotspot":
+        return f"Top topic: {data['top_topic']}"
+    if command_name == "product":
+        return f"Product risk level: {data['risk_level']}"
+    if command_name == "comments":
+        return f"Approval-gated replies: {data['approval_gated']}"
+    return "Venus report generated."
 
 
 def _extract_text(payload: dict[str, Any]) -> str:

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -135,4 +136,135 @@ def test_run_feishu_entry_unknown_command_returns_safe_error(tmp_workspace):
     assert result["command"]["name"] == "unknown"
     assert result["card"]["type"] == "error"
     assert "Unsupported Venus command" in result["card"]["summary"]
+    assert result["external_actions"] == []
+
+
+def _write_sample_inputs(root: Path) -> None:
+    samples = root / "data" / "samples"
+    samples.mkdir(parents=True, exist_ok=True)
+    (samples / "hotspots.json").write_text(
+        json.dumps(
+            [
+                {
+                    "topic": "早C晚A翻车",
+                    "type": "controversy",
+                    "freshness": 9,
+                    "relevance": 10,
+                    "controversy": 8,
+                    "evidence": ["douyin-export-001"],
+                }
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (samples / "products.json").write_text(
+        json.dumps(
+            [
+                {
+                    "brand": "Example Skin",
+                    "name": "Barrier Serum",
+                    "filing_id": "粤G妆网备字20260001",
+                    "category": "essence",
+                    "claims": ["舒缓", "100%修复屏障"],
+                    "ingredients": ["panthenol", "centella asiatica extract"],
+                    "evidence": ["nmpa-sample-001"],
+                    "controversies": ["达人质疑夸大修复"],
+                }
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (samples / "comments.json").write_text(
+        json.dumps(
+            [
+                {"user": "a", "text": "敏感肌用了会不会烂脸？", "likes": 5},
+                {"user": "b", "text": "是不是智商税", "likes": 7},
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_run_feishu_entry_hotspot_routes_to_orchestrator(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-hotspot",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:35:00+08:00",
+            "text": "/venus hotspot",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "hotspot"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "hotspot"
+    assert result["card"]["result"]["result"]["top_topic"] == "早C晚A翻车"
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_product_routes_to_orchestrator(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-product",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:36:00+08:00",
+            "text": "/venus product",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "product"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "product"
+    assert "100%修复屏障" in result["card"]["result"]["result"]["forbidden_claims"]
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_comments_keeps_reply_drafts_approval_gated(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-comments",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:37:00+08:00",
+            "text": "/venus comments",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "comments"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "comments"
+    assert result["card"]["result"]["result"]["approval_gated"] >= 1
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_approve_records_intent_without_external_action(tmp_workspace):
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-approve",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:38:00+08:00",
+            "text": "/venus approve reply-123 yes",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "approve"
+    assert result["card"]["type"] == "approval_request"
+    assert result["approval_records"][0]["action_type"] == "feishu_approval_intent"
+    assert result["approval_records"][0]["approval_level"] == 2
     assert result["external_actions"] == []
