@@ -136,6 +136,49 @@ def _agent_run_payload():
             "risk_notes": ["避免100%修复屏障这类绝对功效承诺"],
             "broll_assets": ["评论截图", "成分表特写", "备案截图"],
         },
+        "content_eval": {
+            "source": "manual_pre_publish_review",
+            "evaluated_at": "2026-06-14T20:00:00+08:00",
+            "topic": "早C晚A翻车自查",
+            "objective": "提升完播、评论和关注",
+            "live_publish_requested": True,
+            "persona_samples": ["姐妹们，先看屏障状态，证据和体验都要说清楚。"],
+            "script_package": {
+                "hook": "姐妹们，早C晚A翻车自查，先别急着跟风，3秒看懂你是不是高风险。",
+                "opening": "今天不制造焦虑，直接用早C晚A翻车自查做自查。",
+                "body_segments": [
+                    {"segment_id": "point-1", "spoken_line": "先判断屏障状态", "purpose": "risk_filter"},
+                    {
+                        "segment_id": "point-2",
+                        "spoken_line": "再看成分刺激叠加，证据比情绪重要。",
+                        "purpose": "evidence_check",
+                    },
+                    {
+                        "segment_id": "point-3",
+                        "spoken_line": "这个搭配能100%修复屏障。",
+                        "purpose": "comment_trigger",
+                    },
+                ],
+                "cta": "了解了吧",
+                "comment_prompt": "评论区留下肤质+产品名+使用频率，我按屏障、刺激叠加和证据帮你拆。",
+                "title_options": ["早C晚A翻车自查", "敏感肌先看这3点", "别再盲跟早C晚A"],
+            },
+            "shot_list": [
+                {"scene_id": "scene-1", "scene_type": "hook", "retention_goal": "first_three_seconds"},
+                {"scene_id": "scene-2", "scene_type": "problem_frame"},
+                {"scene_id": "scene-3", "scene_type": "evidence_check"},
+                {"scene_id": "scene-4", "scene_type": "decision_framework"},
+                {"scene_id": "scene-5", "scene_type": "comment_cta"},
+            ],
+            "publish_package": {
+                "caption": "早C晚A不是让你跟风，是先看肤质、耐受和证据。",
+                "hashtags": ["#早C晚A", "#护肤", "#屏障护理"],
+                "pinned_comment_draft": "评论区留下肤质+产品名+使用频率，我帮你拆风险。",
+            },
+            "evidence_ids": [],
+            "risk_notes": ["避免100%修复屏障这类绝对功效承诺"],
+            "forbidden_claims": ["100%修复屏障"],
+        },
         "douyin_engagement": {
             "source": "manual_douyin_export",
             "retrieved_at": "2026-06-14T10:00:00+08:00",
@@ -535,6 +578,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "product_intel",
         "comments",
         "production",
+        "content_eval",
         "douyin",
         "ecommerce",
         "wechat",
@@ -558,6 +602,9 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["workflow_summaries"]["production"]["scene_count"] == 5
     assert plan["workflow_summaries"]["production"]["subtitle_card_count"] == 5
     assert plan["workflow_summaries"]["production"]["approval_gated_action_count"] == 2
+    assert plan["workflow_summaries"]["content_eval"]["overall_score"] == 87
+    assert plan["workflow_summaries"]["content_eval"]["publish_readiness_status"] == "blocked_by_claim_risk"
+    assert plan["workflow_summaries"]["content_eval"]["high_priority_revision_count"] == 2
     assert plan["workflow_summaries"]["douyin"]["approval_gated_reply_count"] == 2
     assert plan["workflow_summaries"]["ecommerce"]["product_count"] == 2
     assert plan["workflow_summaries"]["ecommerce"]["low_stock_count"] == 1

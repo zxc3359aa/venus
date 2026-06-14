@@ -6,6 +6,7 @@ from venus.agent_run import build_agent_run_plan
 from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
+from venus.content_eval import build_content_eval_report
 from venus.connector_audit import build_connector_audit_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
@@ -63,6 +64,8 @@ class VenusOrchestrator:
             result = build_self_improvement_report(payload)
         elif workflow == "production":
             result = build_video_production_package(payload)
+        elif workflow == "content_eval":
+            result = build_content_eval_report(payload)
         elif workflow == "trend_scan":
             result = build_trend_scan_report(payload)
         else:

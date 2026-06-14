@@ -175,6 +175,16 @@
 - Integrated production summaries into Agent Run when `video_production` data is present.
 - Preserved safety boundaries: no media render, editor project modification, Douyin upload, publishing schedule, pinned comment, or external video action is executed, and `external_actions: []` remains enforced.
 
+## Content Eval Progress
+
+- Added the content evaluation design spec and implementation plan.
+- Added a local dry-run `content_eval` workflow for pre-publish retention, interaction, comment, follow, persona, evidence, and claim-safety scoring.
+- Added KPI definitions, publish-readiness status, prioritized revision tasks, and approval records for revision and publish review.
+- Added CLI command: `venus content-eval data/samples/content_eval.json`.
+- Added Feishu dry-run command: `/venus content-eval`.
+- Integrated content-eval summaries into Agent Run when `content_eval` data is present.
+- Preserved safety boundaries: no live Douyin metric read, media render, upload, publish, paid traffic action, or external platform action is executed, and `external_actions: []` remains enforced.
+
 ## Trend Scan Progress
 
 - Added the trend scan design spec and implementation plan.

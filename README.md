@@ -117,6 +117,12 @@ Build a local short-video production and editing package:
 venus production data/samples/video_production.json
 ```
 
+Build a local pre-publish content quality evaluation:
+
+```bash
+venus content-eval data/samples/content_eval.json
+```
+
 Build a local approval-gated Agent Run plan:
 
 ```bash
@@ -149,6 +155,7 @@ It also supports `/venus memory` to preview versioned memory merges, rollback pl
 It also supports `/venus scheduler` to preview a 24-hour run queue, blocked connector jobs, approval-gated jobs, and private operator digests without starting timers or platform actions.
 It also supports `/venus connectors` to preview connector permissions, audit logs, rollback gaps, and launch sequence without configuring live apps.
 It also supports `/venus production` to preview scripts, shot lists, editing timelines, subtitles, and publishing drafts without rendering or publishing video.
+It also supports `/venus content-eval` to preview retention, interaction, comment, follow, persona, evidence, and claim-safety gates without publishing video.
 It also supports `/venus trend-scan` to preview Douyin beauty/skincare hot topics, products, creators, comments, ingredients, tags, controversies, and refresh gaps without live platform reads.
 It also supports `/venus agent-run` to preview the next Venus operating cycle and pending approval records.
 

@@ -84,6 +84,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "video_production.json"
     )
     assert (
+        config.default_input_paths["content-eval"]
+        == tmp_workspace / "data" / "samples" / "content_eval.json"
+    )
+    assert (
         config.default_input_paths["trend-scan"]
         == tmp_workspace / "data" / "samples" / "trend_scan.json"
     )
@@ -167,6 +171,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus scheduler" in result["card"]["summary"]
     assert "/venus connectors" in result["card"]["summary"]
     assert "/venus production" in result["card"]["summary"]
+    assert "/venus content-eval" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
 
@@ -823,6 +828,55 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "content_eval.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_pre_publish_review",
+                "evaluated_at": "2026-06-14T20:00:00+08:00",
+                "topic": "早C晚A翻车自查",
+                "objective": "提升完播、评论和关注",
+                "live_publish_requested": True,
+                "persona_samples": ["姐妹们，先看屏障状态，证据和体验都要说清楚。"],
+                "script_package": {
+                    "hook": "姐妹们，早C晚A翻车自查，先别急着跟风，3秒看懂你是不是高风险。",
+                    "opening": "今天不制造焦虑，直接用早C晚A翻车自查做自查。",
+                    "body_segments": [
+                        {"segment_id": "point-1", "spoken_line": "先判断屏障状态", "purpose": "risk_filter"},
+                        {
+                            "segment_id": "point-2",
+                            "spoken_line": "再看成分刺激叠加，证据比情绪重要。",
+                            "purpose": "evidence_check",
+                        },
+                        {
+                            "segment_id": "point-3",
+                            "spoken_line": "这个搭配能100%修复屏障。",
+                            "purpose": "comment_trigger",
+                        },
+                    ],
+                    "cta": "了解了吧",
+                    "comment_prompt": "评论区留下肤质+产品名+使用频率，我按屏障、刺激叠加和证据帮你拆。",
+                    "title_options": ["早C晚A翻车自查", "敏感肌先看这3点", "别再盲跟早C晚A"],
+                },
+                "shot_list": [
+                    {"scene_id": "scene-1", "scene_type": "hook", "retention_goal": "first_three_seconds"},
+                    {"scene_id": "scene-2", "scene_type": "problem_frame"},
+                    {"scene_id": "scene-3", "scene_type": "evidence_check"},
+                    {"scene_id": "scene-4", "scene_type": "decision_framework"},
+                    {"scene_id": "scene-5", "scene_type": "comment_cta"},
+                ],
+                "publish_package": {
+                    "caption": "早C晚A不是让你跟风，是先看肤质、耐受和证据。",
+                    "hashtags": ["#早C晚A", "#护肤", "#屏障护理"],
+                    "pinned_comment_draft": "评论区留下肤质+产品名+使用频率，我帮你拆风险。",
+                },
+                "evidence_ids": [],
+                "risk_notes": ["避免100%修复屏障这类绝对功效承诺"],
+                "forbidden_claims": ["100%修复屏障"],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "trend_scan.json").write_text(
         json.dumps(
             {
@@ -1195,6 +1249,29 @@ def test_run_feishu_entry_production_routes_to_video_production_package(tmp_work
     assert result["card"]["result"]["workflow"] == "production"
     assert result["card"]["result"]["result"]["summary"]["scene_count"] == 5
     assert result["card"]["result"]["result"]["summary"]["approval_gated_action_count"] == 2
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_content_eval_routes_to_growth_and_safety_gate(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-content-eval",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:40:10+08:00",
+            "text": "/venus content-eval",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "content-eval"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "content_eval"
+    assert result["card"]["result"]["result"]["summary"]["overall_score"] == 87
+    assert result["card"]["result"]["result"]["publish_readiness"]["status"] == "blocked_by_claim_risk"
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

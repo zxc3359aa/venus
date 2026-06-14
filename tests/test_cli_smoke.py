@@ -267,6 +267,29 @@ def test_cli_production_outputs_video_production_package():
     assert output["result"]["edit_plan"]["timeline"][0]["cut_style"] == "jump_cut"
 
 
+def test_cli_content_eval_outputs_growth_and_safety_gate():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "content-eval",
+            "data/samples/content_eval.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "content_eval"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["overall_score"] == 87
+    assert output["result"]["summary"]["blocking_issue_count"] == 1
+    assert output["result"]["publish_readiness"]["status"] == "blocked_by_claim_risk"
+    assert output["result"]["scorecard"]["comment_score"]["score"] >= 90
+
+
 def test_cli_trend_scan_outputs_douyin_beauty_signal_report():
     completed = subprocess.run(
         [

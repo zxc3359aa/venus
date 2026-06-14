@@ -7,6 +7,7 @@ from venus.approvals import create_approval_record, requires_manual_approval
 from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
+from venus.content_eval import build_content_eval_report
 from venus.connector_audit import build_connector_audit_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
@@ -112,6 +113,7 @@ def build_agent_run_plan(
     product_intelligence = safe_payload.get("product_intelligence")
     comments = list(safe_payload.get("comments") or [])
     video_production = safe_payload.get("video_production")
+    content_eval = safe_payload.get("content_eval")
     douyin_engagement = safe_payload.get("douyin_engagement")
     ecommerce = safe_payload.get("ecommerce")
     wechat_private_domain = safe_payload.get("wechat_private_domain")
@@ -183,6 +185,19 @@ def build_agent_run_plan(
             "subtitle_card_count": result["summary"]["subtitle_card_count"],
             "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
         }
+
+    if isinstance(content_eval, dict):
+        result = build_content_eval_report(content_eval)
+        executed_workflows.append("content_eval")
+        workflow_summaries["content_eval"] = {
+            "overall_score": result["summary"]["overall_score"],
+            "publish_readiness_status": result["publish_readiness"]["status"],
+            "high_priority_revision_count": result["summary"]["high_priority_revision_count"],
+            "blocking_issue_count": result["summary"]["blocking_issue_count"],
+            "approval_record_count": result["summary"]["approval_record_count"],
+        }
+        for item in result["revision_queue"]:
+            evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
 
     if isinstance(douyin_engagement, dict):
         result = build_douyin_engagement_report(douyin_engagement)

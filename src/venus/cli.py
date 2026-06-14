@@ -30,6 +30,7 @@ def main(argv: list[str] | None = None) -> int:
             "commercial",
             "improvement",
             "production",
+            "content-eval",
             "trend-scan",
             "agent-run",
             "dashboard",
@@ -85,6 +86,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
         return records
     if workflow == "production":
         return records
+    if workflow == "content-eval":
+        return records
     if workflow == "trend-scan":
         return records
     if workflow == "agent-run":
@@ -99,6 +102,8 @@ def _orchestrator_workflow(workflow: str) -> str:
         return "trend_scan"
     if workflow == "product-intel":
         return "product_intel"
+    if workflow == "content-eval":
+        return "content_eval"
     return workflow
 
 
