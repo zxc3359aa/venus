@@ -85,6 +85,16 @@
 - Added Feishu dry-run command: `/venus agent-run`.
 - Preserved Venus/Xiaolongxia isolation, dry-run enforcement, and secret-like payload redaction.
 
+## Scheduler Progress
+
+- Added the scheduler design spec and implementation plan.
+- Added a local dry-run `scheduler` workflow for 24-hour run queues, due-job selection, connector/permission blocking, approval-gated jobs, blackout windows, and private operator digests.
+- Added approval records for live scheduler enablement and approval-gated due jobs.
+- Added CLI command: `venus scheduler data/samples/scheduler.json`.
+- Added Feishu dry-run command: `/venus scheduler`.
+- Integrated scheduler summaries into Agent Run when `scheduler` data is present.
+- Preserved safety boundaries: no timer, cron job, platform read, platform write, Feishu message, ad spend, reply, memory write, backup write, or external action is executed, and `external_actions: []` remains enforced.
+
 ## Douyin Engagement Progress
 
 - Added the Douyin engagement design spec and implementation plan.

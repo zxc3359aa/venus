@@ -24,6 +24,7 @@ def main(argv: list[str] | None = None) -> int:
             "douyin",
             "ecommerce",
             "memory",
+            "scheduler",
             "wechat",
             "commercial",
             "improvement",
@@ -70,6 +71,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
     if workflow == "ecommerce":
         return records
     if workflow == "memory":
+        return records
+    if workflow == "scheduler":
         return records
     if workflow == "wechat":
         return records

@@ -359,6 +359,29 @@ def test_cli_memory_outputs_versioned_memory_report():
     assert output["result"]["summary"]["blocked_sensitive_candidate_count"] == 1
 
 
+def test_cli_scheduler_outputs_24h_run_plan():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "scheduler",
+            "data/samples/scheduler.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "scheduler"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["due_job_count"] == 3
+    assert output["result"]["summary"]["blocked_job_count"] == 2
+    assert output["result"]["summary"]["approval_gated_job_count"] == 1
+    assert output["result"]["run_queue"][0]["workflow"] == "trend_scan"
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [

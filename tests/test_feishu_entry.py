@@ -72,6 +72,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "memory.json"
     )
     assert (
+        config.default_input_paths["scheduler"]
+        == tmp_workspace / "data" / "samples" / "scheduler.json"
+    )
+    assert (
         config.default_input_paths["production"]
         == tmp_workspace / "data" / "samples" / "video_production.json"
     )
@@ -156,6 +160,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus commercial" in result["card"]["summary"]
     assert "/venus improvement" in result["card"]["summary"]
     assert "/venus memory" in result["card"]["summary"]
+    assert "/venus scheduler" in result["card"]["summary"]
     assert "/venus production" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
@@ -548,6 +553,81 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "scheduler.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_scheduler_plan",
+                "generated_at": "2026-06-14T18:30:00+08:00",
+                "timezone": "Asia/Shanghai",
+                "live_scheduler_requested": True,
+                "jobs": [
+                    {
+                        "job_id": "job-trend",
+                        "workflow": "trend_scan",
+                        "cadence_minutes": 15,
+                        "last_run_at": "2026-06-14T18:00:00+08:00",
+                        "priority": "high",
+                        "connector_state": "ready",
+                        "approval_level": 1,
+                        "evidence": ["trend-schedule-001"],
+                    },
+                    {
+                        "job_id": "job-monitoring",
+                        "workflow": "monitoring",
+                        "cadence_minutes": 60,
+                        "last_run_at": "2026-06-14T17:00:00+08:00",
+                        "priority": "medium",
+                        "connector_state": "ready",
+                        "approval_level": 1,
+                        "evidence": ["monitoring-schedule-001"],
+                    },
+                    {
+                        "job_id": "job-douyin",
+                        "workflow": "douyin",
+                        "cadence_minutes": 10,
+                        "last_run_at": "2026-06-14T18:25:00+08:00",
+                        "priority": "high",
+                        "connector_state": "ready",
+                        "approval_level": 3,
+                        "evidence": ["douyin-schedule-001"],
+                    },
+                    {
+                        "job_id": "job-ecommerce",
+                        "workflow": "ecommerce",
+                        "cadence_minutes": 30,
+                        "last_run_at": "2026-06-14T17:40:00+08:00",
+                        "priority": "high",
+                        "connector_state": "missing_permission",
+                        "approval_level": 3,
+                        "evidence": ["shop-schedule-001"],
+                    },
+                    {
+                        "job_id": "job-backup",
+                        "workflow": "backup_verification",
+                        "cadence_minutes": 1440,
+                        "last_run_at": "2026-06-13T08:00:00+08:00",
+                        "priority": "high",
+                        "connector_state": "ready",
+                        "approval_level": 2,
+                        "evidence": ["backup-schedule-001"],
+                    },
+                    {
+                        "job_id": "job-memory",
+                        "workflow": "memory",
+                        "cadence_minutes": 1440,
+                        "last_run_at": "2026-06-14T08:00:00+08:00",
+                        "priority": "medium",
+                        "connector_state": "paused",
+                        "approval_level": 3,
+                        "evidence": ["memory-schedule-001"],
+                    },
+                ],
+                "operator_channels": ["feishu_private"],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "commercial_strategy.json").write_text(
         json.dumps(
             {
@@ -908,6 +988,29 @@ def test_run_feishu_entry_memory_routes_to_versioned_memory_report(tmp_workspace
     assert result["card"]["result"]["workflow"] == "memory"
     assert result["card"]["result"]["result"]["summary"]["proposed_version"] == "v4"
     assert result["card"]["result"]["result"]["summary"]["proposed_change_count"] == 1
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_scheduler_routes_to_24h_run_plan(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-scheduler",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:39:45+08:00",
+            "text": "/venus scheduler",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "scheduler"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "scheduler"
+    assert result["card"]["result"]["result"]["summary"]["due_job_count"] == 3
+    assert result["card"]["result"]["result"]["summary"]["blocked_job_count"] == 2
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

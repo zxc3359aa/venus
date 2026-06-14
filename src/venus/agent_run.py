@@ -15,6 +15,7 @@ from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_intelligence import build_product_intelligence_report
 from venus.product_research import build_product_research_card
+from venus.scheduler import build_scheduler_plan
 from venus.self_improvement import build_self_improvement_report
 from venus.trend_scan import build_trend_scan_report
 from venus.video_production import build_video_production_package
@@ -116,6 +117,7 @@ def build_agent_run_plan(
     commercial_strategy = safe_payload.get("commercial_strategy")
     self_improvement = safe_payload.get("self_improvement")
     memory = safe_payload.get("memory")
+    scheduler = safe_payload.get("scheduler")
     competitors = _competitor_payload(safe_payload.get("competitors"))
 
     if isinstance(trend_scan, dict):
@@ -242,6 +244,18 @@ def build_agent_run_plan(
         for item in result["candidate_reviews"]:
             if not item["privacy_flag"]:
                 evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
+
+    if isinstance(scheduler, dict):
+        result = build_scheduler_plan(scheduler)
+        executed_workflows.append("scheduler")
+        workflow_summaries["scheduler"] = {
+            "due_job_count": result["summary"]["due_job_count"],
+            "blocked_job_count": result["summary"]["blocked_job_count"],
+            "approval_gated_job_count": result["summary"]["approval_gated_job_count"],
+            "approval_record_count": result["summary"]["approval_record_count"],
+        }
+        for item in result["run_queue"]:
+            evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
 
     if competitors.get("competitors"):
         result = build_monitoring_report(competitors)

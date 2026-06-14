@@ -344,6 +344,74 @@ def _agent_run_payload():
                 "status": "missing_verification",
             },
         },
+        "scheduler": {
+            "source": "manual_scheduler_plan",
+            "generated_at": "2026-06-14T18:30:00+08:00",
+            "timezone": "Asia/Shanghai",
+            "live_scheduler_requested": True,
+            "jobs": [
+                {
+                    "job_id": "job-trend",
+                    "workflow": "trend_scan",
+                    "cadence_minutes": 15,
+                    "last_run_at": "2026-06-14T18:00:00+08:00",
+                    "priority": "high",
+                    "connector_state": "ready",
+                    "approval_level": 1,
+                    "evidence": ["trend-schedule-001"],
+                },
+                {
+                    "job_id": "job-monitoring",
+                    "workflow": "monitoring",
+                    "cadence_minutes": 60,
+                    "last_run_at": "2026-06-14T17:00:00+08:00",
+                    "priority": "medium",
+                    "connector_state": "ready",
+                    "approval_level": 1,
+                    "evidence": ["monitoring-schedule-001"],
+                },
+                {
+                    "job_id": "job-douyin",
+                    "workflow": "douyin",
+                    "cadence_minutes": 10,
+                    "last_run_at": "2026-06-14T18:25:00+08:00",
+                    "priority": "high",
+                    "connector_state": "ready",
+                    "approval_level": 3,
+                    "evidence": ["douyin-schedule-001"],
+                },
+                {
+                    "job_id": "job-ecommerce",
+                    "workflow": "ecommerce",
+                    "cadence_minutes": 30,
+                    "last_run_at": "2026-06-14T17:40:00+08:00",
+                    "priority": "high",
+                    "connector_state": "missing_permission",
+                    "approval_level": 3,
+                    "evidence": ["shop-schedule-001"],
+                },
+                {
+                    "job_id": "job-backup",
+                    "workflow": "backup_verification",
+                    "cadence_minutes": 1440,
+                    "last_run_at": "2026-06-13T08:00:00+08:00",
+                    "priority": "high",
+                    "connector_state": "ready",
+                    "approval_level": 2,
+                    "evidence": ["backup-schedule-001"],
+                },
+                {
+                    "job_id": "job-memory",
+                    "workflow": "memory",
+                    "cadence_minutes": 1440,
+                    "last_run_at": "2026-06-14T08:00:00+08:00",
+                    "priority": "medium",
+                    "connector_state": "paused",
+                    "approval_level": 3,
+                    "evidence": ["memory-schedule-001"],
+                },
+            ],
+        },
         "competitors": {
             "competitors": [
                 {
@@ -391,6 +459,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "commercial",
         "improvement",
         "memory",
+        "scheduler",
         "monitoring",
         "airtable",
     ]
@@ -418,6 +487,9 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["workflow_summaries"]["memory"]["proposed_version"] == "v4"
     assert plan["workflow_summaries"]["memory"]["proposed_change_count"] == 1
     assert plan["workflow_summaries"]["memory"]["blocked_sensitive_candidate_count"] == 1
+    assert plan["workflow_summaries"]["scheduler"]["due_job_count"] == 3
+    assert plan["workflow_summaries"]["scheduler"]["blocked_job_count"] == 2
+    assert plan["workflow_summaries"]["scheduler"]["approval_gated_job_count"] == 1
     assert plan["workflow_summaries"]["monitoring"]["top_account"] == "成分党A"
     assert plan["workflow_summaries"]["airtable"]["table_count"] == 6
 

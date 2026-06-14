@@ -14,6 +14,7 @@ from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_intelligence import build_product_intelligence_report
 from venus.product_research import build_product_research_card
+from venus.scheduler import build_scheduler_plan
 from venus.self_improvement import build_self_improvement_report
 from venus.trend_scan import build_trend_scan_report
 from venus.video_production import build_video_production_package
@@ -49,6 +50,8 @@ class VenusOrchestrator:
             result = build_ecommerce_report(payload)
         elif workflow == "memory":
             result = build_memory_report(payload)
+        elif workflow == "scheduler":
+            result = build_scheduler_plan(payload)
         elif workflow == "wechat":
             result = build_wechat_private_domain_report(payload)
         elif workflow == "commercial":

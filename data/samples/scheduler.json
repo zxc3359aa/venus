@@ -1,0 +1,78 @@
+{
+  "source": "manual_scheduler_plan",
+  "generated_at": "2026-06-14T18:30:00+08:00",
+  "timezone": "Asia/Shanghai",
+  "live_scheduler_requested": true,
+  "jobs": [
+    {
+      "job_id": "job-trend",
+      "workflow": "trend_scan",
+      "cadence_minutes": 15,
+      "last_run_at": "2026-06-14T18:00:00+08:00",
+      "priority": "high",
+      "connector_state": "ready",
+      "approval_level": 1,
+      "evidence": ["trend-schedule-001"]
+    },
+    {
+      "job_id": "job-monitoring",
+      "workflow": "monitoring",
+      "cadence_minutes": 60,
+      "last_run_at": "2026-06-14T17:00:00+08:00",
+      "priority": "medium",
+      "connector_state": "ready",
+      "approval_level": 1,
+      "evidence": ["monitoring-schedule-001"]
+    },
+    {
+      "job_id": "job-douyin",
+      "workflow": "douyin",
+      "cadence_minutes": 10,
+      "last_run_at": "2026-06-14T18:25:00+08:00",
+      "priority": "high",
+      "connector_state": "ready",
+      "approval_level": 3,
+      "evidence": ["douyin-schedule-001"]
+    },
+    {
+      "job_id": "job-ecommerce",
+      "workflow": "ecommerce",
+      "cadence_minutes": 30,
+      "last_run_at": "2026-06-14T17:40:00+08:00",
+      "priority": "high",
+      "connector_state": "missing_permission",
+      "approval_level": 3,
+      "evidence": ["shop-schedule-001"]
+    },
+    {
+      "job_id": "job-backup",
+      "workflow": "backup_verification",
+      "cadence_minutes": 1440,
+      "last_run_at": "2026-06-13T08:00:00+08:00",
+      "priority": "high",
+      "connector_state": "ready",
+      "approval_level": 2,
+      "evidence": ["backup-schedule-001"]
+    },
+    {
+      "job_id": "job-memory",
+      "workflow": "memory",
+      "cadence_minutes": 1440,
+      "last_run_at": "2026-06-14T08:00:00+08:00",
+      "priority": "medium",
+      "connector_state": "paused",
+      "approval_level": 3,
+      "evidence": ["memory-schedule-001"]
+    }
+  ],
+  "blackout_windows": [
+    {
+      "name": "ad_spend_freeze",
+      "surface": "qianchuan",
+      "start": "2026-06-14T18:00:00+08:00",
+      "end": "2026-06-14T20:00:00+08:00",
+      "reason": "预算复盘前不自动调整投流"
+    }
+  ],
+  "operator_channels": ["feishu_private"]
+}
