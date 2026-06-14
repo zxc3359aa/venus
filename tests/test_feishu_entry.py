@@ -96,6 +96,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "evals.json"
     )
     assert (
+        config.default_input_paths["approvals"]
+        == tmp_workspace / "data" / "samples" / "approvals.json"
+    )
+    assert (
         config.default_input_paths["trend-scan"]
         == tmp_workspace / "data" / "samples" / "trend_scan.json"
     )
@@ -182,6 +186,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus content-eval" in result["card"]["summary"]
     assert "/venus performance" in result["card"]["summary"]
     assert "/venus evals" in result["card"]["summary"]
+    assert "/venus approvals" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
 
@@ -1054,6 +1059,86 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "approvals.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_approval_export",
+                "reviewed_at": "2026-06-14T22:30:00+08:00",
+                "approval_records": [
+                    {
+                        "action_type": "venus_autopilot_enablement_review",
+                        "approval_level": 4,
+                        "draft": "Review autopilot before enabling live surfaces.",
+                        "evidence_ids": ["connector_readiness"],
+                        "status": "pending",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T22:00:00+08:00",
+                    },
+                    {
+                        "action_type": "qianchuan_budget_review",
+                        "approval_level": 4,
+                        "draft": "Review budget before changing spend.",
+                        "evidence_ids": ["qianchuan-app-001"],
+                        "status": "pending",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T21:30:00+08:00",
+                    },
+                    {
+                        "action_type": "douyin_comment_reply_queue",
+                        "approval_level": 3,
+                        "draft": "Review high-risk Douyin reply drafts.",
+                        "evidence_ids": ["comment-001"],
+                        "status": "pending",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T21:10:00+08:00",
+                    },
+                    {
+                        "action_type": "venus_content_publish_review",
+                        "approval_level": 3,
+                        "draft": "Review content publish package.",
+                        "evidence_ids": ["content-001"],
+                        "status": "rejected",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T20:40:00+08:00",
+                    },
+                    {
+                        "action_type": "wechat_private_domain_handoff",
+                        "approval_level": 2,
+                        "draft": "Review Enterprise WeChat handoff.",
+                        "evidence_ids": ["wechat-001"],
+                        "status": "pending",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T20:20:00+08:00",
+                    },
+                    {
+                        "action_type": "feishu_mobile_report",
+                        "approval_level": 2,
+                        "draft": "Send private Feishu summary.",
+                        "evidence_ids": ["run-001"],
+                        "status": "approved",
+                        "reviewer": "owner",
+                        "created_at": "2026-06-14T20:00:00+08:00",
+                    },
+                ],
+                "requested_decisions": [
+                    {
+                        "action_type": "qianchuan_budget_review",
+                        "decision": "approve",
+                        "reason": "预算建议合理，但仍需二次确认。",
+                        "reviewer": "owner",
+                    },
+                    {
+                        "action_type": "feishu_mobile_report",
+                        "decision": "needs_changes",
+                        "reason": "摘要需要更短。",
+                        "reviewer": "owner",
+                    },
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "trend_scan.json").write_text(
         json.dumps(
             {
@@ -1498,6 +1583,32 @@ def test_run_feishu_entry_evals_routes_to_agent_gate_report(tmp_workspace):
         == "blocked_by_connector_readiness"
     )
     assert result["card"]["result"]["result"]["failed_gates"][0]["gate_id"] == "connector_readiness"
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_approvals_routes_to_manual_review_inbox(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-approvals",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:41:00+08:00",
+            "text": "/venus approvals",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "approvals"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "approvals"
+    assert result["card"]["result"]["result"]["summary"]["pending_count"] == 4
+    assert (
+        result["card"]["result"]["result"]["priority_queue"][0]["action_type"]
+        == "venus_autopilot_enablement_review"
+    )
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

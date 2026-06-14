@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from venus.agent_run import build_agent_run_plan
+from venus.approval_inbox import build_approval_inbox
 from venus.airtable_export import build_airtable_sync_package
 from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
@@ -46,6 +47,8 @@ class VenusOrchestrator:
             result = build_monitoring_report(payload)
         elif workflow == "airtable":
             result = build_airtable_sync_package(payload)
+        elif workflow == "approvals":
+            result = build_approval_inbox(payload)
         elif workflow == "connectors":
             result = build_connector_audit_report(payload)
         elif workflow == "agent_run":

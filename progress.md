@@ -224,3 +224,11 @@
 - Added CLI command: `venus evals data/samples/evals.json`.
 - Added Feishu dry-run command: `/venus evals`.
 - Preserved safety boundaries: no OpenAI API call, live connector call, Feishu send, Douyin reply, video publish, ad spend, memory write, backup write, or external platform action is executed, and `external_actions: []` remains enforced.
+
+## Approval Inbox Progress
+
+- Added the approval inbox design spec and implementation plan.
+- Added a local dry-run `approvals` workflow for centralizing pending approvals, risk/surface classification, priority sorting, and recorded-only decision intents.
+- Added CLI command: `venus approvals data/samples/approvals.json`.
+- Added Feishu dry-run command: `/venus approvals`.
+- Preserved safety boundaries: no approval decision is applied, no source approval record is mutated, and no Feishu message, Douyin reply, publishing action, ad spend, brand commitment, WeChat contact, memory write, or external platform action is executed.

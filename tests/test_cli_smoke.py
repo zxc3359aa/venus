@@ -333,6 +333,27 @@ def test_cli_evals_outputs_agent_gate_report():
     assert output["result"]["failed_gates"][0]["gate_id"] == "connector_readiness"
 
 
+def test_cli_approvals_outputs_manual_review_inbox():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "approvals",
+            "data/samples/approvals.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "approvals"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["pending_count"] == 4
+    assert output["result"]["priority_queue"][0]["action_type"] == "venus_autopilot_enablement_review"
+
+
 def test_cli_trend_scan_outputs_douyin_beauty_signal_report():
     completed = subprocess.run(
         [
