@@ -25,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
             "commercial",
             "improvement",
             "production",
+            "trend-scan",
             "agent-run",
             "dashboard",
             "feishu",
@@ -42,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
         result = _run_dashboard(records, args.output)
     else:
         payload = _payload_for(args.workflow, records)
-        orchestrator_workflow = "agent_run" if args.workflow == "agent-run" else args.workflow
+        orchestrator_workflow = _orchestrator_workflow(args.workflow)
         result = VenusOrchestrator().run(orchestrator_workflow, payload)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
@@ -69,9 +70,19 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
         return records
     if workflow == "production":
         return records
+    if workflow == "trend-scan":
+        return records
     if workflow == "agent-run":
         return records
     raise ValueError(f"Unsupported Venus workflow: {workflow}")
+
+
+def _orchestrator_workflow(workflow: str) -> str:
+    if workflow == "agent-run":
+        return "agent_run"
+    if workflow == "trend-scan":
+        return "trend_scan"
+    return workflow
 
 
 def _run_dashboard(records: dict[str, Any], output: str | None) -> dict[str, Any]:

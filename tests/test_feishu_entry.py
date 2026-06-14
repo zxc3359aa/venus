@@ -63,6 +63,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         config.default_input_paths["production"]
         == tmp_workspace / "data" / "samples" / "video_production.json"
     )
+    assert (
+        config.default_input_paths["trend-scan"]
+        == tmp_workspace / "data" / "samples" / "trend_scan.json"
+    )
 
 
 def test_feishu_config_rejects_xiaolongxia_namespace(tmp_workspace):
@@ -139,6 +143,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus commercial" in result["card"]["summary"]
     assert "/venus improvement" in result["card"]["summary"]
     assert "/venus production" in result["card"]["summary"]
+    assert "/venus trend-scan" in result["card"]["summary"]
 
 
 def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
@@ -465,6 +470,46 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "trend_scan.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_douyin_beauty_scan",
+                "retrieved_at": "2026-06-14T15:00:00+08:00",
+                "refresh_interval_minutes": 15,
+                "live_connector_requested": True,
+                "topics": [
+                    {
+                        "id": "topic-001",
+                        "label": "早C晚A翻车",
+                        "mentions": 320000,
+                        "growth": 0.82,
+                        "controversy": 0.78,
+                        "evidence": ["douyin-hot-001"],
+                    }
+                ],
+                "products": [
+                    {"id": "prod-001", "label": "屏障修护精华", "mentions": 98000, "growth": 0.64, "controversy": 0.7}
+                ],
+                "creators": [
+                    {"id": "creator-001", "handle": "成分党A", "mentions": 65000, "growth": 0.55, "controversy": 0.4}
+                ],
+                "comments": [
+                    {"id": "comment-001", "text": "敏感肌用了会不会烂脸？", "likes": 1800, "growth": 0.8, "controversy": 0.9}
+                ],
+                "ingredients": [
+                    {"id": "ing-001", "label": "视黄醇", "mentions": 120000, "growth": 0.7, "controversy": 0.85}
+                ],
+                "tags": [
+                    {"id": "tag-001", "label": "早C晚A", "mentions": 260000, "growth": 0.74, "controversy": 0.6}
+                ],
+                "controversies": [
+                    {"id": "risk-001", "label": "A醇叠加刷酸爆皮", "mentions": 88000, "growth": 0.71, "controversy": 0.92}
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_run_feishu_entry_hotspot_routes_to_orchestrator(tmp_workspace):
@@ -682,6 +727,29 @@ def test_run_feishu_entry_production_routes_to_video_production_package(tmp_work
     assert result["card"]["result"]["workflow"] == "production"
     assert result["card"]["result"]["result"]["summary"]["scene_count"] == 5
     assert result["card"]["result"]["result"]["summary"]["approval_gated_action_count"] == 2
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_trend_scan_routes_to_douyin_signal_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-trend-scan",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:39:57+08:00",
+            "text": "/venus trend-scan",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "trend-scan"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "trend_scan"
+    assert result["card"]["result"]["result"]["summary"]["signal_count"] == 7
+    assert result["card"]["result"]["result"]["leaderboard"][0]["label"] == "早C晚A翻车"
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

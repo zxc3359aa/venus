@@ -267,6 +267,29 @@ def test_cli_production_outputs_video_production_package():
     assert output["result"]["edit_plan"]["timeline"][0]["cut_style"] == "jump_cut"
 
 
+def test_cli_trend_scan_outputs_douyin_beauty_signal_report():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "trend-scan",
+            "data/samples/trend_scan.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "trend_scan"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["signal_count"] == 7
+    assert output["result"]["summary"]["content_opportunity_count"] == 3
+    assert output["result"]["leaderboard"][0]["label"] == "早C晚A翻车"
+    assert output["result"]["watch_plan"]["refresh_interval_minutes"] == 15
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [

@@ -13,6 +13,7 @@ from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_research import build_product_research_card
 from venus.self_improvement import build_self_improvement_report
+from venus.trend_scan import build_trend_scan_report
 from venus.video_production import build_video_production_package
 from venus.wechat_private_domain import build_wechat_private_domain_report
 
@@ -100,6 +101,7 @@ def build_agent_run_plan(
     workflow_summaries: dict[str, dict[str, Any]] = {}
     evidence_ids: list[str] = []
 
+    trend_scan = safe_payload.get("trend_scan")
     hotspots = list(safe_payload.get("hotspots") or [])
     products = list(safe_payload.get("products") or [])
     comments = list(safe_payload.get("comments") or [])
@@ -109,6 +111,19 @@ def build_agent_run_plan(
     commercial_strategy = safe_payload.get("commercial_strategy")
     self_improvement = safe_payload.get("self_improvement")
     competitors = _competitor_payload(safe_payload.get("competitors"))
+
+    if isinstance(trend_scan, dict):
+        result = build_trend_scan_report(trend_scan)
+        executed_workflows.append("trend_scan")
+        top_signal = result["leaderboard"][0]["label"] if result["leaderboard"] else ""
+        workflow_summaries["trend_scan"] = {
+            "signal_count": result["summary"]["signal_count"],
+            "top_signal": top_signal,
+            "content_opportunity_count": result["summary"]["content_opportunity_count"],
+            "refresh_interval_minutes": result["summary"]["refresh_interval_minutes"],
+        }
+        for signal in result["normalized_signals"]:
+            evidence_ids.extend(str(item) for item in list(signal.get("evidence_ids") or []))
 
     if hotspots:
         result = generate_hotspot_brief(hotspots, profile)

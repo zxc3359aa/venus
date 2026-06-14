@@ -17,6 +17,40 @@ def _agent_run_payload():
             "xingtu_brief_response",
             "wechat_private_domain_handoff",
         ],
+        "trend_scan": {
+            "source": "manual_douyin_beauty_scan",
+            "retrieved_at": "2026-06-14T15:00:00+08:00",
+            "refresh_interval_minutes": 15,
+            "live_connector_requested": True,
+            "topics": [
+                {
+                    "id": "topic-001",
+                    "label": "早C晚A翻车",
+                    "mentions": 320000,
+                    "growth": 0.82,
+                    "controversy": 0.78,
+                    "evidence": ["douyin-hot-001"],
+                }
+            ],
+            "products": [
+                {"id": "prod-001", "label": "屏障修护精华", "mentions": 98000, "growth": 0.64, "controversy": 0.7}
+            ],
+            "creators": [
+                {"id": "creator-001", "handle": "成分党A", "mentions": 65000, "growth": 0.55, "controversy": 0.4}
+            ],
+            "comments": [
+                {"id": "comment-001", "text": "敏感肌用了会不会烂脸？", "likes": 1800, "growth": 0.8, "controversy": 0.9}
+            ],
+            "ingredients": [
+                {"id": "ing-001", "label": "视黄醇", "mentions": 120000, "growth": 0.7, "controversy": 0.85}
+            ],
+            "tags": [
+                {"id": "tag-001", "label": "早C晚A", "mentions": 260000, "growth": 0.74, "controversy": 0.6}
+            ],
+            "controversies": [
+                {"id": "risk-001", "label": "A醇叠加刷酸爆皮", "mentions": 88000, "growth": 0.71, "controversy": 0.92}
+            ],
+        },
         "hotspots": [
             {
                 "topic": "早C晚A翻车",
@@ -198,6 +232,7 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert plan["approval_mode"] == "manual"
     assert plan["external_actions"] == []
     assert plan["executed_workflows"] == [
+        "trend_scan",
         "hotspot",
         "product",
         "comments",
@@ -210,6 +245,9 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
         "airtable",
     ]
     assert plan["workflow_summaries"]["hotspot"]["top_topic"] == "早C晚A翻车"
+    assert plan["workflow_summaries"]["trend_scan"]["signal_count"] == 7
+    assert plan["workflow_summaries"]["trend_scan"]["top_signal"] == "早C晚A翻车"
+    assert plan["workflow_summaries"]["trend_scan"]["refresh_interval_minutes"] == 15
     assert plan["workflow_summaries"]["product"]["risk_level"] == "high"
     assert plan["workflow_summaries"]["comments"]["approval_gated"] == 1
     assert plan["workflow_summaries"]["production"]["scene_count"] == 5

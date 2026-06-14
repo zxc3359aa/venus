@@ -134,3 +134,14 @@
 - Added Feishu dry-run command: `/venus production`.
 - Integrated production summaries into Agent Run when `video_production` data is present.
 - Preserved safety boundaries: no media render, editor project modification, Douyin upload, publishing schedule, pinned comment, or external video action is executed, and `external_actions: []` remains enforced.
+
+## Trend Scan Progress
+
+- Added the trend scan design spec and implementation plan.
+- Added a local dry-run `trend_scan` workflow for Douyin beauty/skincare hot topics, products, creators, comments, ingredients, tags, and controversies.
+- Added signal normalization, scoring, leaderboard, trend clustering, content opportunities, and refresh watch plan.
+- Added approval records for live all-day Douyin connector enablement.
+- Added CLI command: `venus trend-scan data/samples/trend_scan.json`.
+- Added Feishu dry-run command: `/venus trend-scan`.
+- Integrated trend-scan summaries into Agent Run when `trend_scan` data is present.
+- Preserved safety boundaries: no live Douyin search, scrape, login, API call, browser automation, platform read, or external action is executed, and `external_actions: []` remains enforced.

@@ -39,6 +39,12 @@ Analyze comments and draft approval-gated replies:
 venus comments data/samples/comments.json
 ```
 
+Build a local Douyin beauty trend scan report:
+
+```bash
+venus trend-scan data/samples/trend_scan.json
+```
+
 Build a local competitor monitoring report:
 
 ```bash
@@ -108,6 +114,7 @@ It also supports `/venus wechat` to preview Mini Program answer and Enterprise W
 It also supports `/venus commercial` to preview Qianchuan budget guardrails and Xingtu brief reviews without touching ad accounts or brand tasks.
 It also supports `/venus improvement` to preview learning candidates, defect guardrails, and backup verification tasks without changing memory, code, or backups.
 It also supports `/venus production` to preview scripts, shot lists, editing timelines, subtitles, and publishing drafts without rendering or publishing video.
+It also supports `/venus trend-scan` to preview Douyin beauty/skincare hot topics, products, creators, comments, ingredients, tags, controversies, and refresh gaps without live platform reads.
 It also supports `/venus agent-run` to preview the next Venus operating cycle and pending approval records.
 
 The local MVP never performs external actions. Public replies, publishing, lead routing, and ad spend remain approval-gated future integrations.
