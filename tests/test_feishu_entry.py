@@ -6,6 +6,7 @@ from venus.feishu_entry import (
     FeishuConfig,
     normalize_feishu_message,
     parse_feishu_command,
+    run_feishu_entry,
 )
 
 
@@ -77,3 +78,61 @@ def test_parse_feishu_command_extracts_name_args_and_approval_level(tmp_workspac
     assert command.requires_approval is True
     assert command.approval_level == 2
     assert command.source_message_id == "msg-002"
+
+
+def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-help",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:32:00+08:00",
+            "text": "/venus help",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["workflow"] == "feishu"
+    assert result["command"]["name"] == "help"
+    assert result["dry_run"] is True
+    assert result["external_actions"] == []
+    assert result["card"]["type"] == "status"
+    assert "/venus hotspot" in result["card"]["summary"]
+
+
+def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-status",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:33:00+08:00",
+            "text": "/venus status",
+            "app_secret": "secret-value",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    rendered = str(result)
+    assert result["card"]["type"] == "status"
+    assert "secret-value" not in rendered
+    assert "VENUS_FEISHU_" in rendered
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_unknown_command_returns_safe_error(tmp_workspace):
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-unknown",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:34:00+08:00",
+            "text": "/venus dance",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "unknown"
+    assert result["card"]["type"] == "error"
+    assert "Unsupported Venus command" in result["card"]["summary"]
+    assert result["external_actions"] == []

@@ -15,6 +15,8 @@ COMMAND_APPROVAL_LEVELS = {
     "approve": 2,
 }
 
+SECRET_KEYS = {"secret", "token", "password", "app_secret", "authorization"}
+
 
 @dataclass(frozen=True)
 class FeishuConfig:
@@ -129,6 +131,94 @@ def parse_feishu_command(message: FeishuMessage, config: FeishuConfig) -> Feishu
         approval_level=approval_level,
         source_message_id=message.message_id,
     )
+
+
+def run_feishu_entry(
+    payload: dict[str, Any],
+    workspace_root: Path | str | None = None,
+    config: FeishuConfig | None = None,
+) -> dict[str, Any]:
+    root = Path(workspace_root) if workspace_root is not None else Path.cwd()
+    active_config = config or FeishuConfig(workspace_root=root)
+    message = normalize_feishu_message(_redact_payload(payload))
+    command = parse_feishu_command(message, active_config)
+
+    if command.name == "help":
+        card = _status_card(
+            "Venus command help",
+            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus comments, /venus approve <id> <decision>",
+            active_config,
+        )
+    elif command.name == "status":
+        card = _status_card(
+            "Venus Feishu status",
+            f"{active_config.agent_name} is running in dry-run mode with {active_config.env_prefix} config.",
+            active_config,
+        )
+    elif command.name == "unknown":
+        card = _error_card(
+            "Unsupported Venus command",
+            "Unsupported Venus command. Send /venus help to see available commands.",
+        )
+    else:
+        card = _error_card(
+            "Workflow unavailable",
+            f"The {command.name} command is parsed but unavailable in this dry-run adapter shell.",
+        )
+
+    return _base_response(command, active_config, card, approval_records=[])
+
+
+def _base_response(
+    command: FeishuCommand,
+    config: FeishuConfig,
+    card: dict[str, Any],
+    approval_records: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "workflow": "feishu",
+        "dry_run": config.dry_run,
+        "command": command.to_dict(),
+        "card": card,
+        "approval_records": approval_records,
+        "external_actions": [],
+    }
+
+
+def _status_card(title: str, summary: str, config: FeishuConfig) -> dict[str, Any]:
+    return {
+        "type": "status",
+        "title": title,
+        "summary": summary,
+        "facts": {
+            "agent_name": config.agent_name,
+            "env_prefix": config.env_prefix,
+            "command_prefix": config.command_prefix,
+            "dry_run": config.dry_run,
+            "storage_namespace": config.storage_namespace,
+        },
+    }
+
+
+def _error_card(title: str, summary: str) -> dict[str, Any]:
+    return {
+        "type": "error",
+        "title": title,
+        "summary": summary,
+        "suggested_command": "/venus help",
+    }
+
+
+def _redact_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    redacted: dict[str, Any] = {}
+    for key, value in payload.items():
+        if key.lower() in SECRET_KEYS:
+            redacted[key] = "[REDACTED]"
+        elif isinstance(value, dict):
+            redacted[key] = _redact_payload(value)
+        else:
+            redacted[key] = value
+    return redacted
 
 
 def _extract_text(payload: dict[str, Any]) -> str:
