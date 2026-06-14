@@ -68,6 +68,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "self_improvement.json"
     )
     assert (
+        config.default_input_paths["memory"]
+        == tmp_workspace / "data" / "samples" / "memory.json"
+    )
+    assert (
         config.default_input_paths["production"]
         == tmp_workspace / "data" / "samples" / "video_production.json"
     )
@@ -151,6 +155,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus wechat" in result["card"]["summary"]
     assert "/venus commercial" in result["card"]["summary"]
     assert "/venus improvement" in result["card"]["summary"]
+    assert "/venus memory" in result["card"]["summary"]
     assert "/venus production" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
@@ -486,6 +491,58 @@ def _write_sample_inputs(root: Path) -> None:
                         ],
                     }
                 ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (samples / "memory.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_memory_review",
+                "retrieved_at": "2026-06-14T18:00:00+08:00",
+                "current_memory": {
+                    "version": "v3",
+                    "principles": ["先看屏障状态"],
+                    "style_phrases": ["姐妹们"],
+                    "product_beliefs": ["成分要看浓度、配方和肤质"],
+                    "content_rules": ["先抛出用户真实问题，再给专业判断"],
+                    "banned_claims": ["100%修复屏障"],
+                    "privacy_boundaries": ["不记录手机号、地址、订单号等直接个人信息"],
+                },
+                "learning_candidates": [
+                    {
+                        "candidate_id": "mem-001",
+                        "category": "principles",
+                        "proposed_rule": "先判断屏障状态，再谈功效、搭配和频率。",
+                        "evidence": ["fb-001"],
+                    },
+                    {
+                        "candidate_id": "mem-002",
+                        "category": "style_phrases",
+                        "proposed_rule": "姐妹们，先别急着跟风。",
+                        "evidence": ["script-001"],
+                    },
+                    {
+                        "candidate_id": "mem-003",
+                        "category": "privacy_boundaries",
+                        "proposed_rule": "用户联系方式 contact-token-001 不进入任何记忆。",
+                        "evidence": ["privacy-001"],
+                        "contains_personal_data": True,
+                    },
+                ],
+                "approval_decisions": [
+                    {"candidate_id": "mem-001", "decision": "approved", "reviewer": "owner"},
+                    {"candidate_id": "mem-002", "decision": "pending", "reviewer": "owner"},
+                    {"candidate_id": "mem-003", "decision": "approved", "reviewer": "owner"},
+                ],
+                "backup": {
+                    "target": "local-memory-ledger",
+                    "last_snapshot_version": "v3",
+                    "last_backup_at": "2026-06-14T07:00:00+08:00",
+                    "last_verified_at": "",
+                    "status": "missing_verification",
+                },
             },
             ensure_ascii=False,
         ),
@@ -828,6 +885,29 @@ def test_run_feishu_entry_wechat_routes_to_private_domain_report(tmp_workspace):
     assert result["card"]["result"]["workflow"] == "wechat"
     assert result["card"]["result"]["result"]["summary"]["question_count"] == 2
     assert result["card"]["result"]["result"]["summary"]["enterprise_wechat_handoff_count"] == 1
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_memory_routes_to_versioned_memory_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-memory",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:39:40+08:00",
+            "text": "/venus memory",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "memory"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "memory"
+    assert result["card"]["result"]["result"]["summary"]["proposed_version"] == "v4"
+    assert result["card"]["result"]["result"]["summary"]["proposed_change_count"] == 1
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

@@ -10,6 +10,7 @@ from venus.commercial_strategy import build_commercial_strategy_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.ecommerce import build_ecommerce_report
+from venus.memory import build_memory_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_intelligence import build_product_intelligence_report
@@ -114,6 +115,7 @@ def build_agent_run_plan(
     wechat_private_domain = safe_payload.get("wechat_private_domain")
     commercial_strategy = safe_payload.get("commercial_strategy")
     self_improvement = safe_payload.get("self_improvement")
+    memory = safe_payload.get("memory")
     competitors = _competitor_payload(safe_payload.get("competitors"))
 
     if isinstance(trend_scan, dict):
@@ -226,6 +228,20 @@ def build_agent_run_plan(
             "backup_issue_count": result["summary"]["backup_issue_count"],
             "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
         }
+
+    if isinstance(memory, dict):
+        result = build_memory_report(memory)
+        executed_workflows.append("memory")
+        workflow_summaries["memory"] = {
+            "current_version": result["summary"]["current_version"],
+            "proposed_version": result["summary"]["proposed_version"],
+            "proposed_change_count": result["summary"]["proposed_change_count"],
+            "blocked_sensitive_candidate_count": result["summary"]["blocked_sensitive_candidate_count"],
+            "approval_gated_action_count": result["summary"]["approval_gated_action_count"],
+        }
+        for item in result["candidate_reviews"]:
+            if not item["privacy_flag"]:
+                evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
 
     if competitors.get("competitors"):
         result = build_monitoring_report(competitors)

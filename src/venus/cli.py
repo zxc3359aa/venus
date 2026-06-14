@@ -23,6 +23,7 @@ def main(argv: list[str] | None = None) -> int:
             "airtable",
             "douyin",
             "ecommerce",
+            "memory",
             "wechat",
             "commercial",
             "improvement",
@@ -67,6 +68,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
     if workflow == "douyin":
         return records
     if workflow == "ecommerce":
+        return records
+    if workflow == "memory":
         return records
     if workflow == "wechat":
         return records

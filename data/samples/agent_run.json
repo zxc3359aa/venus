@@ -410,6 +410,67 @@
       }
     ]
   },
+  "memory": {
+    "source": "manual_memory_review",
+    "retrieved_at": "2026-06-14T18:00:00+08:00",
+    "current_memory": {
+      "version": "v3",
+      "principles": ["先看屏障状态"],
+      "style_phrases": ["姐妹们"],
+      "product_beliefs": ["成分要看浓度、配方和肤质"],
+      "content_rules": ["先抛出用户真实问题，再给专业判断"],
+      "banned_claims": ["100%修复屏障"],
+      "privacy_boundaries": ["不记录手机号、地址、订单号等直接个人信息"]
+    },
+    "learning_candidates": [
+      {
+        "candidate_id": "mem-001",
+        "category": "principles",
+        "proposed_rule": "先判断屏障状态，再谈功效、搭配和频率。",
+        "evidence": ["fb-001"],
+        "source": "content_feedback"
+      },
+      {
+        "candidate_id": "mem-002",
+        "category": "style_phrases",
+        "proposed_rule": "姐妹们，先别急着跟风。",
+        "evidence": ["script-001"],
+        "source": "script_edit"
+      },
+      {
+        "candidate_id": "mem-003",
+        "category": "privacy_boundaries",
+        "proposed_rule": "用户联系方式 contact-token-001 不进入任何记忆。",
+        "evidence": ["privacy-001"],
+        "source": "comment_review",
+        "contains_personal_data": true
+      }
+    ],
+    "approval_decisions": [
+      {
+        "candidate_id": "mem-001",
+        "decision": "approved",
+        "reviewer": "owner"
+      },
+      {
+        "candidate_id": "mem-002",
+        "decision": "pending",
+        "reviewer": "owner"
+      },
+      {
+        "candidate_id": "mem-003",
+        "decision": "approved",
+        "reviewer": "owner"
+      }
+    ],
+    "backup": {
+      "target": "local-memory-ledger",
+      "last_snapshot_version": "v3",
+      "last_backup_at": "2026-06-14T07:00:00+08:00",
+      "last_verified_at": "",
+      "status": "missing_verification"
+    }
+  },
   "competitors": {
     "competitors": [
       {

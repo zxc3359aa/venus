@@ -135,6 +135,16 @@
 - Integrated self-improvement summaries into Agent Run when `self_improvement` data is present.
 - Preserved safety boundaries: no memory update, system prompt change, code change, backup restore, backup upload, external service write, or platform action is executed, and `external_actions: []` remains enforced.
 
+## Versioned Memory Progress
+
+- Added the versioned memory design spec and implementation plan.
+- Added a local dry-run `memory` workflow for current memory review, learning-candidate decisions, proposed memory diffs, rollback plans, privacy blocking, and backup verification.
+- Added approval records for memory merge review and memory backup verification.
+- Added CLI command: `venus memory data/samples/memory.json`.
+- Added Feishu dry-run command: `/venus memory`.
+- Integrated memory summaries into Agent Run when `memory` data is present.
+- Preserved safety boundaries: no long-term memory, persona file, system prompt, JSON store, backup target, Feishu message, or external platform state is changed, and `external_actions: []` remains enforced.
+
 ## Video Production Progress
 
 - Added the video production design spec and implementation plan.

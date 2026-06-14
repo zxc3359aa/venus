@@ -93,6 +93,12 @@ Build a local self-improvement, regression, and backup verification report:
 venus improvement data/samples/self_improvement.json
 ```
 
+Build a local versioned memory review report:
+
+```bash
+venus memory data/samples/memory.json
+```
+
 Build a local short-video production and editing package:
 
 ```bash
@@ -127,6 +133,7 @@ It also supports `/venus ecommerce` to preview product catalog checks, inventory
 It also supports `/venus wechat` to preview Mini Program answer and Enterprise WeChat handoff queues without touching WeChat.
 It also supports `/venus commercial` to preview Qianchuan budget guardrails and Xingtu brief reviews without touching ad accounts or brand tasks.
 It also supports `/venus improvement` to preview learning candidates, defect guardrails, and backup verification tasks without changing memory, code, or backups.
+It also supports `/venus memory` to preview versioned memory merges, rollback plans, privacy blocks, and backup checks without writing long-term memory.
 It also supports `/venus production` to preview scripts, shot lists, editing timelines, subtitles, and publishing drafts without rendering or publishing video.
 It also supports `/venus trend-scan` to preview Douyin beauty/skincare hot topics, products, creators, comments, ingredients, tags, controversies, and refresh gaps without live platform reads.
 It also supports `/venus agent-run` to preview the next Venus operating cycle and pending approval records.

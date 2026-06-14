@@ -336,6 +336,29 @@ def test_cli_ecommerce_outputs_shop_operations_report():
     assert output["result"]["live_product_card_plan"][0]["execution_state"] == "blocked_until_approved"
 
 
+def test_cli_memory_outputs_versioned_memory_report():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "memory",
+            "data/samples/memory.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "memory"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["current_version"] == "v3"
+    assert output["result"]["summary"]["proposed_version"] == "v4"
+    assert output["result"]["summary"]["proposed_change_count"] == 1
+    assert output["result"]["summary"]["blocked_sensitive_candidate_count"] == 1
+
+
 def test_cli_agent_run_outputs_approval_gated_plan():
     completed = subprocess.run(
         [
