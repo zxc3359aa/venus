@@ -57,6 +57,11 @@ DEFAULT_CASES = [
         "severity": "critical",
     },
     {
+        "case_id": "eval-connector-dispatch-readiness",
+        "gate_id": "connector_dispatch_readiness",
+        "severity": "critical",
+    },
+    {
         "case_id": "eval-scheduler-memory-backup",
         "gate_id": "scheduler_memory_backup",
         "severity": "high",
@@ -87,6 +92,10 @@ GATE_DEFINITIONS = {
     "connector_readiness": {
         "definition": "Checks that live connectors have no blocked or high-risk readiness gaps.",
         "decision_use": "确认接入抖音、飞书、千川、星图、私域或备份前权限和回滚已准备好。",
+    },
+    "connector_dispatch_readiness": {
+        "definition": "Checks that connector execution manifests and dispatch rehearsals are locally ready before live autopilot.",
+        "decision_use": "确认维纳斯最后一公里连接器执行和调度演练都已本地就绪，没有被拦截或悬空审批。",
     },
     "scheduler_memory_backup": {
         "definition": "Checks that scheduler, memory, and backup risks remain approval-gated and non-executing.",
@@ -187,6 +196,8 @@ def _evaluate_case(
         passed, reason, evidence_ids = _check_content_claim_safety(agent_run)
     elif gate_id == "connector_readiness":
         passed, reason, evidence_ids = _check_connector_readiness(agent_run)
+    elif gate_id == "connector_dispatch_readiness":
+        passed, reason, evidence_ids = _check_connector_dispatch_readiness(agent_run)
     elif gate_id == "scheduler_memory_backup":
         passed, reason, evidence_ids = _check_scheduler_memory_backup(agent_run)
     else:
@@ -287,6 +298,65 @@ def _check_connector_readiness(agent_run: dict[str, Any]) -> tuple[bool, str, li
     return True, "All connector readiness checks are clear.", ["connectors"]
 
 
+def _check_connector_dispatch_readiness(
+    agent_run: dict[str, Any],
+) -> tuple[bool, str, list[str]]:
+    summaries = dict(agent_run.get("workflow_summaries") or {})
+    execution = dict(summaries.get("connector_execution") or {})
+    dispatch = dict(summaries.get("connector_dispatch") or {})
+    missing = []
+    if not execution:
+        missing.append("connector_execution")
+    if not dispatch:
+        missing.append("connector_dispatch")
+    if missing:
+        return (
+            False,
+            f"Missing last-mile connector summaries: {', '.join(missing)}.",
+            missing,
+        )
+
+    execution_blocked = int(_number(execution.get("blocked_count")))
+    dispatch_blocked = int(_number(dispatch.get("blocked_count")))
+    if execution_blocked or dispatch_blocked:
+        return (
+            False,
+            "Connector execution or dispatch still has blocked last-mile items.",
+            ["connector_execution", "connector_dispatch"],
+        )
+
+    execution_state = str(execution.get("execution_state") or "").lower()
+    dispatch_state = str(dispatch.get("dispatch_state") or "").lower()
+    ready_execution_states = {"local_manifests_written", "already_manifested"}
+    ready_dispatch_states = {"local_rehearsals_written", "already_rehearsed"}
+    if execution_state not in ready_execution_states or dispatch_state not in ready_dispatch_states:
+        return (
+            False,
+            "Connector execution or dispatch state is not locally ready.",
+            ["connector_execution", "connector_dispatch"],
+        )
+
+    execution_approvals = int(_number(execution.get("approval_record_count")))
+    dispatch_approvals = int(_number(dispatch.get("approval_record_count")))
+    unexplained_execution_review = execution_approvals and not _state_mentions_review(
+        execution_state
+    )
+    unexplained_dispatch_review = dispatch_approvals and not _state_mentions_review(
+        dispatch_state
+    )
+    if unexplained_execution_review or unexplained_dispatch_review:
+        return (
+            False,
+            "Connector execution or dispatch reports approval records without an explicit blocked/review state.",
+            ["connector_execution", "connector_dispatch"],
+        )
+
+    return True, "Connector execution and dispatch readiness are clear.", [
+        "connector_execution",
+        "connector_dispatch",
+    ]
+
+
 def _check_scheduler_memory_backup(agent_run: dict[str, Any]) -> tuple[bool, str, list[str]]:
     summaries = dict(agent_run.get("workflow_summaries") or {})
     scheduler = dict(summaries.get("scheduler") or {})
@@ -319,6 +389,8 @@ def _readiness_status(failed_gates: list[dict[str, Any]]) -> str:
         return "ready_for_manual_autopilot_review"
     if any(item["gate_id"] == "connector_readiness" for item in failed_gates):
         return "blocked_by_connector_readiness"
+    if any(item["gate_id"] == "connector_dispatch_readiness" for item in failed_gates):
+        return "blocked_by_connector_dispatch_readiness"
     return "blocked_by_eval_failure"
 
 
@@ -337,8 +409,18 @@ def _next_actions(
                 evidence_ids=["connectors"],
             )
         )
+    if any(item["gate_id"] == "connector_dispatch_readiness" for item in failed_gates):
+        actions.append(
+            _action(
+                action_type="resolve_connector_dispatch_readiness",
+                title="Resolve connector execution and dispatch blockers",
+                approval_level=4,
+                draft="Clear connector execution manifests and dispatch rehearsal blockers before enabling any live connector dispatch.",
+                evidence_ids=["connector_execution", "connector_dispatch"],
+            )
+        )
     for gate in failed_gates:
-        if gate["gate_id"] == "connector_readiness":
+        if gate["gate_id"] in {"connector_readiness", "connector_dispatch_readiness"}:
             continue
         actions.append(
             _action(
@@ -406,6 +488,10 @@ def _number(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _state_mentions_review(value: str) -> bool:
+    return "blocked" in value or "review" in value
 
 
 def _redact(value: Any) -> Any:

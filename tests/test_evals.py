@@ -27,6 +27,8 @@ def _eval_payload():
                 "memory",
                 "scheduler",
                 "connectors",
+                "connector_execution",
+                "connector_dispatch",
                 "monitoring",
                 "airtable",
             ],
@@ -47,6 +49,20 @@ def _eval_payload():
                     "blocked_connector_count": 3,
                     "high_risk_connector_count": 1,
                     "approval_record_count": 2,
+                },
+                "connector_execution": {
+                    "execution_state": "local_manifests_written",
+                    "execution_record_count": 1,
+                    "blocked_count": 1,
+                    "duplicate_count": 0,
+                    "approval_record_count": 1,
+                },
+                "connector_dispatch": {
+                    "dispatch_state": "local_rehearsals_written",
+                    "rehearsal_record_count": 1,
+                    "blocked_count": 1,
+                    "duplicate_count": 0,
+                    "approval_record_count": 1,
                 },
                 "scheduler": {
                     "due_job_count": 3,
@@ -101,26 +117,69 @@ def test_build_eval_report_blocks_autopilot_when_connectors_are_not_ready():
     assert report["approval_mode"] == "manual"
     assert report["external_actions"] == []
     assert report["summary"] == {
-        "case_count": 7,
+        "case_count": 8,
         "passed_count": 6,
-        "failed_count": 1,
-        "critical_failed_count": 1,
+        "failed_count": 2,
+        "critical_failed_count": 2,
         "autopilot_ready": False,
         "readiness_status": "blocked_by_connector_readiness",
         "approval_record_count": 1,
     }
 
     assert report["failed_gates"][0]["gate_id"] == "connector_readiness"
+    assert report["failed_gates"][1]["gate_id"] == "connector_dispatch_readiness"
     assert report["gate_results"][0]["gate_id"] == "required_workflows"
     assert report["gate_results"][0]["status"] == "pass"
     assert report["next_actions"][0]["action_type"] == "resolve_blocked_connectors"
     assert report["next_actions"][0]["execution_state"] == "blocked_until_approved"
+    assert report["next_actions"][1]["action_type"] == "resolve_connector_dispatch_readiness"
     assert report["gate_definitions"]["external_action_lock"]["decision_use"] == "确认维纳斯没有执行任何平台动作。"
     assert report["approval_records"][0]["action_type"] == "venus_autopilot_enablement_review"
     assert report["approval_records"][0]["approval_level"] == 4
     assert "secret-evals-token" not in str(report)
     assert "Xiaolongxia" not in str(report)
     assert "小龙虾" not in str(report)
+
+
+def test_build_eval_report_passes_when_connector_dispatch_readiness_is_clear():
+    payload = _eval_payload()
+    payload["live_autopilot_requested"] = False
+    summaries = payload["agent_run"]["workflow_summaries"]
+    summaries["connectors"] = {
+        "ready_connector_count": 5,
+        "blocked_connector_count": 0,
+        "high_risk_connector_count": 0,
+        "approval_record_count": 0,
+    }
+    summaries["connector_execution"] = {
+        "execution_state": "local_manifests_written",
+        "execution_record_count": 2,
+        "blocked_count": 0,
+        "duplicate_count": 0,
+        "approval_record_count": 0,
+    }
+    summaries["connector_dispatch"] = {
+        "dispatch_state": "local_rehearsals_written",
+        "rehearsal_record_count": 2,
+        "blocked_count": 0,
+        "duplicate_count": 0,
+        "approval_record_count": 0,
+    }
+
+    report = build_eval_report(payload)
+
+    assert report["summary"] == {
+        "case_count": 8,
+        "passed_count": 8,
+        "failed_count": 0,
+        "critical_failed_count": 0,
+        "autopilot_ready": True,
+        "readiness_status": "ready_for_manual_autopilot_review",
+        "approval_record_count": 0,
+    }
+    assert report["failed_gates"] == []
+    assert report["next_actions"] == []
+    assert report["approval_records"] == []
 
 
 def test_eval_gate_config_rejects_xiaolongxia_namespace():

@@ -763,6 +763,26 @@
       }
     ]
   },
+  "connector_execution": {
+    "source": "manual_connector_execution_review",
+    "workspace_root": ".",
+    "executed_at": "2026-06-15T14:00:00+08:00",
+    "execution_requested": false,
+    "approved_execution_review": false,
+    "live_dispatch_requested": false,
+    "draft_records": [],
+    "connector_reviews": []
+  },
+  "connector_dispatch": {
+    "source": "manual_connector_dispatch_review",
+    "workspace_root": ".",
+    "rehearsed_at": "2026-06-15T15:00:00+08:00",
+    "dispatch_requested": false,
+    "approved_dispatch_review": false,
+    "live_dispatch_requested": false,
+    "environment": {},
+    "execution_records": []
+  },
   "competitors": {
     "competitors": [
       {

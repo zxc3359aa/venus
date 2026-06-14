@@ -632,6 +632,124 @@ def _agent_run_payload():
     }
 
 
+def _connector_execution_payload(tmp_workspace):
+    return {
+        "source": "manual_connector_execution_review",
+        "workspace_root": str(tmp_workspace),
+        "executed_at": "2026-06-15T14:00:00+08:00",
+        "execution_requested": True,
+        "approved_execution_review": True,
+        "live_dispatch_requested": False,
+        "draft_records": [
+            {
+                "draft_id": "draft-feishu-report-001",
+                "outbox_id": "outbox-feishu-report-001",
+                "action_id": "feishu-report-001",
+                "action_type": "feishu_mobile_report",
+                "artifact_type": "feishu_card_draft",
+                "target_surface": "feishu",
+                "draft_payload": {"card": {"title": "Venus private report"}},
+                "dispatch_state": "local_review_required",
+                "approval_level": 2,
+                "external_action_enabled": False,
+            },
+            {
+                "draft_id": "draft-qianchuan-budget-001",
+                "outbox_id": "outbox-qianchuan-budget-001",
+                "action_id": "qianchuan-budget-001",
+                "action_type": "qianchuan_budget_review",
+                "artifact_type": "qianchuan_budget_package",
+                "target_surface": "qianchuan",
+                "draft_payload": {"budget_delta": 500},
+                "dispatch_state": "local_review_required",
+                "approval_level": 4,
+                "external_action_enabled": False,
+            },
+        ],
+        "connector_reviews": [
+            {
+                "connector_id": "feishu-bot",
+                "surface": "feishu",
+                "connector_type": "feishu_bot",
+                "ready_for_launch": True,
+                "missing_permissions": [],
+                "permissions_required": ["send_private_card"],
+                "permissions_granted": ["send_private_card"],
+                "secret_refs": ["VENUS_FEISHU_APP_ID"],
+                "audit_ready": True,
+                "rollback_ready": True,
+                "approval_level": 2,
+            },
+            {
+                "connector_id": "qianchuan-ads",
+                "surface": "qianchuan",
+                "connector_type": "oceanengine_marketing_api",
+                "ready_for_launch": True,
+                "missing_permissions": [],
+                "permissions_required": ["budget_write"],
+                "permissions_granted": ["budget_write"],
+                "secret_refs": ["VENUS_QIANCHUAN_APP_ID"],
+                "audit_ready": True,
+                "rollback_ready": True,
+                "approval_level": 4,
+            },
+        ],
+    }
+
+
+def _connector_dispatch_payload(tmp_workspace):
+    return {
+        "source": "manual_connector_dispatch_review",
+        "workspace_root": str(tmp_workspace),
+        "rehearsed_at": "2026-06-15T15:00:00+08:00",
+        "dispatch_requested": True,
+        "approved_dispatch_review": True,
+        "live_dispatch_requested": False,
+        "environment": {
+            "VENUS_FEISHU_APP_ID_configured": True,
+            "VENUS_QIANCHUAN_APP_ID_configured": True,
+        },
+        "execution_records": [
+            {
+                "execution_id": "exec-draft-feishu-report-001-feishu-bot",
+                "draft_id": "draft-feishu-report-001",
+                "outbox_id": "outbox-feishu-report-001",
+                "action_id": "feishu-report-001",
+                "action_type": "feishu_mobile_report",
+                "artifact_type": "feishu_card_draft",
+                "target_surface": "feishu",
+                "connector_id": "feishu-bot",
+                "connector_type": "feishu_bot",
+                "adapter_type": "feishu_card_send_candidate",
+                "required_secret_refs": ["VENUS_FEISHU_APP_ID"],
+                "manifest_payload": {"card": {"title": "Venus private report"}},
+                "execution_state": "local_manifest_ready",
+                "dispatch_state": "blocked_until_live_connector_enabled",
+                "approval_level": 2,
+                "external_action_enabled": False,
+            },
+            {
+                "execution_id": "exec-draft-qianchuan-budget-001-qianchuan-ads",
+                "draft_id": "draft-qianchuan-budget-001",
+                "outbox_id": "outbox-qianchuan-budget-001",
+                "action_id": "qianchuan-budget-001",
+                "action_type": "qianchuan_budget_review",
+                "artifact_type": "qianchuan_budget_package",
+                "target_surface": "qianchuan",
+                "connector_id": "qianchuan-ads",
+                "connector_type": "oceanengine_marketing_api",
+                "adapter_type": "oceanengine_budget_candidate",
+                "required_secret_refs": ["VENUS_QIANCHUAN_APP_ID"],
+                "manifest_payload": {"budget_delta": 500},
+                "execution_state": "local_manifest_ready",
+                "dispatch_state": "blocked_until_live_connector_enabled",
+                "approval_level": 4,
+                "external_action_enabled": False,
+            },
+        ],
+    }
+
+
 def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     plan = build_agent_run_plan(_agent_run_payload())
 
@@ -717,6 +835,34 @@ def test_build_agent_run_plan_routes_workflows_and_gates_external_surfaces():
     assert "super-secret-token" not in str(plan)
     assert "Xiaolongxia" not in str(plan)
     assert "小龙虾" not in str(plan)
+
+
+def test_build_agent_run_plan_includes_connector_execution_and_dispatch_readiness(
+    tmp_workspace,
+):
+    payload = _agent_run_payload()
+    payload["connector_execution"] = _connector_execution_payload(tmp_workspace)
+    payload["connector_dispatch"] = _connector_dispatch_payload(tmp_workspace)
+
+    plan = build_agent_run_plan(payload)
+
+    assert "connector_execution" in plan["executed_workflows"]
+    assert "connector_dispatch" in plan["executed_workflows"]
+    assert plan["workflow_summaries"]["connector_execution"] == {
+        "execution_state": "local_manifests_written",
+        "execution_record_count": 1,
+        "blocked_count": 1,
+        "duplicate_count": 0,
+        "approval_record_count": 1,
+    }
+    assert plan["workflow_summaries"]["connector_dispatch"] == {
+        "dispatch_state": "local_rehearsals_written",
+        "rehearsal_record_count": 1,
+        "blocked_count": 1,
+        "duplicate_count": 0,
+        "approval_record_count": 1,
+    }
+    assert plan["external_actions"] == []
 
 
 def test_agent_run_config_rejects_xiaolongxia_namespace():

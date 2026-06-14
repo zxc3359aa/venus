@@ -9,6 +9,8 @@ from venus.comments import analyze_comments
 from venus.commercial_strategy import build_commercial_strategy_report
 from venus.content_eval import build_content_eval_report
 from venus.connector_audit import build_connector_audit_report
+from venus.connector_dispatch import build_connector_dispatch_rehearsal
+from venus.connector_execution import build_connector_execution_plan
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.ecommerce import build_ecommerce_report
@@ -124,6 +126,8 @@ def build_agent_run_plan(
     memory = safe_payload.get("memory")
     scheduler = safe_payload.get("scheduler")
     connectors = safe_payload.get("connectors")
+    connector_execution = safe_payload.get("connector_execution")
+    connector_dispatch = safe_payload.get("connector_dispatch")
     competitors = _competitor_payload(safe_payload.get("competitors"))
 
     if isinstance(trend_scan, dict):
@@ -302,6 +306,36 @@ def build_agent_run_plan(
         }
         for item in result["connector_reviews"]:
             evidence_ids.extend(str(evidence) for evidence in list(item.get("evidence_ids") or []))
+
+    if isinstance(connector_execution, dict):
+        result = build_connector_execution_plan(connector_execution)
+        executed_workflows.append("connector_execution")
+        workflow_summaries["connector_execution"] = {
+            "execution_state": result["execution_state"],
+            "execution_record_count": result["summary"]["execution_record_count"],
+            "blocked_count": result["summary"]["blocked_count"],
+            "duplicate_count": result["summary"]["duplicate_count"],
+            "approval_record_count": result["summary"]["approval_record_count"],
+        }
+        for item in result["execution_records"]:
+            evidence_ids.append(str(item.get("execution_id") or "connector_execution"))
+        for item in result["blocked_items"]:
+            evidence_ids.append(str(item.get("draft_id") or "connector_execution_blocked"))
+
+    if isinstance(connector_dispatch, dict):
+        result = build_connector_dispatch_rehearsal(connector_dispatch)
+        executed_workflows.append("connector_dispatch")
+        workflow_summaries["connector_dispatch"] = {
+            "dispatch_state": result["dispatch_state"],
+            "rehearsal_record_count": result["summary"]["rehearsal_record_count"],
+            "blocked_count": result["summary"]["blocked_count"],
+            "duplicate_count": result["summary"]["duplicate_count"],
+            "approval_record_count": result["summary"]["approval_record_count"],
+        }
+        for item in result["rehearsal_records"]:
+            evidence_ids.append(str(item.get("rehearsal_id") or "connector_dispatch"))
+        for item in result["blocked_items"]:
+            evidence_ids.append(str(item.get("execution_id") or "connector_dispatch_blocked"))
 
     if competitors.get("competitors"):
         result = build_monitoring_report(competitors)

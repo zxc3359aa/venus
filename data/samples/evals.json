@@ -20,6 +20,8 @@
       "memory",
       "scheduler",
       "connectors",
+      "connector_execution",
+      "connector_dispatch",
       "monitoring",
       "airtable"
     ],
@@ -40,6 +42,20 @@
         "blocked_connector_count": 3,
         "high_risk_connector_count": 1,
         "approval_record_count": 2
+      },
+      "connector_execution": {
+        "execution_state": "local_manifests_written",
+        "execution_record_count": 1,
+        "blocked_count": 1,
+        "duplicate_count": 0,
+        "approval_record_count": 1
+      },
+      "connector_dispatch": {
+        "dispatch_state": "local_rehearsals_written",
+        "rehearsal_record_count": 1,
+        "blocked_count": 1,
+        "duplicate_count": 0,
+        "approval_record_count": 1
       },
       "scheduler": {
         "due_job_count": 3,

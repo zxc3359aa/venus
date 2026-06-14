@@ -318,3 +318,13 @@
 - Added CLI command: `venus connector-dispatch data/samples/connector_dispatch.json`.
 - Added Feishu dry-run command: `/venus connector-dispatch`.
 - Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, Douyin publish, ad spend, Xingtu commitment, WeChat contact, OpenAI model call, backup write, memory write, or external platform state is changed.
+
+## Agent Run Dispatch Readiness Progress
+
+- Added the Agent Run dispatch readiness design spec and implementation plan.
+- Integrated connector execution and connector dispatch summaries into the local Agent Run when `connector_execution` and `connector_dispatch` payloads are present.
+- Added the `connector_dispatch_readiness` eval gate so live autopilot readiness now checks connector audit, execution manifests, and dispatch rehearsals together.
+- Added failure coverage for blocked execution/dispatch records and pass coverage for clean connector audit, execution, and dispatch summaries.
+- Updated Agent Run and eval samples to expose the new readiness layer while keeping sample connector execution and dispatch requests disabled.
+- Verified CLI smoke checks through the CLI wrapper `result` payload shape and confirmed `data/venus` still only contains `.gitkeep`.
+- Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, Douyin publish, ad spend, Xingtu commitment, WeChat contact, OpenAI model call, backup write, memory write, or external platform state is changed.
