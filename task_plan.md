@@ -6,14 +6,14 @@ Build "Venus", a beauty and skincare agent system that helps the user's Douyin s
 
 ## Current Phase
 
-Phase 1 is in progress: convert the large product vision into a clear, staged system design before implementation. The user confirmed that the first practical Venus version should include all three MVP centers: content/trend intelligence, product research, and persona/style learning.
+Phase 2 is in progress: the design spec is approved, and the first-slice MVP implementation plan has been written for user execution choice. The first practical Venus version includes all three MVP centers: content/trend intelligence, product research, and persona/style learning.
 
 ## Phases
 
 | Phase | Status | Purpose | Exit Criteria |
 |---|---|---|---|
-| 1. Product and system design | In progress | Clarify scope, module boundaries, data flow, safety limits, and MVP sequence. | User approves a written design spec. |
-| 2. Implementation plan | Pending | Break the approved design into executable milestones, files, services, connectors, and tests. | User approves implementation plan. |
+| 1. Product and system design | Complete | Clarify scope, module boundaries, data flow, safety limits, and MVP sequence. | User approved the written design spec. |
+| 2. Implementation plan | In progress | Break the approved design into executable milestones, files, services, connectors, and tests. | User chooses execution approach for the saved implementation plan. |
 | 3. Local project scaffold | Pending | Create the repo structure, environment templates, docs, and first runnable agent skeleton. | Local smoke command runs. |
 | 4. Knowledge and memory layer | Pending | Define Venus memory, style profile, skincare philosophy, content library, product database, and privacy controls. | Data model and basic CRUD flow work locally. |
 | 5. Trend and research pipeline | Pending | Build source collection, normalization, scoring, reports, and script ideation for Douyin beauty/skincare topics. | Sample report and script pack generated from test inputs. |
@@ -33,11 +33,9 @@ Phase 1 is in progress: convert the large product vision into a clear, staged sy
 
 ## Immediate Next Steps
 
-1. Propose 2-3 architecture paths with trade-offs.
-2. Present the recommended Phase 1 design for approval.
-3. After approval, write the design spec under `docs/superpowers/specs/`.
-4. Self-review the spec for scope, contradictions, ambiguity, and missing details.
-5. Ask the user to review the written spec before implementation planning.
+1. Commit the MVP implementation plan.
+2. Ask the user to choose Subagent-Driven or Inline Execution.
+3. Begin executing the saved plan after the user chooses an approach.
 
 ## Errors Encountered
 

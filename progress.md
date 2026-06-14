@@ -19,7 +19,10 @@
 - User approved continuing as long as the design fits the user's goal.
 - Wrote the formal Venus system design spec at `docs/superpowers/specs/2026-06-14-venus-agent-system-design.md`.
 - Self-reviewed the design spec: no placeholder markers found, source anchors added, and acceptance wording clarified.
+- User confirmed to continue execution.
+- Wrote the first-slice MVP implementation plan at `docs/superpowers/plans/2026-06-14-venus-mvp-implementation.md`.
+- Self-reviewed the implementation plan: fixed nested Markdown snippets and removed literal placeholder markers from the self-review text.
 
 ## Next
 
-- Commit the spec and planning files, then ask the user to review the written spec before implementation planning.
+- Review and commit the implementation plan, then ask the user to choose Subagent-Driven or Inline Execution.
