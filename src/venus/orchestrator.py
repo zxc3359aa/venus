@@ -14,6 +14,7 @@ from venus.content_eval import build_content_eval_report
 from venus.connector_audit import build_connector_audit_report
 from venus.content import generate_hotspot_brief
 from venus.delivery_drafts import build_delivery_drafts
+from venus.delivery_status import build_delivery_status
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.ecommerce import build_ecommerce_report
 from venus.evals import build_eval_report
@@ -61,6 +62,8 @@ class VenusOrchestrator:
             result = build_action_outbox(payload)
         elif workflow == "delivery_drafts":
             result = build_delivery_drafts(payload)
+        elif workflow == "delivery_status":
+            result = build_delivery_status(payload)
         elif workflow == "connectors":
             result = build_connector_audit_report(payload)
         elif workflow == "agent_run":

@@ -534,6 +534,62 @@ def test_cli_delivery_drafts_persists_to_tmp_workspace(tmp_path):
     assert "feishu_card_draft" in stored_file.read_text(encoding="utf-8")
 
 
+def test_cli_delivery_status_persists_to_tmp_workspace(tmp_path):
+    payload = {
+        "source": "manual_delivery_status",
+        "workspace_root": str(tmp_path),
+        "recorded_at": "2026-06-15T10:20:00+08:00",
+        "status_update_requested": True,
+        "approved_status_review": True,
+        "draft_records": [
+            {
+                "draft_id": "draft-outbox-feishu_mobile_report-feishu-report-001-decision-001",
+                "outbox_id": "outbox-feishu_mobile_report-feishu-report-001-decision-001",
+                "action_id": "feishu-report-001",
+                "action_type": "feishu_mobile_report",
+                "artifact_type": "feishu_card_draft",
+                "target_surface": "feishu",
+                "dispatch_state": "local_review_required",
+                "external_action_enabled": False,
+            }
+        ],
+        "status_events": [
+            {
+                "draft_id": "draft-outbox-feishu_mobile_report-feishu-report-001-decision-001",
+                "delivery_status": "manual_dispatch_completed",
+                "reviewer": "owner",
+                "event_time": "2026-06-15T10:00:00+08:00",
+                "notes": "Copied the private Feishu card manually.",
+                "evidence_ids": ["manual-feishu-001"],
+                "external_action_enabled": False,
+            }
+        ],
+    }
+    input_file = tmp_path / "delivery_status.json"
+    input_file.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "delivery-status",
+            str(input_file),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "delivery_status"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["recorded_count"] == 1
+    stored_file = tmp_path / "data" / "venus" / "delivery_status.json"
+    assert stored_file.exists()
+    assert "manual_dispatch_completed" in stored_file.read_text(encoding="utf-8")
+
+
 def test_cli_trend_scan_outputs_douyin_beauty_signal_report():
     completed = subprocess.run(
         [

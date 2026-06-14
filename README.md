@@ -93,6 +93,12 @@ Preview local delivery drafts for approved outbox items:
 venus delivery-drafts data/samples/delivery_drafts.json
 ```
 
+Preview the local delivery status ledger:
+
+```bash
+venus delivery-status data/samples/delivery_status.json
+```
+
 Build a local Douyin comment and live-message engagement report:
 
 ```bash
@@ -192,6 +198,7 @@ It also supports `/venus approval-ledger` to preview deduplicated approval decis
 It also supports `/venus approval-archive` to preview the local approval archive gate; approved low-risk entries can be persisted only through the isolated Venus JSON store, with no platform actions.
 It also supports `/venus action-outbox` to preview approval-driven local action queueing while keeping every platform delivery disabled.
 It also supports `/venus delivery-drafts` to preview local Feishu card and Airtable record-package drafts without sending or syncing anything.
+It also supports `/venus delivery-status` to preview local manual delivery status records without confirming or changing any external platform state.
 It also supports `/venus product-intel` to preview brand backing, filing checks, ingredient risk, supplier documents, test reports, controversies, and product retrieval tasks without live product-data reads.
 It also supports `/venus douyin` to preview comment and live-message reply queues without touching Douyin.
 It also supports `/venus ecommerce` to preview product catalog checks, inventory alerts, live product-card plans, promotions, and after-sales risk without touching shop, order, price, coupon, or inventory state.

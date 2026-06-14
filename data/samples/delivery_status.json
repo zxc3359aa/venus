@@ -1,0 +1,32 @@
+{
+  "source": "manual_delivery_status",
+  "workspace_root": ".",
+  "recorded_at": "2026-06-15T10:20:00+08:00",
+  "status_update_requested": false,
+  "approved_status_review": false,
+  "draft_records": [
+    {
+      "draft_id": "draft-outbox-feishu_mobile_report-feishu-report-001-decision-001",
+      "outbox_id": "outbox-feishu_mobile_report-feishu-report-001-decision-001",
+      "action_id": "feishu-report-001",
+      "action_type": "feishu_mobile_report",
+      "artifact_type": "feishu_card_draft",
+      "target_surface": "feishu",
+      "dispatch_state": "local_review_required",
+      "external_action_enabled": false
+    }
+  ],
+  "status_events": [
+    {
+      "draft_id": "draft-outbox-feishu_mobile_report-feishu-report-001-decision-001",
+      "delivery_status": "manual_dispatch_completed",
+      "reviewer": "owner",
+      "event_time": "2026-06-15T10:00:00+08:00",
+      "notes": "Copied the private Feishu card manually.",
+      "evidence_ids": [
+        "manual-feishu-001"
+      ],
+      "external_action_enabled": false
+    }
+  ]
+}

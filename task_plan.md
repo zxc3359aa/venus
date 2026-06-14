@@ -6,7 +6,7 @@ Build "Venus", a beauty and skincare agent system that helps the user's Douyin s
 
 ## Current Phase
 
-Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mobile entry, Douyin beauty trend-scan contract, product-intelligence dossier contract, competitor monitoring workflow, Airtable-ready operations export, dry-run approval inbox, dry-run approval decision ledger, controlled local approval decision archive, approval-driven local action outbox, local delivery draft adapters, static operations dashboard, local Agent Run orchestration layer, dry-run Agent Run eval gate, dry-run 24-hour scheduler plan, dry-run connector readiness audit, dry-run video-production package, dry-run content quality evaluation gate, dry-run content performance calibration loop, dry-run Douyin engagement connector, dry-run Douyin ecommerce operations connector, dry-run WeChat private-domain connector, dry-run Qianchuan/Xingtu commercial strategy connector, dry-run self-improvement/backup verification workflow, and dry-run versioned memory review workflow are implemented before live Douyin, WeChat, Qianchuan, Xingtu, BI, Airtable writes, product-data connector reads, shop/order changes, timers, media rendering, video publishing, or autonomous memory changes are enabled.
+Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mobile entry, Douyin beauty trend-scan contract, product-intelligence dossier contract, competitor monitoring workflow, Airtable-ready operations export, dry-run approval inbox, dry-run approval decision ledger, controlled local approval decision archive, approval-driven local action outbox, local delivery draft adapters, local delivery status ledger, static operations dashboard, local Agent Run orchestration layer, dry-run Agent Run eval gate, dry-run 24-hour scheduler plan, dry-run connector readiness audit, dry-run video-production package, dry-run content quality evaluation gate, dry-run content performance calibration loop, dry-run Douyin engagement connector, dry-run Douyin ecommerce operations connector, dry-run WeChat private-domain connector, dry-run Qianchuan/Xingtu commercial strategy connector, dry-run self-improvement/backup verification workflow, and dry-run versioned memory review workflow are implemented before live Douyin, WeChat, Qianchuan, Xingtu, BI, Airtable writes, product-data connector reads, shop/order changes, timers, media rendering, video publishing, or autonomous memory changes are enabled.
 
 ## Phases
 
@@ -33,7 +33,7 @@ Phase 8/9/10 bridge is in progress: the first local Venus MVP, dry-run Feishu mo
 
 ## Immediate Next Steps
 
-1. Decide whether the next slice should be real Airtable write connector, live connector permission adapter for Douyin/WeChat/Qianchuan/Xingtu, OpenAI Agents SDK runner, scheduler permission/audit adapter, ecommerce permission/audit adapter, delivery-status ledger, or memory write automation.
+1. Decide whether the next slice should be real Airtable write connector, live connector permission adapter for Douyin/WeChat/Qianchuan/Xingtu, OpenAI Agents SDK runner, scheduler permission/audit adapter, ecommerce permission/audit adapter, or memory write automation.
 2. Keep external actions disabled until permissions, logs, and approval gates are verified.
 3. Preserve Venus/Xiaolongxia isolation in every connector and mobile command.
 

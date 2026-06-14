@@ -270,3 +270,12 @@
 - Added CLI command: `venus delivery-drafts data/samples/delivery_drafts.json`.
 - Added Feishu dry-run command: `/venus delivery-drafts`.
 - Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, publishing action, ad spend, brand task, WeChat contact, memory state, backup state, or external platform state is changed.
+
+## Delivery Status Progress
+
+- Added the delivery status design spec and implementation plan.
+- Added a local `delivery_status` workflow for recording manual delivery outcomes for delivery drafts.
+- Added idempotent local status persistence, missing-draft blocking, unsupported-status blocking, external-event blocking, rollback plans, and storage-path reporting.
+- Added CLI command: `venus delivery-status data/samples/delivery_status.json`.
+- Added Feishu dry-run command: `/venus delivery-status`.
+- Preserved safety boundaries: no Feishu message, Airtable write, Douyin reply, publishing action, ad spend, brand task, WeChat contact, memory state, backup state, external delivery confirmation, or platform state is changed.
