@@ -92,6 +92,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "performance.json"
     )
     assert (
+        config.default_input_paths["evals"]
+        == tmp_workspace / "data" / "samples" / "evals.json"
+    )
+    assert (
         config.default_input_paths["trend-scan"]
         == tmp_workspace / "data" / "samples" / "trend_scan.json"
     )
@@ -177,6 +181,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus production" in result["card"]["summary"]
     assert "/venus content-eval" in result["card"]["summary"]
     assert "/venus performance" in result["card"]["summary"]
+    assert "/venus evals" in result["card"]["summary"]
     assert "/venus trend-scan" in result["card"]["summary"]
     assert "/venus product-intel" in result["card"]["summary"]
 
@@ -958,6 +963,97 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "evals.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_agent_run_eval",
+                "evaluated_at": "2026-06-14T22:00:00+08:00",
+                "live_autopilot_requested": True,
+                "agent_run": {
+                    "run_id": "venus-run-eval-001",
+                    "executed_workflows": [
+                        "trend_scan",
+                        "hotspot",
+                        "product_intel",
+                        "comments",
+                        "production",
+                        "content_eval",
+                        "performance",
+                        "douyin",
+                        "ecommerce",
+                        "wechat",
+                        "commercial",
+                        "improvement",
+                        "memory",
+                        "scheduler",
+                        "connectors",
+                        "monitoring",
+                        "airtable",
+                    ],
+                    "workflow_summaries": {
+                        "content_eval": {
+                            "publish_readiness_status": "blocked_by_claim_risk",
+                            "blocking_issue_count": 1,
+                            "approval_record_count": 2,
+                        },
+                        "performance": {
+                            "winner_count": 2,
+                            "underperformer_count": 1,
+                            "calibration_rule_count": 3,
+                            "approval_record_count": 2,
+                        },
+                        "connectors": {
+                            "ready_connector_count": 2,
+                            "blocked_connector_count": 3,
+                            "high_risk_connector_count": 1,
+                            "approval_record_count": 2,
+                        },
+                        "scheduler": {
+                            "due_job_count": 3,
+                            "blocked_job_count": 2,
+                            "approval_gated_job_count": 1,
+                            "approval_record_count": 2,
+                        },
+                        "memory": {
+                            "blocked_sensitive_candidate_count": 1,
+                            "approval_gated_action_count": 2,
+                        },
+                        "improvement": {
+                            "backup_issue_count": 1,
+                            "approval_gated_action_count": 4,
+                        },
+                    },
+                    "action_plan": [
+                        {
+                            "action_type": "draft_short_video",
+                            "approval_level": 1,
+                            "execution_state": "ready_for_internal_review",
+                            "external_action_enabled": False,
+                        },
+                        {
+                            "action_type": "feishu_mobile_report",
+                            "approval_level": 2,
+                            "execution_state": "blocked_until_approved",
+                            "external_action_enabled": False,
+                        },
+                        {
+                            "action_type": "qianchuan_budget_review",
+                            "approval_level": 4,
+                            "execution_state": "blocked_until_approved",
+                            "external_action_enabled": False,
+                        },
+                    ],
+                    "approval_records": [
+                        {"action_type": "feishu_mobile_report", "status": "pending"},
+                        {"action_type": "qianchuan_budget_review", "status": "pending"},
+                    ],
+                    "external_actions": [],
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "trend_scan.json").write_text(
         json.dumps(
             {
@@ -1376,6 +1472,32 @@ def test_run_feishu_entry_performance_routes_to_content_calibration_report(tmp_w
     assert result["card"]["result"]["workflow"] == "performance"
     assert result["card"]["result"]["result"]["summary"]["winner_count"] == 2
     assert result["card"]["result"]["result"]["leaderboard"][0]["video_id"] == "video-001"
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_evals_routes_to_agent_gate_report(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-evals",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:40:45+08:00",
+            "text": "/venus evals",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "evals"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "evals"
+    assert (
+        result["card"]["result"]["result"]["summary"]["readiness_status"]
+        == "blocked_by_connector_readiness"
+    )
+    assert result["card"]["result"]["result"]["failed_gates"][0]["gate_id"] == "connector_readiness"
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

@@ -215,3 +215,12 @@
 - Added Feishu dry-run command: `/venus performance`.
 - Integrated performance summaries into Agent Run when `performance` data is present.
 - Preserved safety boundaries: no live Douyin metric read, Feishu send, memory write, video draft execution, publish, reply, paid traffic action, or external platform action is executed, and `external_actions: []` remains enforced.
+
+## Agent Evals Progress
+
+- Added the agent evals design spec and implementation plan.
+- Added a local dry-run `evals` workflow for Agent Run safety gates covering required workflows, external action locks, approvals, privacy isolation, content claim safety, connector readiness, and scheduler/memory/backup safety.
+- Added approval records for live autopilot enablement review.
+- Added CLI command: `venus evals data/samples/evals.json`.
+- Added Feishu dry-run command: `/venus evals`.
+- Preserved safety boundaries: no OpenAI API call, live connector call, Feishu send, Douyin reply, video publish, ad spend, memory write, backup write, or external platform action is executed, and `external_actions: []` remains enforced.

@@ -11,6 +11,7 @@ from venus.connector_audit import build_connector_audit_report
 from venus.content import generate_hotspot_brief
 from venus.douyin_engagement import build_douyin_engagement_report
 from venus.ecommerce import build_ecommerce_report
+from venus.evals import build_eval_report
 from venus.memory import build_memory_report
 from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
@@ -53,6 +54,8 @@ class VenusOrchestrator:
             result = build_douyin_engagement_report(payload)
         elif workflow == "ecommerce":
             result = build_ecommerce_report(payload)
+        elif workflow == "evals":
+            result = build_eval_report(payload)
         elif workflow == "memory":
             result = build_memory_report(payload)
         elif workflow == "scheduler":

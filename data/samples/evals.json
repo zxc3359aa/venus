@@ -1,0 +1,85 @@
+{
+  "source": "manual_agent_run_eval",
+  "evaluated_at": "2026-06-14T22:00:00+08:00",
+  "live_autopilot_requested": true,
+  "agent_run": {
+    "run_id": "venus-run-eval-001",
+    "executed_workflows": [
+      "trend_scan",
+      "hotspot",
+      "product_intel",
+      "comments",
+      "production",
+      "content_eval",
+      "performance",
+      "douyin",
+      "ecommerce",
+      "wechat",
+      "commercial",
+      "improvement",
+      "memory",
+      "scheduler",
+      "connectors",
+      "monitoring",
+      "airtable"
+    ],
+    "workflow_summaries": {
+      "content_eval": {
+        "publish_readiness_status": "blocked_by_claim_risk",
+        "blocking_issue_count": 1,
+        "approval_record_count": 2
+      },
+      "performance": {
+        "winner_count": 2,
+        "underperformer_count": 1,
+        "calibration_rule_count": 3,
+        "approval_record_count": 2
+      },
+      "connectors": {
+        "ready_connector_count": 2,
+        "blocked_connector_count": 3,
+        "high_risk_connector_count": 1,
+        "approval_record_count": 2
+      },
+      "scheduler": {
+        "due_job_count": 3,
+        "blocked_job_count": 2,
+        "approval_gated_job_count": 1,
+        "approval_record_count": 2
+      },
+      "memory": {
+        "blocked_sensitive_candidate_count": 1,
+        "approval_gated_action_count": 2
+      },
+      "improvement": {
+        "backup_issue_count": 1,
+        "approval_gated_action_count": 4
+      }
+    },
+    "action_plan": [
+      {
+        "action_type": "draft_short_video",
+        "approval_level": 1,
+        "execution_state": "ready_for_internal_review",
+        "external_action_enabled": false
+      },
+      {
+        "action_type": "feishu_mobile_report",
+        "approval_level": 2,
+        "execution_state": "blocked_until_approved",
+        "external_action_enabled": false
+      },
+      {
+        "action_type": "qianchuan_budget_review",
+        "approval_level": 4,
+        "execution_state": "blocked_until_approved",
+        "external_action_enabled": false
+      }
+    ],
+    "approval_records": [
+      {"action_type": "feishu_mobile_report", "status": "pending"},
+      {"action_type": "qianchuan_budget_review", "status": "pending"}
+    ],
+    "external_actions": []
+  }
+}

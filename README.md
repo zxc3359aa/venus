@@ -129,6 +129,12 @@ Build a local content performance calibration report:
 venus performance data/samples/performance.json
 ```
 
+Build a local Agent Run eval gate report:
+
+```bash
+venus evals data/samples/evals.json
+```
+
 Build a local approval-gated Agent Run plan:
 
 ```bash
@@ -163,6 +169,7 @@ It also supports `/venus connectors` to preview connector permissions, audit log
 It also supports `/venus production` to preview scripts, shot lists, editing timelines, subtitles, and publishing drafts without rendering or publishing video.
 It also supports `/venus content-eval` to preview retention, interaction, comment, follow, persona, evidence, and claim-safety gates without publishing video.
 It also supports `/venus performance` to preview video metric winners, underperformers, calibration rules, and next-content actions without reading live Douyin metrics.
+It also supports `/venus evals` to preview Agent Run safety gates before live autopilot, connector writes, memory writes, replies, publishing, or ad spend are considered.
 It also supports `/venus trend-scan` to preview Douyin beauty/skincare hot topics, products, creators, comments, ingredients, tags, controversies, and refresh gaps without live platform reads.
 It also supports `/venus agent-run` to preview the next Venus operating cycle and pending approval records.
 
