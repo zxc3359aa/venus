@@ -38,7 +38,7 @@
 
 ## Next
 
-- Choose the next integration slice: analytics monitoring, Airtable sync, Douyin comment connector, or richer OpenAI Agents SDK orchestration.
+- Finish the local analytics monitoring slice, then choose the next integration slice: Airtable sync, Douyin comment connector, richer OpenAI Agents SDK orchestration, or dashboard artifact.
 
 ## Feishu Entry Progress
 
@@ -48,3 +48,12 @@
 - Routed hotspot, product, and comments commands through the existing Venus orchestrator.
 - Added card-ready response drafts with `external_actions: []` for every Feishu entry output.
 - Added CLI smoke command: `venus feishu data/samples/feishu_message.json`.
+
+## Analytics Monitoring Progress
+
+- Added the Phase 8 analytics monitoring design spec and implementation plan.
+- Added a local `monitoring` workflow for competitor, video, live, ad, comment, topic, and risk signals.
+- Added a deterministic competitor sample at `data/samples/competitors.json`.
+- Added leaderboard, hero metrics, risk watchlist, source coverage, and action opportunities.
+- Routed monitoring through the Venus orchestrator, CLI, and Feishu dry-run `/venus monitoring` command.
+- Preserved the safety boundary: monitoring output is internal analysis only and returns `external_actions: []`.

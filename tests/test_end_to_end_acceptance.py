@@ -46,7 +46,33 @@ def test_first_slice_acceptance_workflows():
             ]
         },
     )
+    monitoring = orchestrator.run(
+        "monitoring",
+        {
+            "competitors": [
+                {
+                    "handle": "成分党A",
+                    "videos": [
+                        {
+                            "title": "早C晚A翻车自查",
+                            "topic": "早C晚A翻车",
+                            "views": 120000,
+                            "likes": 9800,
+                            "comments": 1680,
+                            "shares": 2400,
+                            "completion_rate": 0.72,
+                            "is_ad": False,
+                            "high_risk_comments": ["敏感肌会不会烂脸"],
+                        }
+                    ],
+                    "live_sessions": [{"duration_minutes": 60}],
+                }
+            ]
+        },
+    )
 
     assert hotspot["external_actions"] == []
     assert product["result"]["forbidden_claims"] == ["100%修复屏障"]
     assert comments["result"]["summary"]["approval_gated"] == 1
+    assert monitoring["external_actions"] == []
+    assert monitoring["result"]["opportunities"][0]["action_type"] == "film"

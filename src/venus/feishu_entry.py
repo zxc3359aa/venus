@@ -16,6 +16,7 @@ COMMAND_APPROVAL_LEVELS = {
     "hotspot": 1,
     "product": 1,
     "comments": 1,
+    "monitoring": 1,
     "approve": 2,
 }
 
@@ -43,6 +44,7 @@ class FeishuConfig:
                 "hotspot": root / "data" / "samples" / "hotspots.json",
                 "product": root / "data" / "samples" / "products.json",
                 "comments": root / "data" / "samples" / "comments.json",
+                "monitoring": root / "data" / "samples" / "competitors.json",
             },
         )
         self.validate_isolation()
@@ -150,7 +152,7 @@ def run_feishu_entry(
     if command.name == "help":
         card = _status_card(
             "Venus command help",
-            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus comments, /venus approve <id> <decision>",
+            "Available commands: /venus help, /venus status, /venus hotspot, /venus product, /venus comments, /venus monitoring, /venus approve <id> <decision>",
             active_config,
         )
     elif command.name == "status":
@@ -164,7 +166,7 @@ def run_feishu_entry(
             "Unsupported Venus command",
             "Unsupported Venus command. Send /venus help to see available commands.",
         )
-    elif command.name in {"hotspot", "product", "comments"}:
+    elif command.name in {"hotspot", "product", "comments", "monitoring"}:
         card = _workflow_report_card(command, active_config)
     elif command.name == "approve":
         approval = create_approval_record(
@@ -254,8 +256,10 @@ def _workflow_report_card(command: FeishuCommand, config: FeishuConfig) -> dict[
         "hotspot": "hotspots",
         "product": "products",
         "comments": "comments",
+        "monitoring": "competitors",
     }[command.name]
-    result = VenusOrchestrator().run(command.name, {payload_key: records})
+    payload = records if command.name == "monitoring" else {payload_key: records}
+    result = VenusOrchestrator().run(command.name, payload)
     result = _normalize_report_result(command.name, result)
     return {
         "type": "report",
@@ -295,6 +299,8 @@ def _report_summary(command_name: str, result: dict[str, Any]) -> str:
         return f"Product risk level: {data['risk_level']}"
     if command_name == "comments":
         return f"Approval-gated replies: {data['approval_gated']}"
+    if command_name == "monitoring":
+        return f"Top monitored account: {data['summary']['top_account']}"
     return "Venus report generated."
 
 

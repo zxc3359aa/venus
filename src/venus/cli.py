@@ -11,7 +11,7 @@ from venus.orchestrator import VenusOrchestrator
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="venus")
-    parser.add_argument("workflow", choices=["hotspot", "product", "comments", "feishu"])
+    parser.add_argument("workflow", choices=["hotspot", "product", "comments", "monitoring", "feishu"])
     parser.add_argument("input", help="Path to a JSON input file")
     args = parser.parse_args(argv)
 
@@ -33,6 +33,8 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
         return {"products": records}
     if workflow == "comments":
         return {"comments": records}
+    if workflow == "monitoring":
+        return records
     raise ValueError(f"Unsupported Venus workflow: {workflow}")
 
 

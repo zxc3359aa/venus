@@ -4,6 +4,7 @@ from typing import Any
 
 from venus.comments import analyze_comments
 from venus.content import generate_hotspot_brief
+from venus.monitoring import build_monitoring_report
 from venus.persona import build_persona_profile
 from venus.product_research import build_product_research_card
 
@@ -23,6 +24,8 @@ class VenusOrchestrator:
             result = build_product_research_card(products[0])
         elif workflow == "comments":
             result = analyze_comments(list(payload["comments"]), profile)
+        elif workflow == "monitoring":
+            result = build_monitoring_report(payload)
         else:
             raise ValueError(f"Unsupported Venus workflow: {workflow}")
 

@@ -31,6 +31,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         config.default_input_paths["comments"]
         == tmp_workspace / "data" / "samples" / "comments.json"
     )
+    assert (
+        config.default_input_paths["monitoring"]
+        == tmp_workspace / "data" / "samples" / "competitors.json"
+    )
 
 
 def test_feishu_config_rejects_xiaolongxia_namespace(tmp_workspace):
@@ -99,6 +103,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert result["external_actions"] == []
     assert result["card"]["type"] == "status"
     assert "/venus hotspot" in result["card"]["summary"]
+    assert "/venus monitoring" in result["card"]["summary"]
 
 
 def test_run_feishu_entry_status_redacts_secret_like_values(tmp_workspace):
@@ -186,6 +191,32 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "competitors.json").write_text(
+        json.dumps(
+            {
+                "competitors": [
+                    {
+                        "handle": "成分党A",
+                        "videos": [
+                            {
+                                "title": "早C晚A翻车自查",
+                                "topic": "早C晚A翻车",
+                                "views": 120000,
+                                "likes": 9800,
+                                "comments": 1680,
+                                "shares": 2400,
+                                "completion_rate": 0.72,
+                                "is_ad": False,
+                            }
+                        ],
+                        "live_sessions": [{"duration_minutes": 60}],
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_run_feishu_entry_hotspot_routes_to_orchestrator(tmp_workspace):
@@ -248,6 +279,27 @@ def test_run_feishu_entry_comments_keeps_reply_drafts_approval_gated(tmp_workspa
     assert result["card"]["type"] == "report"
     assert result["card"]["result"]["workflow"] == "comments"
     assert result["card"]["result"]["result"]["approval_gated"] >= 1
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_monitoring_routes_to_orchestrator(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-monitoring",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-14T13:37:30+08:00",
+            "text": "/venus monitoring",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "monitoring"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "monitoring"
+    assert result["card"]["result"]["result"]["summary"]["top_account"] == "成分党A"
     assert result["external_actions"] == []
 
 

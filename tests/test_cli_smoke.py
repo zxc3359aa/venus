@@ -28,6 +28,37 @@ def test_orchestrator_routes_hotspot_workflow():
     assert result["result"]["top_topic"] == "早C晚A翻车"
 
 
+def test_orchestrator_routes_monitoring_workflow():
+    orchestrator = VenusOrchestrator()
+    result = orchestrator.run(
+        "monitoring",
+        {
+            "competitors": [
+                {
+                    "handle": "成分党A",
+                    "videos": [
+                        {
+                            "title": "早C晚A翻车自查",
+                            "topic": "早C晚A翻车",
+                            "views": 120000,
+                            "likes": 9800,
+                            "comments": 1680,
+                            "shares": 2400,
+                            "completion_rate": 0.72,
+                            "is_ad": False,
+                        }
+                    ],
+                    "live_sessions": [{"duration_minutes": 60}],
+                }
+            ]
+        },
+    )
+
+    assert result["workflow"] == "monitoring"
+    assert result["external_actions"] == []
+    assert result["result"]["summary"]["top_account"] == "成分党A"
+
+
 def test_cli_hotspot_outputs_json(tmp_path):
     payload = [
         {
@@ -52,6 +83,26 @@ def test_cli_hotspot_outputs_json(tmp_path):
     output = json.loads(completed.stdout)
     assert output["workflow"] == "hotspot"
     assert output["result"]["top_topic"] == "早C晚A翻车"
+
+
+def test_cli_monitoring_outputs_json():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "monitoring",
+            "data/samples/competitors.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "monitoring"
+    assert output["external_actions"] == []
+    assert output["result"]["summary"]["top_account"] == "成分党A"
 
 
 def test_cli_feishu_outputs_dry_run_card():
