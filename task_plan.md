@@ -6,18 +6,18 @@ Build "Venus", a beauty and skincare agent system that helps the user's Douyin s
 
 ## Current Phase
 
-Phase 2 is in progress: the design spec is approved, and the first-slice MVP implementation plan has been written for user execution choice. The first practical Venus version includes all three MVP centers: content/trend intelligence, product research, and persona/style learning.
+Phase 7 is next: the first local Venus MVP is implemented and verified. The first practical Venus version includes all three MVP centers: content/trend intelligence, product research, and persona/style learning.
 
 ## Phases
 
 | Phase | Status | Purpose | Exit Criteria |
 |---|---|---|---|
 | 1. Product and system design | Complete | Clarify scope, module boundaries, data flow, safety limits, and MVP sequence. | User approved the written design spec. |
-| 2. Implementation plan | In progress | Break the approved design into executable milestones, files, services, connectors, and tests. | User chooses execution approach for the saved implementation plan. |
-| 3. Local project scaffold | Pending | Create the repo structure, environment templates, docs, and first runnable agent skeleton. | Local smoke command runs. |
-| 4. Knowledge and memory layer | Pending | Define Venus memory, style profile, skincare philosophy, content library, product database, and privacy controls. | Data model and basic CRUD flow work locally. |
-| 5. Trend and research pipeline | Pending | Build source collection, normalization, scoring, reports, and script ideation for Douyin beauty/skincare topics. | Sample report and script pack generated from test inputs. |
-| 6. Content creation workflow | Pending | Produce short-video scripts, shot lists, editing briefs, and review gates in the user's voice. | One end-to-end content brief can be generated and reviewed. |
+| 2. Implementation plan | Complete | Break the approved design into executable milestones, files, services, connectors, and tests. | Implementation plan saved and reviewed. |
+| 3. Local project scaffold | Complete | Create the repo structure, environment templates, docs, and first runnable agent skeleton. | Local smoke commands run. |
+| 4. Knowledge and memory layer | Complete | Define Venus memory, style profile, skincare philosophy, content library, product database, and privacy controls. | Local persona and storage tests pass. |
+| 5. Trend and research pipeline | Complete | Build source collection, normalization, scoring, reports, and script ideation for Douyin beauty/skincare topics. | Sample report and script pack generated from test inputs. |
+| 6. Content creation workflow | Complete | Produce short-video scripts, shot lists, editing briefs, and review gates in the user's voice. | End-to-end content brief can be generated and reviewed. |
 | 7. Feishu mobile entry | Pending | Add a Feishu interface isolated from the existing "Xiaolongxia" agent. | Venus receives and responds through separate Feishu identity/config/files. |
 | 8. Analytics and monitoring | Pending | Add dashboards for competitors, videos, comments, product risk, content performance, and growth loops. | Monitoring reports can be refreshed and inspected. |
 | 9. Platform integrations | Pending | Add Douyin comments, livestream, e-commerce, Qianchuan, Xingtu, WeChat mini-program, and enterprise WeChat flows as approved connectors. | Each connector has permissions, logs, and rollback controls. |
@@ -33,9 +33,9 @@ Phase 2 is in progress: the design spec is approved, and the first-slice MVP imp
 
 ## Immediate Next Steps
 
-1. Commit the MVP implementation plan.
-2. Ask the user to choose Subagent-Driven or Inline Execution.
-3. Begin executing the saved plan after the user chooses an approach.
+1. Choose the next integration slice: Feishu mobile entry, Airtable sync, Douyin comment connector, or richer OpenAI Agents SDK orchestration.
+2. Write a focused follow-up plan for the chosen slice.
+3. Implement the chosen slice with tests and approval gates.
 
 ## Errors Encountered
 
