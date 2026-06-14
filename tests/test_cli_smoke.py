@@ -52,3 +52,25 @@ def test_cli_hotspot_outputs_json(tmp_path):
     output = json.loads(completed.stdout)
     assert output["workflow"] == "hotspot"
     assert output["result"]["top_topic"] == "早C晚A翻车"
+
+
+def test_cli_feishu_outputs_dry_run_card():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "feishu",
+            "data/samples/feishu_message.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "feishu"
+    assert output["dry_run"] is True
+    assert output["command"]["name"] == "hotspot"
+    assert output["external_actions"] == []
+    assert output["card"]["type"] == "report"

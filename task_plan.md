@@ -6,7 +6,7 @@ Build "Venus", a beauty and skincare agent system that helps the user's Douyin s
 
 ## Current Phase
 
-Phase 7 is next: the first local Venus MVP is implemented and verified. The first practical Venus version includes all three MVP centers: content/trend intelligence, product research, and persona/style learning.
+Phase 8 is next: the first local Venus MVP and dry-run Feishu mobile entry are implemented and verified. The next practical Venus slice should add analytics, monitoring, or the next approved connector.
 
 ## Phases
 
@@ -18,7 +18,7 @@ Phase 7 is next: the first local Venus MVP is implemented and verified. The firs
 | 4. Knowledge and memory layer | Complete | Define Venus memory, style profile, skincare philosophy, content library, product database, and privacy controls. | Local persona and storage tests pass. |
 | 5. Trend and research pipeline | Complete | Build source collection, normalization, scoring, reports, and script ideation for Douyin beauty/skincare topics. | Sample report and script pack generated from test inputs. |
 | 6. Content creation workflow | Complete | Produce short-video scripts, shot lists, editing briefs, and review gates in the user's voice. | End-to-end content brief can be generated and reviewed. |
-| 7. Feishu mobile entry | Pending | Add a Feishu interface isolated from the existing "Xiaolongxia" agent. | Venus receives and responds through separate Feishu identity/config/files. |
+| 7. Feishu mobile entry | Complete | Add a Feishu interface isolated from the existing "Xiaolongxia" agent. | Local dry-run Feishu entry parses `/venus` commands, routes safe workflows, and returns card-ready drafts with no external actions. |
 | 8. Analytics and monitoring | Pending | Add dashboards for competitors, videos, comments, product risk, content performance, and growth loops. | Monitoring reports can be refreshed and inspected. |
 | 9. Platform integrations | Pending | Add Douyin comments, livestream, e-commerce, Qianchuan, Xingtu, WeChat mini-program, and enterprise WeChat flows as approved connectors. | Each connector has permissions, logs, and rollback controls. |
 | 10. Self-improvement and backup | Pending | Add evals, feedback loops, audit logs, safe learning, backups, and recovery. | Recurring improvement and backup checks are verified. |
@@ -33,7 +33,7 @@ Phase 7 is next: the first local Venus MVP is implemented and verified. The firs
 
 ## Immediate Next Steps
 
-1. Choose the next integration slice: Feishu mobile entry, Airtable sync, Douyin comment connector, or richer OpenAI Agents SDK orchestration.
+1. Choose the next integration slice: analytics monitoring, Airtable sync, Douyin comment connector, or richer OpenAI Agents SDK orchestration.
 2. Write a focused follow-up plan for the chosen slice.
 3. Implement the chosen slice with tests and approval gates.
 

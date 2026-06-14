@@ -38,4 +38,13 @@
 
 ## Next
 
-- Choose the next integration slice: Feishu mobile entry, Airtable sync, Douyin comment connector, or richer OpenAI Agents SDK orchestration.
+- Choose the next integration slice: analytics monitoring, Airtable sync, Douyin comment connector, or richer OpenAI Agents SDK orchestration.
+
+## Feishu Entry Progress
+
+- Added a local dry-run Feishu entry layer for Phase 7.
+- Added Venus-only `VENUS_FEISHU_` configuration defaults and Xiaolongxia isolation checks.
+- Added `/venus` command parsing for help, status, hotspot, product, comments, and approval intent.
+- Routed hotspot, product, and comments commands through the existing Venus orchestrator.
+- Added card-ready response drafts with `external_actions: []` for every Feishu entry output.
+- Added CLI smoke command: `venus feishu data/samples/feishu_message.json`.

@@ -39,4 +39,12 @@ Analyze comments and draft approval-gated replies:
 venus comments data/samples/comments.json
 ```
 
+Run the local Feishu dry-run entry:
+
+```bash
+venus feishu data/samples/feishu_message.json
+```
+
+This command parses a Feishu-like `/venus` message and returns a card-ready JSON draft. It does not send Feishu messages or perform external actions.
+
 The local MVP never performs external actions. Public replies, publishing, lead routing, and ad spend remain approval-gated future integrations.
