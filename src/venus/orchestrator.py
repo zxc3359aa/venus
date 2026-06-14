@@ -4,6 +4,7 @@ from typing import Any
 
 from venus.action_outbox import build_action_outbox
 from venus.agent_run import build_agent_run_plan
+from venus.agents_sdk_runtime import build_agents_sdk_manifest
 from venus.approval_archive import build_approval_archive
 from venus.approval_inbox import build_approval_inbox
 from venus.approval_ledger import build_approval_ledger
@@ -71,6 +72,8 @@ class VenusOrchestrator:
             result = build_connector_audit_report(payload)
         elif workflow == "agent_run":
             result = build_agent_run_plan(payload)
+        elif workflow == "agents_sdk":
+            result = build_agents_sdk_manifest(payload)
         elif workflow == "douyin":
             result = build_douyin_engagement_report(payload)
         elif workflow == "ecommerce":

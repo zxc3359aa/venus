@@ -234,6 +234,16 @@
 - Added Feishu dry-run command: `/venus evals`.
 - Preserved safety boundaries: no OpenAI API call, live connector call, Feishu send, Douyin reply, video publish, ad spend, memory write, backup write, or external platform action is executed, and `external_actions: []` remains enforced.
 
+## Agents SDK Runtime Manifest Progress
+
+- Added the Agents SDK runtime manifest design spec and implementation plan.
+- Added a local `agents_sdk` workflow that turns Venus workflows, eval status, tool candidates, guardrails, and environment readiness into an OpenAI Agents SDK-ready manifest.
+- Added readiness blockers for missing `OPENAI_API_KEY`, missing `openai-agents`, failed eval readiness, and external tool overrides.
+- Added level-4 approval records for live SDK enablement requests while keeping execution manifest-only.
+- Added CLI command: `venus agents-sdk data/samples/agents_sdk.json`.
+- Added Feishu dry-run command: `/venus agents-sdk`.
+- Preserved safety boundaries: no OpenAI API call, model run, trace upload, hosted eval, deployment, Feishu send, Douyin reply, Airtable write, ad spend, WeChat contact, memory write, backup write, or external action is executed.
+
 ## Approval Inbox Progress
 
 - Added the approval inbox design spec and implementation plan.

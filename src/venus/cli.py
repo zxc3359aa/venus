@@ -42,6 +42,7 @@ def main(argv: list[str] | None = None) -> int:
             "performance",
             "trend-scan",
             "agent-run",
+            "agents-sdk",
             "dashboard",
             "feishu",
         ],
@@ -129,12 +130,16 @@ def _payload_for(workflow: str, records: Any) -> dict[str, Any]:
         return records
     if workflow == "agent-run":
         return records
+    if workflow == "agents-sdk":
+        return records
     raise ValueError(f"Unsupported Venus workflow: {workflow}")
 
 
 def _orchestrator_workflow(workflow: str) -> str:
     if workflow == "agent-run":
         return "agent_run"
+    if workflow == "agents-sdk":
+        return "agents_sdk"
     if workflow == "airtable-sync":
         return "airtable_sync_plan"
     if workflow == "approval-ledger":

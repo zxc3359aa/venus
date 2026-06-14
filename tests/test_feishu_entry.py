@@ -100,6 +100,10 @@ def test_feishu_config_defaults_are_venus_only(tmp_workspace):
         == tmp_workspace / "data" / "samples" / "evals.json"
     )
     assert (
+        config.default_input_paths["agents-sdk"]
+        == tmp_workspace / "data" / "samples" / "agents_sdk.json"
+    )
+    assert (
         config.default_input_paths["approvals"]
         == tmp_workspace / "data" / "samples" / "approvals.json"
     )
@@ -211,6 +215,7 @@ def test_run_feishu_entry_help_returns_card_draft(tmp_workspace):
     assert "/venus content-eval" in result["card"]["summary"]
     assert "/venus performance" in result["card"]["summary"]
     assert "/venus evals" in result["card"]["summary"]
+    assert "/venus agents-sdk" in result["card"]["summary"]
     assert "/venus approvals" in result["card"]["summary"]
     assert "/venus approval-ledger" in result["card"]["summary"]
     assert "/venus approval-archive" in result["card"]["summary"]
@@ -1128,6 +1133,43 @@ def _write_sample_inputs(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (samples / "agents_sdk.json").write_text(
+        json.dumps(
+            {
+                "source": "manual_agents_sdk_review",
+                "generated_at": "2026-06-15T12:00:00+08:00",
+                "live_sdk_requested": False,
+                "environment": {
+                    "OPENAI_API_KEY_configured": False,
+                    "openai_agents_installed": False,
+                    "deployment_manager_ready": False,
+                },
+                "agent_run": {
+                    "run_id": "venus-run-sdk-001",
+                    "executed_workflows": [
+                        "trend_scan",
+                        "product_intel",
+                        "content_eval",
+                        "performance",
+                        "connectors",
+                        "scheduler",
+                        "memory",
+                    ],
+                    "action_plan": [],
+                    "external_actions": [],
+                },
+                "eval_report": {
+                    "summary": {
+                        "autopilot_ready": False,
+                        "readiness_status": "blocked_by_connector_readiness",
+                    }
+                },
+                "tool_overrides": [],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (samples / "approvals.json").write_text(
         json.dumps(
             {
@@ -1883,6 +1925,32 @@ def test_run_feishu_entry_evals_routes_to_agent_gate_report(tmp_workspace):
         == "blocked_by_connector_readiness"
     )
     assert result["card"]["result"]["result"]["failed_gates"][0]["gate_id"] == "connector_readiness"
+    assert result["card"]["result"]["result"]["external_actions"] == []
+    assert result["external_actions"] == []
+
+
+def test_run_feishu_entry_agents_sdk_routes_to_runtime_manifest(tmp_workspace):
+    _write_sample_inputs(tmp_workspace)
+
+    result = run_feishu_entry(
+        {
+            "message_id": "msg-agents-sdk",
+            "chat_id": "chat-001",
+            "sender_id": "owner-001",
+            "timestamp": "2026-06-15T12:01:00+08:00",
+            "text": "/venus agents-sdk",
+        },
+        workspace_root=tmp_workspace,
+    )
+
+    assert result["command"]["name"] == "agents-sdk"
+    assert result["card"]["type"] == "report"
+    assert result["card"]["result"]["workflow"] == "agents_sdk"
+    assert result["card"]["result"]["result"]["summary"]["tool_count"] == 16
+    assert (
+        result["card"]["result"]["result"]["deployment_readiness"]["status"]
+        == "blocked_by_sdk_readiness"
+    )
     assert result["card"]["result"]["result"]["external_actions"] == []
     assert result["external_actions"] == []
 

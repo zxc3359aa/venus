@@ -392,6 +392,28 @@ def test_cli_evals_outputs_agent_gate_report():
     assert output["result"]["failed_gates"][0]["gate_id"] == "connector_readiness"
 
 
+def test_cli_agents_sdk_outputs_runtime_manifest():
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "venus.cli",
+            "agents-sdk",
+            "data/samples/agents_sdk.json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output = json.loads(completed.stdout)
+    assert output["workflow"] == "agents_sdk"
+    assert output["external_actions"] == []
+    assert output["result"]["sdk_mode"] == "manifest_only"
+    assert output["result"]["summary"]["tool_count"] == 16
+    assert output["result"]["deployment_readiness"]["status"] == "blocked_by_sdk_readiness"
+
+
 def test_cli_approvals_outputs_manual_review_inbox():
     completed = subprocess.run(
         [
