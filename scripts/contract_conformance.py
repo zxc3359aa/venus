@@ -22,6 +22,12 @@ from venus.modules.m7_ads import (
     build_m7_ads_report,
     build_xingtu_accept_order_action,
 )
+from venus.modules.m8_benchmark import build_m8_benchmark_report
+from venus.modules.m9_evolution import (
+    build_data_delete_action,
+    build_m9_evolution_report,
+    build_policy_change_action,
+)
 
 
 def main() -> int:
@@ -35,6 +41,8 @@ def main() -> int:
     failures.extend(_check_m5_contracts())
     failures.extend(_check_m6_contracts())
     failures.extend(_check_m7_contracts())
+    failures.extend(_check_m8_contracts())
+    failures.extend(_check_m9_contracts())
 
     if failures:
         print("contract-conformance: FAIL")
@@ -325,6 +333,138 @@ def _check_m7_contracts() -> list[str]:
             failures.append("M7 对外动作必须不可逆且带 idempotency_key")
         elif action.data_class != DataClass.C2_SENSITIVE:
             failures.append("M7 投流/星图动作必须标记为 C2_SENSITIVE")
+    return failures
+
+
+def _check_m8_contracts() -> list[str]:
+    source = Tagged(
+        payload={
+            "data_source": {"name": "contract-licensed-provider", "tier": "B", "authorized": True},
+            "creators": [
+                {
+                    "creator_id": "contract-creator",
+                    "handle": "契约对标样本",
+                    "style_tags": ["evidence", "review"],
+                    "metrics": {"engagement_rate": 0.06, "avg_views": 50000, "ad_post_ratio": 0.2},
+                    "previous_metrics": {"engagement_rate": 0.05, "avg_views": 42000},
+                    "videos": [{"id": "contract-video", "views": 52000, "completion_rate": 0.36, "ad": False}],
+                    "live": {"sessions": 2, "avg_gpm": 3200, "peak_online": 1000},
+                }
+            ],
+        },
+        data_class=DataClass.C1_INTERNAL,
+    )
+    try:
+        report = build_m8_benchmark_report(source)
+    except NotImplementedError:
+        return ["M8 对标模块尚未实现"]
+
+    failures = []
+    if not isinstance(report, Tagged):
+        failures.append("M8 输出必须是 Tagged")
+    if report.data_class != DataClass.C1_INTERNAL or report.pii:
+        failures.append("M8 输出必须是无 PII 的 C1_INTERNAL")
+    if report.payload.get("external_actions") != []:
+        failures.append("M8 报告不应直接产生外部动作")
+    source_boundary = report.payload.get("source_boundary") or {}
+    if not source_boundary.get("tier_c_blocked"):
+        failures.append("M8 必须声明 Tier C 阻断")
+    matrix = report.payload.get("benchmark_matrix") or {}
+    if matrix.get("method") != "percentile_trend_baseline_comparison":
+        failures.append("M8 必须使用分位、趋势与基准比较方法")
+    timeseries = report.payload.get("timeseries_sink") or {}
+    if timeseries.get("table") != "venus_metric_timeseries":
+        failures.append("M8 对标时序指标必须落 venus_metric_timeseries")
+    polling = report.payload.get("polling_policy") or {}
+    if polling.get("mode") != "near_real_time_configurable":
+        failures.append("M8 必须体现近实时可配置轮询")
+    return failures
+
+
+def _check_m9_contracts() -> list[str]:
+    source = Tagged(
+        payload={
+            "eval_runs": [
+                {"module": "m4", "kpi": "reply_safety", "score": 0.72, "threshold": 0.85},
+                {"module": "m7", "kpi": "roas_guardrail", "score": 0.78, "threshold": 0.85},
+            ],
+            "incidents": [{"module": "m4", "kind": "compliance_alert", "count": 2}],
+            "candidate_changes": [
+                {
+                    "change_id": "prompt-m4-contract",
+                    "category": "prompt_parameter",
+                    "summary": "降低回复草稿医疗化表达",
+                    "expected_gain": 0.05,
+                    "rollback_ref": "prompt-m4-current",
+                },
+                {
+                    "change_id": "core-identity-contract",
+                    "category": "core_identity",
+                    "summary": "修改核心人设",
+                    "expected_gain": 0.1,
+                },
+            ],
+            "backup": {
+                "backup_id": "contract-backup",
+                "copies": [
+                    {
+                        "id": "local-db",
+                        "medium": "disk",
+                        "location": "primary_cn",
+                        "encrypted": True,
+                        "checksum": "sha256:a",
+                    },
+                    {
+                        "id": "object-store",
+                        "medium": "object",
+                        "location": "secondary_cn",
+                        "encrypted": True,
+                        "checksum": "sha256:b",
+                    },
+                    {
+                        "id": "offline-archive",
+                        "medium": "offline",
+                        "location": "offline_cn",
+                        "encrypted": True,
+                        "checksum": "sha256:c",
+                    },
+                ],
+                "restore_drill": {"status": "passed", "checksum_match": True, "sampled_restore_count": 2},
+            },
+        },
+        data_class=DataClass.C2_SENSITIVE,
+    )
+    try:
+        report = build_m9_evolution_report(source)
+        policy = build_policy_change_action(change_id="core-identity-contract", category="core_identity")
+        delete = build_data_delete_action(subject_ref="lead-hash-contract", reason="user_requested_erasure")
+    except NotImplementedError:
+        return ["M9 自进化与备份模块尚未实现"]
+
+    failures = []
+    if not isinstance(report, Tagged):
+        failures.append("M9 输出必须是 Tagged")
+    if report.data_class != DataClass.C2_SENSITIVE or report.pii:
+        failures.append("M9 输出必须是无 PII 的 C2_SENSITIVE")
+    if report.payload.get("external_actions") != []:
+        failures.append("M9 报告不应直接产生外部动作")
+    eval_sink = report.payload.get("eval_runs_sink") or {}
+    if eval_sink.get("table") != "venus_eval_runs":
+        failures.append("M9 评估记录必须落 venus_eval_runs")
+    loop = report.payload.get("improvement_loop") or {}
+    if loop.get("allowed_scope") != "authorized_and_privacy_matrix_compliant_only":
+        failures.append("M9 自进化必须受授权与隐私矩阵约束")
+    backup = report.payload.get("backup_plan") or {}
+    if backup.get("strategy") != "3-2-1" or backup.get("status") != "restore_verified":
+        failures.append("M9 备份必须体现 3-2-1、加密、校验和恢复演练")
+    if not isinstance(policy, Action) or policy.kind != "change_governed_policy":
+        failures.append("M9 高风险策略变更必须是 Action")
+    elif not policy.payload.get("requires_approval") or not policy.payload.get("rollback_required"):
+        failures.append("M9 高风险策略变更必须先审批且可回滚")
+    if not isinstance(delete, Action) or delete.kind != "delete_data":
+        failures.append("M9 数据删除必须是 Action")
+    elif delete.reversible or not delete.payload.get("requires_approval"):
+        failures.append("M9 数据删除必须不可逆且先审批")
     return failures
 
 
