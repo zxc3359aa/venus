@@ -38,6 +38,11 @@ from venus.modules.m5_video_editing import (
     build_video_publish_action,
     validate_asset_authorizations,
 )
+from venus.modules.m6_private_domain import (
+    build_m6_private_domain_report,
+    build_wecom_add_contact_action,
+    validate_miniprogram_answer,
+)
 from venus.privacy import DefaultPrivacyFirewall, PrivacyError
 
 
@@ -631,3 +636,86 @@ def test_m5_publish_action_is_idempotent_and_requires_approval():
     assert action.idempotency_key == "publish-douyin-m5-project-001"
     assert action.reversible is False
     assert action.data_class == DataClass.C1_INTERNAL
+
+
+def test_m6_miniprogram_answer_requires_consent_and_has_medical_guardrails():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "question": "脸烂了是不是激素脸？能不能直接根治？",
+            "consent": {"privacy_notice_accepted": False},
+            "lead": {"lead_hash": "lead-hash-001", "skin_type": "sensitive"},
+        },
+    )
+
+    report = build_m6_private_domain_report(source)
+
+    assert report.data_class == DataClass.C1_INTERNAL
+    assert report.pii is False
+    assert report.payload["module"] == "m6_private_domain"
+    assert report.payload["pipl_consent"]["status"] == "blocked_pending_consent"
+    assert report.payload["pipl_consent"]["requires_explicit_notice"] is True
+    assert validate_miniprogram_answer(report.payload["answer_draft"]) == []
+    assert "医疗诊断" in report.payload["safety_boundary"]["medical_boundary"]
+    assert report.payload["wecom_handoff"]["status"] == "blocked_pending_consent"
+    assert report.payload["external_actions"] == []
+
+
+def test_m6_builds_redacted_lead_and_cohort_funnel_when_consented():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "question": "敏感肌早C晚A刺痛怎么办？",
+            "consent": {"privacy_notice_accepted": True, "marketing_opt_in": True},
+            "lead": {
+                "lead_hash": "lead-hash-002",
+                "skin_type": "sensitive",
+                "concerns": ["barrier", "retinol"],
+            },
+            "funnel_events": [
+                {"cohort": "2026-06", "stage": "visit", "count": 100, "spend": 300.0},
+                {"cohort": "2026-06", "stage": "qa_completed", "count": 64},
+                {"cohort": "2026-06", "stage": "wecom_intent", "count": 36},
+                {"cohort": "2026-06", "stage": "wecom_added", "count": 24},
+                {"cohort": "2026-06", "stage": "purchase", "count": 9, "revenue": 900.0},
+                {"cohort": "2026-06", "stage": "retained_7d", "count": 7},
+            ],
+        },
+    )
+
+    report = build_m6_private_domain_report(source)
+    rendered = str(report.payload)
+
+    assert report.payload["lead_record"]["table"] == "venus_leads"
+    assert report.payload["lead_record"]["data_class"] == "C3_SECRET_AT_REST"
+    assert report.payload["lead_record"]["stored_fields"] == ["lead_hash", "skin_type", "concerns", "consent"]
+    assert "phone" not in rendered
+    assert "name" not in rendered
+    assert report.payload["funnel_dashboard"]["method"] == "cohort_conversion_retention_payback"
+    assert report.payload["funnel_dashboard"]["cohorts"][0]["cohort"] == "2026-06"
+    assert report.payload["funnel_dashboard"]["cohorts"][0]["payback_days"] is not None
+    assert report.payload["wecom_handoff"]["status"] == "draft_ready"
+    assert report.payload["external_actions"] == []
+
+
+def test_m6_wecom_add_contact_action_is_idempotent_and_requires_approval():
+    action = build_wecom_add_contact_action(lead_id="lead-hash-002", contact_ref="wecom-user-hash")
+
+    assert isinstance(action, Action)
+    assert action.kind == "add_contact"
+    assert action.idempotency_key == "add-contact-lead-hash-002"
+    assert action.reversible is False
+    assert action.data_class == DataClass.C1_INTERNAL
+    assert action.payload["platform"] == "wecom"
+    assert action.payload["official_api_status"] == "pending_context7_verification"
+
+
+def test_m6_rejects_c3_or_pii_private_lead_payloads():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"lead": {"phone": "13800138000"}, "question": "我的私域用户问题"},
+    )
+
+    with pytest.raises(ValueError, match="C3"):
+        build_m6_private_domain_report(source)

@@ -13,6 +13,10 @@ from venus.modules.m3_persona_memory import (
 )
 from venus.modules.m4_community import build_m4_community_report, build_reply_action
 from venus.modules.m5_video_editing import build_m5_video_package, build_video_publish_action
+from venus.modules.m6_private_domain import (
+    build_m6_private_domain_report,
+    build_wecom_add_contact_action,
+)
 
 
 def main() -> int:
@@ -24,6 +28,7 @@ def main() -> int:
     failures.extend(_check_m3_contracts())
     failures.extend(_check_m4_contracts())
     failures.extend(_check_m5_contracts())
+    failures.extend(_check_m6_contracts())
 
     if failures:
         print("contract-conformance: FAIL")
@@ -211,6 +216,43 @@ def _check_m5_contracts() -> list[str]:
         failures.append("M5 发布 Action 必须带 publish_video 与 idempotency_key")
     if action.reversible:
         failures.append("M5 发布动作必须标为不可逆")
+    return failures
+
+
+def _check_m6_contracts() -> list[str]:
+    source = Tagged(
+        payload={
+            "question": "契约核对：敏感肌早C晚A刺痛怎么办？",
+            "consent": {"privacy_notice_accepted": True},
+            "lead": {"lead_hash": "contract-lead", "skin_type": "sensitive"},
+        },
+        data_class=DataClass.C1_INTERNAL,
+    )
+    try:
+        report = build_m6_private_domain_report(source)
+        action = build_wecom_add_contact_action(lead_id="contract-lead", contact_ref="wecom-ref")
+    except NotImplementedError:
+        return ["M6 私域模块尚未实现"]
+
+    failures = []
+    if not isinstance(report, Tagged):
+        failures.append("M6 输出必须是 Tagged")
+    if report.data_class != DataClass.C1_INTERNAL or report.pii:
+        failures.append("M6 输出必须是无 PII 的 C1_INTERNAL")
+    if report.payload.get("external_actions") != []:
+        failures.append("M6 报告不应直接产生外部动作")
+    consent = report.payload.get("pipl_consent") or {}
+    if not consent.get("requires_explicit_notice"):
+        failures.append("M6 必须声明 PIPL 明示告知与同意")
+    funnel = report.payload.get("funnel_dashboard") or {}
+    if funnel.get("method") != "cohort_conversion_retention_payback":
+        failures.append("M6 漏斗必须使用 cohort + 留存 + 回本周期方法")
+    if not isinstance(action, Action):
+        failures.append("M6 企微加客动作必须是 Action")
+    if action.kind != "add_contact" or not action.idempotency_key:
+        failures.append("M6 企微 Action 必须带 add_contact 与 idempotency_key")
+    if action.reversible:
+        failures.append("M6 加客户动作必须标为不可逆")
     return failures
 
 

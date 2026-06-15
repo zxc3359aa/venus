@@ -51,3 +51,7 @@ def test_contract_conformance_checks_m4_community_shape():
 
 def test_contract_conformance_checks_m5_video_shape():
     assert contract_conformance._check_m5_contracts() == []
+
+
+def test_contract_conformance_checks_m6_private_domain_shape():
+    assert contract_conformance._check_m6_contracts() == []
