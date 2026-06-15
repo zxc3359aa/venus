@@ -215,6 +215,21 @@ venus feishu data/samples/feishu_message.json
 
 This command parses a Feishu-like `/venus` message and returns a card-ready JSON draft. It does not send Feishu messages or perform external actions.
 
+If you need to test a live Feishu long-connection adapter locally (offline-safe to dry-run by default):
+
+```bash
+export VENUS_FEISHU_APP_ID=你的AppID
+export VENUS_FEISHU_APP_SECRET=你的AppSecret
+export VENUS_FEISHU_CONTEXT7_VERIFIED=true
+export VENUS_FEISHU_LIVE_ENABLED=true
+```
+
+Then run the gateway starter in a controlled environment (approval confirmed) by calling
+`venus.connectors_feishu.real_start(VENUS_FEISHU_APP_ID, VENUS_FEISHU_APP_SECRET, handler)` in
+your own bootstrap script.  
+默认不发送任何消息；若未设置 `VENUS_FEISHU_CONTEXT7_VERIFIED=true` 或
+`VENUS_FEISHU_LIVE_ENABLED=true`，实时通道仍会保持阻断（`PlatformInterfaceNotVerified`）。
+
 The Feishu dry-run entry also supports `/venus monitoring` when the local `data/samples/competitors.json` sample is present.
 It also supports `/venus airtable` to preview the Airtable-ready operations package without writing to Airtable.
 It also supports `/venus airtable-sync` to preview approved local Airtable sync plans without writing any Airtable records.

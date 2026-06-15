@@ -9,8 +9,11 @@
 """
 from __future__ import annotations
 
+import importlib
+import os
 from dataclasses import dataclass, field
-from typing import Callable
+from pathlib import Path
+from typing import Any, Callable, Mapping
 
 from venus.contracts import ApprovalRequest
 
@@ -34,13 +37,140 @@ class FakeFeishuGateway:
         self.sent_cards.append(req)
 
 
-def real_start(app_id: str, app_secret: str, on_message: Callable[[object], None]) -> None:
-    """真实长连接占位。Context7 核验前禁止执行。
+def _env_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _is_context7_verified() -> bool:
+    if _env_bool(os.getenv("VENUS_FEISHU_CONTEXT7_VERIFIED")):
+        return True
+    marker = os.getenv("VENUS_FEISHU_CONTEXT7_MARKER")
+    if marker:
+        return Path(marker).expanduser().exists()
+    return False
+
+
+def _is_live_enabled() -> bool:
+    return _env_bool(os.getenv("VENUS_FEISHU_LIVE_ENABLED"))
+
+
+def _import_lark_oapi():
+    try:
+        return importlib.import_module("lark_oapi")
+    except ModuleNotFoundError as exc:
+        raise PlatformInterfaceNotVerified(
+            "未发现 lark_oapi 依赖。请先安装 `venus[feishu]`（或 `pip install lark-oapi`）后再启用实时接入。"
+        ) from exc
+
+
+def _extract_event_payload(message: Any) -> Mapping[str, Any]:
+    if isinstance(message, Mapping):
+        if "event" in message and isinstance(message["event"], Mapping):
+            return message["event"]
+        return message
+    if hasattr(message, "dict") and callable(message.dict):
+        return _extract_event_payload(message.dict())
+    if hasattr(message, "__dict__"):
+        return _extract_event_payload(message.__dict__)
+    return {}
+
+
+def _build_event_handler(lark_oapi_module, on_message: Callable[[Mapping[str, Any]], None]):
+    """Build a minimal event handler for message events and keep registration compatibility."""
+    event_handler_cls = getattr(lark_oapi_module, "EventDispatcherHandler", None)
+    if event_handler_cls is None:
+        raise PlatformInterfaceNotVerified(
+            "Context7 已核验接口，但当前 lark_oapi 缺少 EventDispatcherHandler。"
+        )
+    handler = event_handler_cls()
+
+    register_names = (
+        "register_p2_im_message_receive_v1",
+        "register_im_message_receive_v1",
+        "register_message_receive",
+    )
+    register = None
+    for name in register_names:
+        candidate = getattr(handler, name, None)
+        if callable(candidate):
+            register = candidate
+            break
+    if register is None:
+        raise PlatformInterfaceNotVerified(
+            "Context7 已核验接口，但当前 lark_oapi 无可用的消息事件回调注册方法。"
+        )
+
+    def _on_message(event):
+        on_message(_extract_event_payload(event))
+
+    register_attempts = ((_on_message,), ("im.message.receive_v1", _on_message), ("p2:im.message.receive_v1", _on_message))
+    last_exc: Exception | None = None
+    for args in register_attempts:
+        try:
+            register(*args)
+            return handler
+        except TypeError as exc:
+            last_exc = exc
+            continue
+    raise PlatformInterfaceNotVerified(
+        "Context7 已核验接口，但当前 lark_oapi 事件处理器注册方式与预期不匹配。"
+    ) from last_exc
+
+
+def _build_ws_client(lark_oapi_module, app_id: str, app_secret: str, handler):
+    factory = None
+    if hasattr(lark_oapi_module, "ws"):
+        factory = getattr(lark_oapi_module.ws, "Client", None)
+    if factory is None:
+        factory = getattr(lark_oapi_module, "Client", None)
+    if factory is None:
+        raise PlatformInterfaceNotVerified(
+            "Context7 已核验接口，但当前 lark_oapi 缺少可用的长连接 Client。"
+        )
+
+    candidate_inits = (
+        ((app_id, app_secret, handler), {}),
+        ((app_id, app_secret), {"handler": handler}),
+        ((app_id, app_secret), {"event_handler": handler}),
+    )
+    last_exc: Exception | None = None
+    for args, kwargs in candidate_inits:
+        try:
+            return factory(*args, **kwargs)
+        except TypeError as exc:
+            last_exc = exc
+    raise PlatformInterfaceNotVerified(
+        "Context7 已核验接口，但 lark-oapi Client 参构造方式与预期不匹配。"
+    ) from last_exc
+
+
+def real_start(app_id: str, app_secret: str, on_message: Callable[[Mapping[str, Any]], None]) -> None:
+    """真实长连接启动。默认严格阻断，必须显式开启后才会执行。
 
     // VERIFY-DOC: 飞书 事件订阅(im.message.receive_v1) 与 交互卡片 接口
+    // VERIFY-DOC: 飞书 长连接回调签名与验签、事件去重、重连退避策略
     """
-    _ = (app_id, app_secret, on_message)
-    raise PlatformInterfaceNotVerified(
-        "飞书真实长连接必须先用 Context7 核验最新 lark-oapi、事件订阅、交互卡片、"
-        "回调验签、事件去重与重连要求；当前仅允许 FakeFeishuGateway 离线演示。"
-    )
+    if not _is_context7_verified():
+        raise PlatformInterfaceNotVerified(
+            "飞书真实长连接必须先完成 Context7/官方文档核验（VENUS_FEISHU_CONTEXT7_VERIFIED 或标记文件）。"
+        )
+    if not _is_live_enabled():
+        raise PlatformInterfaceNotVerified(
+            "文档核验已完成，但尚未开启实时接入。请设置 VENUS_FEISHU_LIVE_ENABLED=true 并通过审批确认。"
+        )
+    if not app_id or not app_secret:
+        raise ValueError("app_id 与 app_secret 均不能为空。")
+
+    lark_oapi = _import_lark_oapi()
+    handler = _build_event_handler(lark_oapi, on_message)
+    ws_client = _build_ws_client(lark_oapi, app_id, app_secret, handler)
+
+    if not hasattr(ws_client, "start"):
+        raise PlatformInterfaceNotVerified("lark-oapi 长连接对象不支持 start()，请核对官方文档。")
+
+    # 真实环境下保持阻塞运行；无网/无凭证场景应由调用方异常治理重试。
+    ws_client.start()
