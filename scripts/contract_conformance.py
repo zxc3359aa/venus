@@ -12,6 +12,7 @@ from venus.modules.m3_persona_memory import (
     distill_persona_descriptor,
 )
 from venus.modules.m4_community import build_m4_community_report, build_reply_action
+from venus.modules.m5_video_editing import build_m5_video_package, build_video_publish_action
 
 
 def main() -> int:
@@ -22,6 +23,7 @@ def main() -> int:
     failures.extend(_check_m2_contracts())
     failures.extend(_check_m3_contracts())
     failures.extend(_check_m4_contracts())
+    failures.extend(_check_m5_contracts())
 
     if failures:
         print("contract-conformance: FAIL")
@@ -176,6 +178,39 @@ def _check_m4_contracts() -> list[str]:
     live = report.payload.get("live_assist") or {}
     if not live.get("auto_send_blocked") or not live.get("tier_c_blocked"):
         failures.append("M4 必须阻止非官方弹幕自动发送")
+    return failures
+
+
+def _check_m5_contracts() -> list[str]:
+    source = Tagged(
+        payload={
+            "script": {
+                "topic": "契约核对短视频",
+                "full_text": "千万别急着跟风，先看屏障状态。评论区留下肤质和产品名，关注我少踩坑。",
+            },
+            "assets": [{"id": "asset-1", "type": "video", "uri": "local://asset.mp4", "license": "owned", "authorized": True}],
+        },
+        data_class=DataClass.C1_INTERNAL,
+    )
+    package = build_m5_video_package(source)
+    action = build_video_publish_action(project_id=package.payload["project_id"], platform="douyin")
+    failures = []
+    if not isinstance(package, Tagged):
+        failures.append("M5 输出必须是 Tagged")
+    if package.data_class != DataClass.C1_INTERNAL or package.pii:
+        failures.append("M5 输出必须是无 PII 的 C1_INTERNAL")
+    if package.payload.get("external_actions") != []:
+        failures.append("M5 工程包不应直接产生外部动作")
+    if (package.payload.get("authorization_gate") or {}).get("status") != "passed":
+        failures.append("M5 必须通过素材授权门禁")
+    if not package.payload.get("editable_project"):
+        failures.append("M5 必须生成可编辑工程描述")
+    if not isinstance(action, Action):
+        failures.append("M5 发布动作必须是 Action")
+    if action.kind != "publish_video" or not action.idempotency_key:
+        failures.append("M5 发布 Action 必须带 publish_video 与 idempotency_key")
+    if action.reversible:
+        failures.append("M5 发布动作必须标为不可逆")
     return failures
 
 

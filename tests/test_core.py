@@ -33,6 +33,11 @@ from venus.modules.m4_community import (
     build_reply_action,
     validate_reply_draft,
 )
+from venus.modules.m5_video_editing import (
+    build_m5_video_package,
+    build_video_publish_action,
+    validate_asset_authorizations,
+)
 from venus.privacy import DefaultPrivacyFirewall, PrivacyError
 
 
@@ -533,3 +538,96 @@ def test_m4_live_barrage_is_advice_only_and_blocks_unofficial_auto_send():
     assert report.payload["live_assist"]["mode"] == "summary_and_suggested_talk_track"
     assert report.payload["live_assist"]["auto_send_blocked"] is True
     assert report.payload["live_assist"]["tier_c_blocked"] is True
+
+
+def test_m5_video_package_builds_editable_timeline_and_caption_tracks():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "script": {
+                "topic": "早C晚A翻车",
+                "hook": "千万别急着跟风早C晚A，三秒先看你是不是高风险。",
+                "body": "先看屏障状态，再看刺激叠加，最后看证据来源。",
+                "comment_prompt": "评论区留下肤质、产品名和频率。",
+                "follow_reason": "关注我，少踩一次护肤坑。",
+                "full_text": "千万别急着跟风早C晚A，三秒先看你是不是高风险。先看屏障状态，再看刺激叠加，最后看证据来源。评论区留下肤质、产品名和频率。关注我，少踩一次护肤坑。",
+            },
+            "assets": [
+                {
+                    "id": "a-roll-1",
+                    "type": "video",
+                    "uri": "local://camera/intro.mp4",
+                    "license": "owned",
+                    "authorized": True,
+                },
+                {
+                    "id": "font-1",
+                    "type": "font",
+                    "uri": "local://fonts/brand.otf",
+                    "license": "owned",
+                    "authorized": True,
+                },
+            ],
+            "style_descriptor": "口语、克制、证据化。",
+        },
+    )
+
+    package = build_m5_video_package(source)
+
+    assert package.data_class == DataClass.C1_INTERNAL
+    assert package.pii is False
+    assert package.payload["module"] == "m5_video_editing"
+    assert package.payload["editable_project"]["format"] == "venus_edit_decision_list"
+    assert package.payload["timeline"]["duration_seconds"] > 0
+    assert package.payload["timeline"]["shots"]
+    assert package.payload["caption_track"]
+    assert package.payload["cover_suggestions"]
+    assert package.payload["title_suggestions"]
+    assert package.payload["tag_suggestions"]
+    assert package.payload["authorization_gate"]["status"] == "passed"
+    assert package.payload["external_actions"] == []
+
+
+def test_m5_blocks_unlicensed_assets_before_project_package():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "script": {"full_text": "你知道吗？先看屏障，再看成分。评论区告诉我肤质，关注我。"},
+            "assets": [
+                {
+                    "id": "music-1",
+                    "type": "music",
+                    "uri": "local://music/trending.mp3",
+                    "license": "",
+                    "authorized": False,
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(ValueError, match="素材授权"):
+        build_m5_video_package(source)
+    gate = validate_asset_authorizations(source.payload["assets"])
+    assert gate["status"] == "blocked"
+    assert gate["blocked_assets"][0]["id"] == "music-1"
+
+
+def test_m5_rejects_c3_inputs_and_does_not_emit_publish_actions():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"script": {"full_text": "我的私域用户真实经历"}},
+    )
+
+    with pytest.raises(ValueError, match="C3"):
+        build_m5_video_package(source)
+
+
+def test_m5_publish_action_is_idempotent_and_requires_approval():
+    action = build_video_publish_action(project_id="m5-project-001", platform="douyin")
+
+    assert isinstance(action, Action)
+    assert action.kind == "publish_video"
+    assert action.idempotency_key == "publish-douyin-m5-project-001"
+    assert action.reversible is False
+    assert action.data_class == DataClass.C1_INTERNAL

@@ -47,3 +47,7 @@ def test_contract_conformance_checks_m3_memory_shape():
 
 def test_contract_conformance_checks_m4_community_shape():
     assert contract_conformance._check_m4_contracts() == []
+
+
+def test_contract_conformance_checks_m5_video_shape():
+    assert contract_conformance._check_m5_contracts() == []
