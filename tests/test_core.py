@@ -43,6 +43,12 @@ from venus.modules.m6_private_domain import (
     build_wecom_add_contact_action,
     validate_miniprogram_answer,
 )
+from venus.modules.m7_ads import (
+    build_campaign_approval_action,
+    build_m7_ads_report,
+    build_xingtu_accept_order_action,
+    validate_ad_script,
+)
 from venus.privacy import DefaultPrivacyFirewall, PrivacyError
 
 
@@ -719,3 +725,174 @@ def test_m6_rejects_c3_or_pii_private_lead_payloads():
 
     with pytest.raises(ValueError, match="C3"):
         build_m6_private_domain_report(source)
+
+
+def test_m7_builds_budget_constrained_media_plan_with_learning_protection():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "plan_id": "m7-live-20260615",
+            "objective": {
+                "primary": "maximize_gmv",
+                "budget_cap": 3000.0,
+                "roas_floor": 3.0,
+                "attribution_window_days": 3,
+            },
+            "ad_groups": [
+                {
+                    "id": "creative-a",
+                    "name": "直播间敏感肌人群",
+                    "stage": "learning",
+                    "learning_day": 2,
+                    "spend": 600.0,
+                    "gmv": 2100.0,
+                    "orders": 12,
+                    "impressions": 12000,
+                    "clicks": 600,
+                    "attribution_mature": False,
+                },
+                {
+                    "id": "creative-b",
+                    "name": "早C晚A兴趣人群",
+                    "stage": "active",
+                    "learning_day": 8,
+                    "spend": 900.0,
+                    "gmv": 3900.0,
+                    "orders": 20,
+                    "impressions": 15000,
+                    "clicks": 900,
+                    "attribution_mature": True,
+                },
+            ],
+        },
+    )
+
+    report = build_m7_ads_report(source)
+
+    assert report.data_class == DataClass.C2_SENSITIVE
+    assert report.pii is False
+    assert report.payload["module"] == "m7_ads"
+    assert report.payload["optimization_policy"]["objective"] == "maximize_gmv_under_roas_constraint"
+    assert report.payload["optimization_policy"]["secondary_constraint"]["roas_floor"] == 3.0
+    assert report.payload["optimization_policy"]["exploration_method"] == "discounted_sliding_window_thompson_sampling"
+    assert report.payload["optimization_policy"]["attribution_window_days"] == 3
+    assert report.payload["external_actions"] == []
+
+    decisions = {row["ad_group_id"]: row for row in report.payload["media_plan"]["ad_group_decisions"]}
+    assert decisions["creative-a"]["decision"] == "protect_learning_phase"
+    assert decisions["creative-a"]["can_pause_now"] is False
+    assert decisions["creative-b"]["decision"] == "scale_with_guardrails"
+    assert decisions["creative-b"]["proposed_budget"] > decisions["creative-b"]["current_spend"]
+
+
+def test_m7_uses_sequential_testing_and_stop_loss_only_after_attribution_matures():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "objective": {"budget_cap": 2000.0, "roas_floor": 2.5, "cpa_ceiling": 80.0},
+            "ad_groups": [
+                {
+                    "id": "new-learning",
+                    "stage": "learning",
+                    "learning_day": 1,
+                    "spend": 300.0,
+                    "gmv": 100.0,
+                    "orders": 1,
+                    "impressions": 8000,
+                    "clicks": 320,
+                    "attribution_mature": False,
+                },
+                {
+                    "id": "mature-loss",
+                    "stage": "active",
+                    "learning_day": 10,
+                    "spend": 500.0,
+                    "gmv": 900.0,
+                    "orders": 4,
+                    "impressions": 9000,
+                    "clicks": 270,
+                    "attribution_mature": True,
+                },
+            ],
+            "experiments": [
+                {"id": "hook-ab", "variant_a": {"orders": 18, "spend": 800}, "variant_b": {"orders": 21, "spend": 820}}
+            ],
+        },
+    )
+
+    report = build_m7_ads_report(source)
+
+    decisions = {row["ad_group_id"]: row for row in report.payload["media_plan"]["ad_group_decisions"]}
+    assert decisions["new-learning"]["decision"] == "protect_learning_phase"
+    assert "attribution_not_mature" in decisions["new-learning"]["reasons"]
+    assert decisions["mature-loss"]["decision"] == "pause_requires_approval"
+    assert decisions["mature-loss"]["can_pause_now"] is True
+
+    testing = report.payload["sequential_testing"]
+    assert testing["method"] == "bayesian_sequential_with_predeclared_mde"
+    assert testing["peek_policy"] == "no_continuous_peeking_decision_without_guardrails"
+    assert testing["experiments"][0]["decision"] == "continue_collecting"
+    assert report.payload["anomaly_alerts"][0]["requires_human_review"] is True
+
+
+def test_m7_xingtu_quote_uses_expected_value_risk_discount_and_script_guardrails():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "xingtu_offer": {
+                "order_id": "xt-001",
+                "brand": "理性护肤品牌",
+                "fee": 18000.0,
+                "production_cost": 3500.0,
+                "opportunity_cost": 2500.0,
+                "audience_match": 0.86,
+                "brand_safety": 0.92,
+                "reputation_risk": 0.12,
+                "compliance_risk": 0.08,
+                "brief": "敏感肌精华合作，不能承诺医疗效果。",
+            },
+            "persona_descriptor": "口语、证据先行，不夸大功效。",
+        },
+    )
+
+    report = build_m7_ads_report(source)
+    xingtu = report.payload["xingtu_guidance"]
+
+    assert xingtu["method"] == "expected_value_minus_costs_risk_discounted"
+    assert xingtu["order_id"] == "xt-001"
+    assert xingtu["recommendation"] in {"accept_with_review", "negotiate", "reject"}
+    assert xingtu["risk_discount"] > 0
+    assert xingtu["quote_range"]["floor"] >= 6000
+    assert validate_ad_script(xingtu["script_draft"]) == []
+    assert "医疗诊断" in xingtu["script_draft"]
+
+
+def test_m7_external_money_and_xingtu_commitments_are_idempotent_approval_actions():
+    campaign = build_campaign_approval_action(plan_id="m7-live-20260615", budget=3000.0)
+    xingtu = build_xingtu_accept_order_action(order_id="xt-001", quoted_fee=18000.0)
+
+    assert isinstance(campaign, Action)
+    assert campaign.kind == "create_campaign"
+    assert campaign.idempotency_key == "create-campaign-m7-live-20260615"
+    assert campaign.reversible is False
+    assert campaign.data_class == DataClass.C2_SENSITIVE
+    assert campaign.payload["requires_approval"] is True
+    assert campaign.payload["official_api_status"] == "pending_context7_verification"
+
+    assert isinstance(xingtu, Action)
+    assert xingtu.kind == "accept_xingtu_order"
+    assert xingtu.idempotency_key == "accept-xingtu-order-xt-001"
+    assert xingtu.reversible is False
+    assert xingtu.data_class == DataClass.C2_SENSITIVE
+    assert xingtu.payload["requires_approval"] is True
+
+
+def test_m7_rejects_c3_or_pii_ad_payloads():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"ad_groups": [{"id": "private-user", "phone": "13800138000"}]},
+    )
+
+    with pytest.raises(ValueError, match="C3"):
+        build_m7_ads_report(source)

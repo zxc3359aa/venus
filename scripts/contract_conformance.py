@@ -17,6 +17,11 @@ from venus.modules.m6_private_domain import (
     build_m6_private_domain_report,
     build_wecom_add_contact_action,
 )
+from venus.modules.m7_ads import (
+    build_campaign_approval_action,
+    build_m7_ads_report,
+    build_xingtu_accept_order_action,
+)
 
 
 def main() -> int:
@@ -29,6 +34,7 @@ def main() -> int:
     failures.extend(_check_m4_contracts())
     failures.extend(_check_m5_contracts())
     failures.extend(_check_m6_contracts())
+    failures.extend(_check_m7_contracts())
 
     if failures:
         print("contract-conformance: FAIL")
@@ -253,6 +259,72 @@ def _check_m6_contracts() -> list[str]:
         failures.append("M6 企微 Action 必须带 add_contact 与 idempotency_key")
     if action.reversible:
         failures.append("M6 加客户动作必须标为不可逆")
+    return failures
+
+
+def _check_m7_contracts() -> list[str]:
+    source = Tagged(
+        payload={
+            "objective": {"budget_cap": 2000.0, "roas_floor": 3.0, "attribution_window_days": 3},
+            "ad_groups": [
+                {
+                    "id": "contract-ad",
+                    "stage": "active",
+                    "learning_day": 8,
+                    "spend": 500.0,
+                    "gmv": 2000.0,
+                    "orders": 10,
+                    "impressions": 6000,
+                    "clicks": 300,
+                    "attribution_mature": True,
+                }
+            ],
+            "xingtu_offer": {
+                "order_id": "contract-xingtu",
+                "brand": "契约核对品牌",
+                "fee": 12000.0,
+                "production_cost": 3000.0,
+                "opportunity_cost": 2000.0,
+                "audience_match": 0.8,
+                "brand_safety": 0.9,
+                "reputation_risk": 0.1,
+                "compliance_risk": 0.1,
+            },
+        },
+        data_class=DataClass.C2_SENSITIVE,
+    )
+    try:
+        report = build_m7_ads_report(source)
+        campaign = build_campaign_approval_action(plan_id=report.payload["plan_id"], budget=2000.0)
+        xingtu = build_xingtu_accept_order_action(order_id="contract-xingtu", quoted_fee=12000.0)
+    except NotImplementedError:
+        return ["M7 投流模块尚未实现"]
+
+    failures = []
+    if not isinstance(report, Tagged):
+        failures.append("M7 输出必须是 Tagged")
+    if report.data_class != DataClass.C2_SENSITIVE or report.pii:
+        failures.append("M7 输出必须是无 PII 的 C2_SENSITIVE")
+    if report.payload.get("external_actions") != []:
+        failures.append("M7 报告不应直接产生外部动作")
+    policy = report.payload.get("optimization_policy") or {}
+    if policy.get("objective") != "maximize_gmv_under_roas_constraint":
+        failures.append("M7 必须体现预算/ROAS 约束下最大化 GMV")
+    if policy.get("exploration_method") != "discounted_sliding_window_thompson_sampling":
+        failures.append("M7 必须体现非平稳投放下的滑窗/折扣型探索")
+    testing = report.payload.get("sequential_testing") or {}
+    if testing.get("method") != "bayesian_sequential_with_predeclared_mde":
+        failures.append("M7 A/B 必须使用预设 MDE 的序贯/贝叶斯检验")
+    xingtu_guidance = report.payload.get("xingtu_guidance") or {}
+    if xingtu_guidance.get("method") != "expected_value_minus_costs_risk_discounted":
+        failures.append("M7 星图接单必须使用期望价值与风险折扣")
+    for action in (campaign, xingtu):
+        if not isinstance(action, Action):
+            failures.append("M7 对外动作必须是 Action")
+        elif not action.idempotency_key or action.reversible:
+            failures.append("M7 对外动作必须不可逆且带 idempotency_key")
+        elif action.data_class != DataClass.C2_SENSITIVE:
+            failures.append("M7 投流/星图动作必须标记为 C2_SENSITIVE")
     return failures
 
 
