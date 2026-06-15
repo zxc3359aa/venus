@@ -18,7 +18,7 @@
 | M6 | #7 | `codex/venus-v2-m5` | `codex/venus-v2-m6` | `2a6b309` | open, ready |
 | M7 | #8 | `codex/venus-v2-m6` | `codex/venus-v2-m7` | `e4ad4a8` | open, ready |
 | M8 | #9 | `codex/venus-v2-m7` | `codex/venus-v2-m8` | `368ce6f` | open, ready |
-| M9 | #10 | `codex/venus-v2-m8` | `codex/venus-v2-m9` | `38a05f3` | open, ready |
+| M9 | #10 | `codex/venus-v2-m8` | `codex/venus-v2-m9` | M9 功能提交 `38a05f3`；PR 最新 head 以 GitHub 为准 | open, ready |
 
 建议合并顺序：#2, #3, #4, #5, #6, #7, #8, #9, #10。
 
@@ -46,7 +46,7 @@ make eval
 验证结果：
 
 - 所有阶段均可 fast-forward 合并，无本地冲突。
-- 最终提交为 `38a05f3 feat(m9): add evolution and backup package`。
+- M9 功能最终提交为 `38a05f3 feat(m9): add evolution and backup package`；后续仅追加验收、Context7 与平台接口生产化红线文档。
 - `make test`：59 passed。
 - `make compliance-gate`：PASS。
 - `make contract-conformance`：PASS。
@@ -94,7 +94,17 @@ make eval
 
 ## 6. Context7 与平台接口红线
 
-当前仓库 `.codex/config.toml` 只包含 Context7 示例配置，当前会话也没有可调用的 Context7 工具。因此，在启用 Context7 并核验最新官方文档之前，不应继续写任何真实平台接口。
+当前仓库 `.codex/config.toml` 已声明 Context7 MCP：
+
+```toml
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+```
+
+当前会话启动时还没有可调用的 Context7 工具；新增 MCP 配置通常需要重启或重载 Codex 会话后才会出现在工具列表。因此，在工具可见并完成最新官方文档核验之前，不应继续写任何真实平台接口。
+
+接口生产化前置清单见 `docs/Platform-Interface-Readiness-Checklist.md`。
 
 允许继续推进的安全工作：
 
