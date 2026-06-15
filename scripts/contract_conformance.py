@@ -22,6 +22,7 @@ from venus.modules.m7_ads import (
     build_m7_ads_report,
     build_xingtu_accept_order_action,
 )
+from venus.modules.m8_benchmark import build_m8_benchmark_report
 
 
 def main() -> int:
@@ -35,6 +36,7 @@ def main() -> int:
     failures.extend(_check_m5_contracts())
     failures.extend(_check_m6_contracts())
     failures.extend(_check_m7_contracts())
+    failures.extend(_check_m8_contracts())
 
     if failures:
         print("contract-conformance: FAIL")
@@ -325,6 +327,51 @@ def _check_m7_contracts() -> list[str]:
             failures.append("M7 对外动作必须不可逆且带 idempotency_key")
         elif action.data_class != DataClass.C2_SENSITIVE:
             failures.append("M7 投流/星图动作必须标记为 C2_SENSITIVE")
+    return failures
+
+
+def _check_m8_contracts() -> list[str]:
+    source = Tagged(
+        payload={
+            "data_source": {"name": "contract-licensed-provider", "tier": "B", "authorized": True},
+            "creators": [
+                {
+                    "creator_id": "contract-creator",
+                    "handle": "契约对标样本",
+                    "style_tags": ["evidence", "review"],
+                    "metrics": {"engagement_rate": 0.06, "avg_views": 50000, "ad_post_ratio": 0.2},
+                    "previous_metrics": {"engagement_rate": 0.05, "avg_views": 42000},
+                    "videos": [{"id": "contract-video", "views": 52000, "completion_rate": 0.36, "ad": False}],
+                    "live": {"sessions": 2, "avg_gpm": 3200, "peak_online": 1000},
+                }
+            ],
+        },
+        data_class=DataClass.C1_INTERNAL,
+    )
+    try:
+        report = build_m8_benchmark_report(source)
+    except NotImplementedError:
+        return ["M8 对标模块尚未实现"]
+
+    failures = []
+    if not isinstance(report, Tagged):
+        failures.append("M8 输出必须是 Tagged")
+    if report.data_class != DataClass.C1_INTERNAL or report.pii:
+        failures.append("M8 输出必须是无 PII 的 C1_INTERNAL")
+    if report.payload.get("external_actions") != []:
+        failures.append("M8 报告不应直接产生外部动作")
+    source_boundary = report.payload.get("source_boundary") or {}
+    if not source_boundary.get("tier_c_blocked"):
+        failures.append("M8 必须声明 Tier C 阻断")
+    matrix = report.payload.get("benchmark_matrix") or {}
+    if matrix.get("method") != "percentile_trend_baseline_comparison":
+        failures.append("M8 必须使用分位、趋势与基准比较方法")
+    timeseries = report.payload.get("timeseries_sink") or {}
+    if timeseries.get("table") != "venus_metric_timeseries":
+        failures.append("M8 对标时序指标必须落 venus_metric_timeseries")
+    polling = report.payload.get("polling_policy") or {}
+    if polling.get("mode") != "near_real_time_configurable":
+        failures.append("M8 必须体现近实时可配置轮询")
     return failures
 
 

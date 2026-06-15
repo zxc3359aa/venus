@@ -49,6 +49,7 @@ from venus.modules.m7_ads import (
     build_xingtu_accept_order_action,
     validate_ad_script,
 )
+from venus.modules.m8_benchmark import build_m8_benchmark_report, validate_benchmark_commentary
 from venus.privacy import DefaultPrivacyFirewall, PrivacyError
 
 
@@ -896,3 +897,154 @@ def test_m7_rejects_c3_or_pii_ad_payloads():
 
     with pytest.raises(ValueError, match="C3"):
         build_m7_ads_report(source)
+
+
+def test_m8_builds_creator_matrix_with_percentiles_trends_and_source_boundaries():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "data_source": {"name": "licensed-panel", "tier": "B", "authorized": True},
+            "polling": {"base_interval_minutes": 360, "burst_interval_minutes": 60},
+            "creators": [
+                {
+                    "creator_id": "creator-a",
+                    "handle": "屏障修护研究所",
+                    "style_tags": ["evidence", "calm"],
+                    "metrics": {"engagement_rate": 0.091, "avg_views": 82000, "ad_post_ratio": 0.18},
+                    "previous_metrics": {"engagement_rate": 0.065, "avg_views": 56000},
+                    "videos": [
+                        {"id": "v-a1", "views": 91000, "completion_rate": 0.43, "ad": False},
+                        {"id": "v-a2", "views": 73000, "completion_rate": 0.38, "ad": True},
+                    ],
+                    "live": {"sessions": 3, "avg_gpm": 6800, "peak_online": 2400},
+                },
+                {
+                    "creator_id": "creator-b",
+                    "handle": "成分党日记",
+                    "style_tags": ["fast", "ingredient"],
+                    "metrics": {"engagement_rate": 0.043, "avg_views": 36000, "ad_post_ratio": 0.42},
+                    "previous_metrics": {"engagement_rate": 0.041, "avg_views": 34000},
+                    "videos": [{"id": "v-b1", "views": 38000, "completion_rate": 0.31, "ad": True}],
+                    "live": {"sessions": 1, "avg_gpm": 2100, "peak_online": 600},
+                },
+                {
+                    "creator_id": "creator-c",
+                    "handle": "敏感肌避坑站",
+                    "style_tags": ["story", "review"],
+                    "metrics": {"engagement_rate": 0.066, "avg_views": 59000, "ad_post_ratio": 0.09},
+                    "previous_metrics": {"engagement_rate": 0.071, "avg_views": 62000},
+                    "videos": [{"id": "v-c1", "views": 61000, "completion_rate": 0.36, "ad": False}],
+                    "live": {"sessions": 0, "avg_gpm": 0, "peak_online": 0},
+                },
+            ],
+        },
+    )
+
+    report = build_m8_benchmark_report(source)
+    rows = report.payload["benchmark_matrix"]["creators"]
+    row_a = next(row for row in rows if row["creator_id"] == "creator-a")
+
+    assert report.data_class == DataClass.C1_INTERNAL
+    assert report.pii is False
+    assert report.payload["module"] == "m8_benchmark"
+    assert report.payload["source_boundary"]["allowed_tiers"] == ["tier_a_official_products", "tier_b_licensed_provider"]
+    assert report.payload["source_boundary"]["tier_c_blocked"] is True
+    assert report.payload["polling_policy"]["mode"] == "near_real_time_configurable"
+    assert report.payload["external_actions"] == []
+
+    assert row_a["engagement_percentile"] == 100.0
+    assert row_a["view_percentile"] == 100.0
+    assert row_a["trend"] == "rising"
+    assert row_a["ad_analysis"]["ad_post_count"] == 1
+    assert row_a["live_analysis"]["sessions"] == 3
+    assert report.payload["timeseries_sink"]["table"] == "venus_metric_timeseries"
+    assert report.payload["timeseries_sink"]["records"][0]["data_class"] == "C1_INTERNAL"
+
+
+def test_m8_detects_anomalies_and_outputs_non_defamatory_recommendations():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "data_source": {"name": "official-data-product", "tier": "A", "authorized": True},
+            "creators": [
+                {
+                    "creator_id": "spike",
+                    "handle": "直播爆发样本",
+                    "metrics": {"engagement_rate": 0.07, "avg_views": 160000, "ad_post_ratio": 0.12},
+                    "previous_metrics": {"engagement_rate": 0.05, "avg_views": 60000},
+                    "videos": [{"id": "v1", "views": 190000, "completion_rate": 0.49, "ad": False}],
+                    "live": {"sessions": 5, "avg_gpm": 9800, "peak_online": 5200},
+                },
+                {
+                    "creator_id": "heavy-ad",
+                    "handle": "高广告占比样本",
+                    "metrics": {"engagement_rate": 0.035, "avg_views": 42000, "ad_post_ratio": 0.71},
+                    "previous_metrics": {"engagement_rate": 0.055, "avg_views": 52000},
+                    "videos": [{"id": "v2", "views": 41000, "completion_rate": 0.28, "ad": True}],
+                    "live": {"sessions": 1, "avg_gpm": 1500, "peak_online": 500},
+                },
+            ],
+        },
+    )
+
+    report = build_m8_benchmark_report(source)
+
+    alerts = report.payload["anomaly_alerts"]
+    assert any(alert["creator_id"] == "spike" and alert["kind"] == "view_velocity_spike" for alert in alerts)
+    assert any(alert["creator_id"] == "heavy-ad" and alert["kind"] == "ad_load_risk" for alert in alerts)
+    assert all(alert["requires_review"] is True for alert in alerts)
+    assert validate_benchmark_commentary(report.payload["recommendations"][0]) == []
+    assert "诽谤" in report.payload["safety_boundary"]["commentary_policy"]
+
+
+def test_m8_supports_provider_switching_and_tracks_style_live_video_dimensions():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "data_source": {"name": "灰豚授权版", "tier": "B", "authorized": True},
+            "fallback_sources": ["official-data-product", "licensed-panel-b"],
+            "creators": [
+                {
+                    "creator_id": "creator-style",
+                    "handle": "风格矩阵样本",
+                    "style_tags": ["lab", "comparison", "soft-selling"],
+                    "metrics": {"engagement_rate": 0.052, "avg_views": 48000, "ad_post_ratio": 0.24},
+                    "previous_metrics": {"engagement_rate": 0.048, "avg_views": 47000},
+                    "videos": [
+                        {"id": "style-1", "views": 50000, "completion_rate": 0.35, "ad": False},
+                        {"id": "style-2", "views": 46000, "completion_rate": 0.33, "ad": True},
+                    ],
+                    "live": {"sessions": 2, "avg_gpm": 3600, "peak_online": 1200},
+                }
+            ],
+        },
+    )
+
+    report = build_m8_benchmark_report(source)
+    creator = report.payload["benchmark_matrix"]["creators"][0]
+
+    assert report.payload["provider_switching"]["primary"] == "灰豚授权版"
+    assert report.payload["provider_switching"]["fallbacks"] == ["official-data-product", "licensed-panel-b"]
+    assert creator["style_analysis"]["tags"] == ["lab", "comparison", "soft-selling"]
+    assert creator["video_analysis"]["video_count"] == 2
+    assert creator["live_analysis"]["avg_gpm"] == 3600.0
+
+
+def test_m8_rejects_tier_c_sources_and_c3_or_pii_payloads():
+    tier_c_source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "data_source": {"name": "unlicensed-export", "tier": "C", "authorized": False},
+            "creators": [],
+        },
+    )
+    private_source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"creators": [{"creator_id": "private", "phone": "13800138000"}]},
+    )
+
+    with pytest.raises(ValueError, match="Tier C"):
+        build_m8_benchmark_report(tier_c_source)
+    with pytest.raises(ValueError, match="C3"):
+        build_m8_benchmark_report(private_source)

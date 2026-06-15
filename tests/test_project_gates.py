@@ -59,3 +59,7 @@ def test_contract_conformance_checks_m6_private_domain_shape():
 
 def test_contract_conformance_checks_m7_ads_shape():
     assert contract_conformance._check_m7_contracts() == []
+
+
+def test_contract_conformance_checks_m8_benchmark_shape():
+    assert contract_conformance._check_m8_contracts() == []
