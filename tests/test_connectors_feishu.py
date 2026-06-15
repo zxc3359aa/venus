@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from venus.connectors_feishu import (
+    _build_event_handler,
     PlatformInterfaceNotVerified,
     real_start,
 )
@@ -61,3 +62,66 @@ def test_real_start_launches_ws_client_when_enabled(monkeypatch):
     assert events["imported"]
     assert events["connected"]
     assert events["started"]
+
+
+def test_build_event_handler_prefers_builder_api():
+    captured = []
+
+    class DummyBuilder:
+        def __init__(self):
+            self.callback = None
+
+        def register_p2_im_message_receive_v1(self, callback):
+            self.callback = callback
+            return self
+
+        def build(self):
+            return self
+
+    class DummyHandler:
+        @staticmethod
+        def builder(_encrypt_key: str, _verification_token: str):
+            return DummyBuilder()
+
+    class DummyModule:
+        EventDispatcherHandler = DummyHandler
+
+    handler = _build_event_handler(DummyModule, lambda payload: captured.append(payload))
+    assert isinstance(handler, DummyBuilder)
+    assert handler.callback is not None
+
+    handler.callback({"event": {"text": "hello", "tag": "unit"}})
+    assert captured == [{"text": "hello", "tag": "unit"}]
+
+
+def test_build_event_handler_falls_back_to_direct_handler_api():
+    captured = []
+
+    class DummyHandler:
+        def __init__(self):
+            self.callback = None
+
+        def register_im_message_receive_v1(self, callback):
+            self.callback = callback
+            return self
+
+    class DummyModule:
+        EventDispatcherHandler = DummyHandler
+
+    handler = _build_event_handler(DummyModule, lambda payload: captured.append(payload))
+    assert isinstance(handler, DummyHandler)
+    assert handler.callback is not None
+
+    handler.callback({"event": {"text": "fallback"}})
+    assert captured == [{"text": "fallback"}]
+
+
+def test_build_event_handler_raises_when_registration_missing():
+    class DummyHandler:
+        pass
+
+    class DummyModule:
+        EventDispatcherHandler = DummyHandler
+
+    with pytest.raises(PlatformInterfaceNotVerified, match="注册方式"):
+        _build_event_handler(DummyModule, lambda payload: None)

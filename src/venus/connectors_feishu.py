@@ -13,7 +13,7 @@ import importlib
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 from venus.contracts import ApprovalRequest
 
@@ -81,44 +81,73 @@ def _extract_event_payload(message: Any) -> Mapping[str, Any]:
 
 def _build_event_handler(lark_oapi_module, on_message: Callable[[Mapping[str, Any]], None]):
     """Build a minimal event handler for message events and keep registration compatibility."""
+
+    def _attempt_register(target: Any, method_names: Iterable[str]) -> Any:
+        candidate = None
+        for name in method_names:
+            candidate = getattr(target, name, None)
+            if callable(candidate):
+                break
+        if candidate is None:
+            return None
+
+        register_attempts = (
+            (_on_message,),
+            ("im.message.receive_v1", _on_message),
+            ("p2:im.message.receive_v1", _on_message),
+        )
+        for args in register_attempts:
+            try:
+                candidate(*args)
+                return target
+            except TypeError:
+                continue
+        return None
+
     event_handler_cls = getattr(lark_oapi_module, "EventDispatcherHandler", None)
     if event_handler_cls is None:
         raise PlatformInterfaceNotVerified(
             "Context7 已核验接口，但当前 lark_oapi 缺少 EventDispatcherHandler。"
         )
-    handler = event_handler_cls()
+
+    # lark-oapi 1.6+ 推荐先通过 builder 注册事件回调，再 build 生成可消费事件的 handler。
+    # 兼容历史实现：直接实例化 EventDispatcherHandler，并尝试直接注册回调。
+    builder = getattr(event_handler_cls, "builder", None)
+
+    def _on_message(event: Any):
+        on_message(_extract_event_payload(event))
 
     register_names = (
         "register_p2_im_message_receive_v1",
         "register_im_message_receive_v1",
         "register_message_receive",
     )
-    register = None
-    for name in register_names:
-        candidate = getattr(handler, name, None)
-        if callable(candidate):
-            register = candidate
-            break
-    if register is None:
+
+    if callable(builder):
+        try:
+            handler = builder("", "")
+        except Exception as exc:  # noqa: BLE001
+            raise PlatformInterfaceNotVerified(
+                "Context7 已核验接口，但当前 lark_oapi EventDispatcherHandler.builder 调用失败。"
+            ) from exc
+
+        if _attempt_register(handler, register_names) is not None:
+            if hasattr(handler, "build"):
+                return handler.build()
+            return handler
+
         raise PlatformInterfaceNotVerified(
             "Context7 已核验接口，但当前 lark_oapi 无可用的消息事件回调注册方法。"
         )
 
-    def _on_message(event):
-        on_message(_extract_event_payload(event))
+    handler = event_handler_cls()
 
-    register_attempts = ((_on_message,), ("im.message.receive_v1", _on_message), ("p2:im.message.receive_v1", _on_message))
-    last_exc: Exception | None = None
-    for args in register_attempts:
-        try:
-            register(*args)
-            return handler
-        except TypeError as exc:
-            last_exc = exc
-            continue
+    if _attempt_register(handler, register_names) is not None:
+        return handler
+
     raise PlatformInterfaceNotVerified(
         "Context7 已核验接口，但当前 lark_oapi 事件处理器注册方式与预期不匹配。"
-    ) from last_exc
+    )
 
 
 def _build_ws_client(lark_oapi_module, app_id: str, app_secret: str, handler):
