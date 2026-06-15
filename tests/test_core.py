@@ -19,6 +19,7 @@ from venus.contracts import (
     MemoryKind,
     Tagged,
 )
+from venus.connectors_feishu import PlatformInterfaceNotVerified, real_start
 from venus.llm import FakeLLMProvider
 from venus.logging_setup import RedactingFormatter
 from venus.modules.m1_hotspot import build_m1_hotspot_package, validate_copy
@@ -37,6 +38,24 @@ from venus.modules.m5_video_editing import (
     build_m5_video_package,
     build_video_publish_action,
     validate_asset_authorizations,
+)
+from venus.modules.m6_private_domain import (
+    build_m6_private_domain_report,
+    build_wecom_add_contact_action,
+    validate_miniprogram_answer,
+)
+from venus.modules.m7_ads import (
+    build_campaign_approval_action,
+    build_m7_ads_report,
+    build_xingtu_accept_order_action,
+    validate_ad_script,
+)
+from venus.modules.m8_benchmark import build_m8_benchmark_report, validate_benchmark_commentary
+from venus.modules.m9_evolution import (
+    build_data_delete_action,
+    build_m9_evolution_report,
+    build_policy_change_action,
+    validate_evolution_proposal,
 )
 from venus.privacy import DefaultPrivacyFirewall, PrivacyError
 
@@ -82,6 +101,11 @@ def test_destination_allowlist():
     fw.assert_destination_allowlisted("https://api.openai.com/v1/chat/completions")
     with pytest.raises(PrivacyError):
         fw.assert_destination_allowlisted("https://evil.example.com/exfil")
+
+
+def test_real_feishu_start_is_blocked_until_context7_verification():
+    with pytest.raises(PlatformInterfaceNotVerified):
+        real_start("app-id", "app-secret", lambda _: None)
 
 
 # ---- 审批网关：幂等与过期 ----
@@ -631,3 +655,550 @@ def test_m5_publish_action_is_idempotent_and_requires_approval():
     assert action.idempotency_key == "publish-douyin-m5-project-001"
     assert action.reversible is False
     assert action.data_class == DataClass.C1_INTERNAL
+
+
+def test_m6_miniprogram_answer_requires_consent_and_has_medical_guardrails():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "question": "脸烂了是不是激素脸？能不能直接根治？",
+            "consent": {"privacy_notice_accepted": False},
+            "lead": {"lead_hash": "lead-hash-001", "skin_type": "sensitive"},
+        },
+    )
+
+    report = build_m6_private_domain_report(source)
+
+    assert report.data_class == DataClass.C1_INTERNAL
+    assert report.pii is False
+    assert report.payload["module"] == "m6_private_domain"
+    assert report.payload["pipl_consent"]["status"] == "blocked_pending_consent"
+    assert report.payload["pipl_consent"]["requires_explicit_notice"] is True
+    assert validate_miniprogram_answer(report.payload["answer_draft"]) == []
+    assert "医疗诊断" in report.payload["safety_boundary"]["medical_boundary"]
+    assert report.payload["wecom_handoff"]["status"] == "blocked_pending_consent"
+    assert report.payload["external_actions"] == []
+
+
+def test_m6_builds_redacted_lead_and_cohort_funnel_when_consented():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "question": "敏感肌早C晚A刺痛怎么办？",
+            "consent": {"privacy_notice_accepted": True, "marketing_opt_in": True},
+            "lead": {
+                "lead_hash": "lead-hash-002",
+                "skin_type": "sensitive",
+                "concerns": ["barrier", "retinol"],
+            },
+            "funnel_events": [
+                {"cohort": "2026-06", "stage": "visit", "count": 100, "spend": 300.0},
+                {"cohort": "2026-06", "stage": "qa_completed", "count": 64},
+                {"cohort": "2026-06", "stage": "wecom_intent", "count": 36},
+                {"cohort": "2026-06", "stage": "wecom_added", "count": 24},
+                {"cohort": "2026-06", "stage": "purchase", "count": 9, "revenue": 900.0},
+                {"cohort": "2026-06", "stage": "retained_7d", "count": 7},
+            ],
+        },
+    )
+
+    report = build_m6_private_domain_report(source)
+    rendered = str(report.payload)
+
+    assert report.payload["lead_record"]["table"] == "venus_leads"
+    assert report.payload["lead_record"]["data_class"] == "C3_SECRET_AT_REST"
+    assert report.payload["lead_record"]["stored_fields"] == ["lead_hash", "skin_type", "concerns", "consent"]
+    assert "phone" not in rendered
+    assert "name" not in rendered
+    assert report.payload["funnel_dashboard"]["method"] == "cohort_conversion_retention_payback"
+    assert report.payload["funnel_dashboard"]["cohorts"][0]["cohort"] == "2026-06"
+    assert report.payload["funnel_dashboard"]["cohorts"][0]["payback_days"] is not None
+    assert report.payload["wecom_handoff"]["status"] == "draft_ready"
+    assert report.payload["external_actions"] == []
+
+
+def test_m6_wecom_add_contact_action_is_idempotent_and_requires_approval():
+    action = build_wecom_add_contact_action(lead_id="lead-hash-002", contact_ref="wecom-user-hash")
+
+    assert isinstance(action, Action)
+    assert action.kind == "add_contact"
+    assert action.idempotency_key == "add-contact-lead-hash-002"
+    assert action.reversible is False
+    assert action.data_class == DataClass.C1_INTERNAL
+    assert action.payload["platform"] == "wecom"
+    assert action.payload["official_api_status"] == "pending_context7_verification"
+
+
+def test_m6_rejects_c3_or_pii_private_lead_payloads():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"lead": {"phone": "13800138000"}, "question": "我的私域用户问题"},
+    )
+
+    with pytest.raises(ValueError, match="C3"):
+        build_m6_private_domain_report(source)
+
+
+def test_m7_builds_budget_constrained_media_plan_with_learning_protection():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "plan_id": "m7-live-20260615",
+            "objective": {
+                "primary": "maximize_gmv",
+                "budget_cap": 3000.0,
+                "roas_floor": 3.0,
+                "attribution_window_days": 3,
+            },
+            "ad_groups": [
+                {
+                    "id": "creative-a",
+                    "name": "直播间敏感肌人群",
+                    "stage": "learning",
+                    "learning_day": 2,
+                    "spend": 600.0,
+                    "gmv": 2100.0,
+                    "orders": 12,
+                    "impressions": 12000,
+                    "clicks": 600,
+                    "attribution_mature": False,
+                },
+                {
+                    "id": "creative-b",
+                    "name": "早C晚A兴趣人群",
+                    "stage": "active",
+                    "learning_day": 8,
+                    "spend": 900.0,
+                    "gmv": 3900.0,
+                    "orders": 20,
+                    "impressions": 15000,
+                    "clicks": 900,
+                    "attribution_mature": True,
+                },
+            ],
+        },
+    )
+
+    report = build_m7_ads_report(source)
+
+    assert report.data_class == DataClass.C2_SENSITIVE
+    assert report.pii is False
+    assert report.payload["module"] == "m7_ads"
+    assert report.payload["optimization_policy"]["objective"] == "maximize_gmv_under_roas_constraint"
+    assert report.payload["optimization_policy"]["secondary_constraint"]["roas_floor"] == 3.0
+    assert report.payload["optimization_policy"]["exploration_method"] == "discounted_sliding_window_thompson_sampling"
+    assert report.payload["optimization_policy"]["attribution_window_days"] == 3
+    assert report.payload["external_actions"] == []
+
+    decisions = {row["ad_group_id"]: row for row in report.payload["media_plan"]["ad_group_decisions"]}
+    assert decisions["creative-a"]["decision"] == "protect_learning_phase"
+    assert decisions["creative-a"]["can_pause_now"] is False
+    assert decisions["creative-b"]["decision"] == "scale_with_guardrails"
+    assert decisions["creative-b"]["proposed_budget"] > decisions["creative-b"]["current_spend"]
+
+
+def test_m7_uses_sequential_testing_and_stop_loss_only_after_attribution_matures():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "objective": {"budget_cap": 2000.0, "roas_floor": 2.5, "cpa_ceiling": 80.0},
+            "ad_groups": [
+                {
+                    "id": "new-learning",
+                    "stage": "learning",
+                    "learning_day": 1,
+                    "spend": 300.0,
+                    "gmv": 100.0,
+                    "orders": 1,
+                    "impressions": 8000,
+                    "clicks": 320,
+                    "attribution_mature": False,
+                },
+                {
+                    "id": "mature-loss",
+                    "stage": "active",
+                    "learning_day": 10,
+                    "spend": 500.0,
+                    "gmv": 900.0,
+                    "orders": 4,
+                    "impressions": 9000,
+                    "clicks": 270,
+                    "attribution_mature": True,
+                },
+            ],
+            "experiments": [
+                {"id": "hook-ab", "variant_a": {"orders": 18, "spend": 800}, "variant_b": {"orders": 21, "spend": 820}}
+            ],
+        },
+    )
+
+    report = build_m7_ads_report(source)
+
+    decisions = {row["ad_group_id"]: row for row in report.payload["media_plan"]["ad_group_decisions"]}
+    assert decisions["new-learning"]["decision"] == "protect_learning_phase"
+    assert "attribution_not_mature" in decisions["new-learning"]["reasons"]
+    assert decisions["mature-loss"]["decision"] == "pause_requires_approval"
+    assert decisions["mature-loss"]["can_pause_now"] is True
+
+    testing = report.payload["sequential_testing"]
+    assert testing["method"] == "bayesian_sequential_with_predeclared_mde"
+    assert testing["peek_policy"] == "no_continuous_peeking_decision_without_guardrails"
+    assert testing["experiments"][0]["decision"] == "continue_collecting"
+    assert report.payload["anomaly_alerts"][0]["requires_human_review"] is True
+
+
+def test_m7_xingtu_quote_uses_expected_value_risk_discount_and_script_guardrails():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "xingtu_offer": {
+                "order_id": "xt-001",
+                "brand": "理性护肤品牌",
+                "fee": 18000.0,
+                "production_cost": 3500.0,
+                "opportunity_cost": 2500.0,
+                "audience_match": 0.86,
+                "brand_safety": 0.92,
+                "reputation_risk": 0.12,
+                "compliance_risk": 0.08,
+                "brief": "敏感肌精华合作，不能承诺医疗效果。",
+            },
+            "persona_descriptor": "口语、证据先行，不夸大功效。",
+        },
+    )
+
+    report = build_m7_ads_report(source)
+    xingtu = report.payload["xingtu_guidance"]
+
+    assert xingtu["method"] == "expected_value_minus_costs_risk_discounted"
+    assert xingtu["order_id"] == "xt-001"
+    assert xingtu["recommendation"] in {"accept_with_review", "negotiate", "reject"}
+    assert xingtu["risk_discount"] > 0
+    assert xingtu["quote_range"]["floor"] >= 6000
+    assert validate_ad_script(xingtu["script_draft"]) == []
+    assert "医疗诊断" in xingtu["script_draft"]
+
+
+def test_m7_external_money_and_xingtu_commitments_are_idempotent_approval_actions():
+    campaign = build_campaign_approval_action(plan_id="m7-live-20260615", budget=3000.0)
+    xingtu = build_xingtu_accept_order_action(order_id="xt-001", quoted_fee=18000.0)
+
+    assert isinstance(campaign, Action)
+    assert campaign.kind == "create_campaign"
+    assert campaign.idempotency_key == "create-campaign-m7-live-20260615"
+    assert campaign.reversible is False
+    assert campaign.data_class == DataClass.C2_SENSITIVE
+    assert campaign.payload["requires_approval"] is True
+    assert campaign.payload["official_api_status"] == "pending_context7_verification"
+
+    assert isinstance(xingtu, Action)
+    assert xingtu.kind == "accept_xingtu_order"
+    assert xingtu.idempotency_key == "accept-xingtu-order-xt-001"
+    assert xingtu.reversible is False
+    assert xingtu.data_class == DataClass.C2_SENSITIVE
+    assert xingtu.payload["requires_approval"] is True
+
+
+def test_m7_rejects_c3_or_pii_ad_payloads():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"ad_groups": [{"id": "private-user", "phone": "13800138000"}]},
+    )
+
+    with pytest.raises(ValueError, match="C3"):
+        build_m7_ads_report(source)
+
+
+def test_m8_builds_creator_matrix_with_percentiles_trends_and_source_boundaries():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "data_source": {"name": "licensed-panel", "tier": "B", "authorized": True},
+            "polling": {"base_interval_minutes": 360, "burst_interval_minutes": 60},
+            "creators": [
+                {
+                    "creator_id": "creator-a",
+                    "handle": "屏障修护研究所",
+                    "style_tags": ["evidence", "calm"],
+                    "metrics": {"engagement_rate": 0.091, "avg_views": 82000, "ad_post_ratio": 0.18},
+                    "previous_metrics": {"engagement_rate": 0.065, "avg_views": 56000},
+                    "videos": [
+                        {"id": "v-a1", "views": 91000, "completion_rate": 0.43, "ad": False},
+                        {"id": "v-a2", "views": 73000, "completion_rate": 0.38, "ad": True},
+                    ],
+                    "live": {"sessions": 3, "avg_gpm": 6800, "peak_online": 2400},
+                },
+                {
+                    "creator_id": "creator-b",
+                    "handle": "成分党日记",
+                    "style_tags": ["fast", "ingredient"],
+                    "metrics": {"engagement_rate": 0.043, "avg_views": 36000, "ad_post_ratio": 0.42},
+                    "previous_metrics": {"engagement_rate": 0.041, "avg_views": 34000},
+                    "videos": [{"id": "v-b1", "views": 38000, "completion_rate": 0.31, "ad": True}],
+                    "live": {"sessions": 1, "avg_gpm": 2100, "peak_online": 600},
+                },
+                {
+                    "creator_id": "creator-c",
+                    "handle": "敏感肌避坑站",
+                    "style_tags": ["story", "review"],
+                    "metrics": {"engagement_rate": 0.066, "avg_views": 59000, "ad_post_ratio": 0.09},
+                    "previous_metrics": {"engagement_rate": 0.071, "avg_views": 62000},
+                    "videos": [{"id": "v-c1", "views": 61000, "completion_rate": 0.36, "ad": False}],
+                    "live": {"sessions": 0, "avg_gpm": 0, "peak_online": 0},
+                },
+            ],
+        },
+    )
+
+    report = build_m8_benchmark_report(source)
+    rows = report.payload["benchmark_matrix"]["creators"]
+    row_a = next(row for row in rows if row["creator_id"] == "creator-a")
+
+    assert report.data_class == DataClass.C1_INTERNAL
+    assert report.pii is False
+    assert report.payload["module"] == "m8_benchmark"
+    assert report.payload["source_boundary"]["allowed_tiers"] == ["tier_a_official_products", "tier_b_licensed_provider"]
+    assert report.payload["source_boundary"]["tier_c_blocked"] is True
+    assert report.payload["polling_policy"]["mode"] == "near_real_time_configurable"
+    assert report.payload["external_actions"] == []
+
+    assert row_a["engagement_percentile"] == 100.0
+    assert row_a["view_percentile"] == 100.0
+    assert row_a["trend"] == "rising"
+    assert row_a["ad_analysis"]["ad_post_count"] == 1
+    assert row_a["live_analysis"]["sessions"] == 3
+    assert report.payload["timeseries_sink"]["table"] == "venus_metric_timeseries"
+    assert report.payload["timeseries_sink"]["records"][0]["data_class"] == "C1_INTERNAL"
+
+
+def test_m8_detects_anomalies_and_outputs_non_defamatory_recommendations():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "data_source": {"name": "official-data-product", "tier": "A", "authorized": True},
+            "creators": [
+                {
+                    "creator_id": "spike",
+                    "handle": "直播爆发样本",
+                    "metrics": {"engagement_rate": 0.07, "avg_views": 160000, "ad_post_ratio": 0.12},
+                    "previous_metrics": {"engagement_rate": 0.05, "avg_views": 60000},
+                    "videos": [{"id": "v1", "views": 190000, "completion_rate": 0.49, "ad": False}],
+                    "live": {"sessions": 5, "avg_gpm": 9800, "peak_online": 5200},
+                },
+                {
+                    "creator_id": "heavy-ad",
+                    "handle": "高广告占比样本",
+                    "metrics": {"engagement_rate": 0.035, "avg_views": 42000, "ad_post_ratio": 0.71},
+                    "previous_metrics": {"engagement_rate": 0.055, "avg_views": 52000},
+                    "videos": [{"id": "v2", "views": 41000, "completion_rate": 0.28, "ad": True}],
+                    "live": {"sessions": 1, "avg_gpm": 1500, "peak_online": 500},
+                },
+            ],
+        },
+    )
+
+    report = build_m8_benchmark_report(source)
+
+    alerts = report.payload["anomaly_alerts"]
+    assert any(alert["creator_id"] == "spike" and alert["kind"] == "view_velocity_spike" for alert in alerts)
+    assert any(alert["creator_id"] == "heavy-ad" and alert["kind"] == "ad_load_risk" for alert in alerts)
+    assert all(alert["requires_review"] is True for alert in alerts)
+    assert validate_benchmark_commentary(report.payload["recommendations"][0]) == []
+    assert "诽谤" in report.payload["safety_boundary"]["commentary_policy"]
+
+
+def test_m8_supports_provider_switching_and_tracks_style_live_video_dimensions():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "data_source": {"name": "灰豚授权版", "tier": "B", "authorized": True},
+            "fallback_sources": ["official-data-product", "licensed-panel-b"],
+            "creators": [
+                {
+                    "creator_id": "creator-style",
+                    "handle": "风格矩阵样本",
+                    "style_tags": ["lab", "comparison", "soft-selling"],
+                    "metrics": {"engagement_rate": 0.052, "avg_views": 48000, "ad_post_ratio": 0.24},
+                    "previous_metrics": {"engagement_rate": 0.048, "avg_views": 47000},
+                    "videos": [
+                        {"id": "style-1", "views": 50000, "completion_rate": 0.35, "ad": False},
+                        {"id": "style-2", "views": 46000, "completion_rate": 0.33, "ad": True},
+                    ],
+                    "live": {"sessions": 2, "avg_gpm": 3600, "peak_online": 1200},
+                }
+            ],
+        },
+    )
+
+    report = build_m8_benchmark_report(source)
+    creator = report.payload["benchmark_matrix"]["creators"][0]
+
+    assert report.payload["provider_switching"]["primary"] == "灰豚授权版"
+    assert report.payload["provider_switching"]["fallbacks"] == ["official-data-product", "licensed-panel-b"]
+    assert creator["style_analysis"]["tags"] == ["lab", "comparison", "soft-selling"]
+    assert creator["video_analysis"]["video_count"] == 2
+    assert creator["live_analysis"]["avg_gpm"] == 3600.0
+
+
+def test_m8_rejects_tier_c_sources_and_c3_or_pii_payloads():
+    tier_c_source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "data_source": {"name": "unlicensed-export", "tier": "C", "authorized": False},
+            "creators": [],
+        },
+    )
+    private_source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"creators": [{"creator_id": "private", "phone": "13800138000"}]},
+    )
+
+    with pytest.raises(ValueError, match="Tier C"):
+        build_m8_benchmark_report(tier_c_source)
+    with pytest.raises(ValueError, match="C3"):
+        build_m8_benchmark_report(private_source)
+
+
+def test_m9_builds_system_health_eval_runs_and_controlled_improvement_loop():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "eval_runs": [
+                {"module": "m1", "kpi": "script_quality", "score": 0.82, "threshold": 0.75},
+                {"module": "m4", "kpi": "reply_safety", "score": 0.62, "threshold": 0.8},
+                {"module": "m7", "kpi": "roas_guardrail", "score": 0.71, "threshold": 0.85},
+            ],
+            "incidents": [
+                {"module": "m4", "kind": "compliance_alert", "count": 2},
+                {"module": "m7", "kind": "cost_anomaly", "count": 1},
+            ],
+            "candidate_changes": [
+                {
+                    "change_id": "prompt-m4-001",
+                    "category": "prompt_parameter",
+                    "summary": "降低回复草稿医疗化表达",
+                    "expected_gain": 0.08,
+                    "rollback_ref": "prompt-m4-v1",
+                },
+                {
+                    "change_id": "core-identity-001",
+                    "category": "core_identity",
+                    "summary": "修改人设核心身份",
+                    "expected_gain": 0.2,
+                },
+            ],
+        },
+    )
+
+    report = build_m9_evolution_report(source)
+
+    assert report.data_class == DataClass.C2_SENSITIVE
+    assert report.pii is False
+    assert report.payload["module"] == "m9_evolution"
+    assert report.payload["system_health"]["status"] == "needs_attention"
+    assert report.payload["eval_runs_sink"]["table"] == "venus_eval_runs"
+    assert report.payload["eval_runs_sink"]["records"][1]["module"] == "m4"
+    assert report.payload["weaknesses"][0]["module"] in {"m4", "m7"}
+    assert (
+        report.payload["improvement_loop"]["allowed_scope"]
+        == "authorized_and_privacy_matrix_compliant_only"
+    )
+    assert report.payload["improvement_loop"]["auto_candidates"][0]["rollout"] == "canary_with_rollback"
+    assert report.payload["improvement_loop"]["approval_required_changes"][0]["category"] == "core_identity"
+    assert report.payload["external_actions"] == []
+
+
+def test_m9_backup_plan_uses_321_encryption_checksums_and_restore_drill():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "backup": {
+                "backup_id": "backup-20260615",
+                "copies": [
+                    {
+                        "id": "local-db",
+                        "medium": "disk",
+                        "location": "primary_cn",
+                        "encrypted": True,
+                        "checksum": "sha256:a",
+                    },
+                    {
+                        "id": "object-store",
+                        "medium": "object",
+                        "location": "secondary_cn",
+                        "encrypted": True,
+                        "checksum": "sha256:b",
+                    },
+                    {
+                        "id": "offline-archive",
+                        "medium": "offline",
+                        "location": "offline_cn",
+                        "encrypted": True,
+                        "checksum": "sha256:c",
+                    },
+                ],
+                "schedule": {"incremental": "daily", "full": "weekly"},
+                "restore_drill": {"status": "passed", "checksum_match": True, "sampled_restore_count": 3},
+                "contains_personal_info": True,
+                "data_residency": "cn",
+            }
+        },
+    )
+
+    report = build_m9_evolution_report(source)
+    backup = report.payload["backup_plan"]
+
+    assert backup["strategy"] == "3-2-1"
+    assert backup["status"] == "restore_verified"
+    assert backup["encrypted_copies"] == 3
+    assert backup["media_count"] >= 2
+    assert backup["offsite_or_offline_copy"] is True
+    assert backup["schedule"] == {"incremental": "daily", "full": "weekly"}
+    assert backup["restore_drill"]["status"] == "passed"
+    assert backup["venus_backups_record"]["table"] == "venus_backups"
+    assert backup["data_residency_policy"] == "personal_info_cn_or_assessed_before_cross_border"
+
+
+def test_m9_high_risk_policy_and_delete_actions_are_idempotent_approval_actions():
+    policy = build_policy_change_action(change_id="core-identity-001", category="core_identity")
+    delete = build_data_delete_action(subject_ref="lead-hash-002", reason="user_requested_erasure")
+
+    assert isinstance(policy, Action)
+    assert policy.kind == "change_governed_policy"
+    assert policy.idempotency_key == "policy-change-core-identity-001"
+    assert policy.payload["requires_approval"] is True
+    assert policy.payload["rollback_required"] is True
+    assert policy.data_class == DataClass.C1_INTERNAL
+
+    assert isinstance(delete, Action)
+    assert delete.kind == "delete_data"
+    assert delete.idempotency_key == "delete-data-lead-hash-002"
+    assert delete.reversible is False
+    assert delete.payload["subject_ref"] == "lead-hash-002"
+    assert "phone" not in str(delete.payload)
+    assert delete.payload["requires_approval"] is True
+
+
+def test_m9_rejects_c3_or_pii_and_blocks_cloud_training_proposals():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"eval_runs": [{"module": "m3", "raw_persona": "私有语料"}]},
+    )
+
+    with pytest.raises(ValueError, match="C3"):
+        build_m9_evolution_report(source)
+
+    issues = validate_evolution_proposal(
+        {
+            "change_id": "bad-training",
+            "category": "model_training",
+            "data_class": "C3_SECRET",
+            "destination": "cloud_llm",
+            "summary": "把我的语料上传云端训练",
+        }
+    )
+    assert any("C3" in issue and "云" in issue for issue in issues)
