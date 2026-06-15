@@ -1,0 +1,61 @@
+{
+  "competitors": [
+    {
+      "handle": "成分党A",
+      "followers": 380000,
+      "source": "manual-douyin-export-001",
+      "videos": [
+        {
+          "title": "早C晚A翻车自查",
+          "topic": "早C晚A翻车",
+          "views": 120000,
+          "likes": 9800,
+          "comments": 1680,
+          "shares": 2400,
+          "completion_rate": 0.72,
+          "is_ad": false,
+          "ingredients": ["视黄醇", "维C"],
+          "controversies": ["刷酸叠加争议"],
+          "high_risk_comments": ["敏感肌会不会烂脸"]
+        },
+        {
+          "title": "屏障修护精华测评",
+          "topic": "屏障修护",
+          "views": 84000,
+          "likes": 5200,
+          "comments": 620,
+          "shares": 900,
+          "completion_rate": 0.61,
+          "is_ad": true,
+          "ingredients": ["泛醇", "神经酰胺NP"]
+        }
+      ],
+      "live_sessions": [
+        {
+          "title": "敏感肌答疑",
+          "duration_minutes": 95,
+          "peak_viewers": 3200
+        }
+      ]
+    },
+    {
+      "handle": "种草号B",
+      "followers": 510000,
+      "source": "manual-douyin-export-002",
+      "videos": [
+        {
+          "title": "贵妇面霜必买",
+          "topic": "面霜种草",
+          "views": 200000,
+          "likes": 6000,
+          "comments": 300,
+          "shares": 500,
+          "completion_rate": 0.38,
+          "is_ad": true,
+          "controversies": ["夸大淡纹效果"]
+        }
+      ],
+      "live_sessions": []
+    }
+  ]
+}

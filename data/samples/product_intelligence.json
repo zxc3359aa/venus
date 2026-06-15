@@ -1,0 +1,92 @@
+{
+  "source": "manual_product_dossier",
+  "retrieved_at": "2026-06-14T16:00:00+08:00",
+  "api_key": "secret-product-token",
+  "live_connector_requested": true,
+  "product": {
+    "brand": "示例品牌",
+    "name": "屏障修护精华",
+    "filing_id": "国妆网备字20260001",
+    "manufacturer": "示例化妆品有限公司",
+    "category": "essence",
+    "claims": ["舒缓", "100%修复屏障"],
+    "brand_backing": [
+      {
+        "type": "dermatologist_quote",
+        "source": "品牌手册",
+        "status": "unverified"
+      },
+      {
+        "type": "lab_collaboration",
+        "source": "品牌发布会",
+        "status": "verified"
+      }
+    ],
+    "ingredients": [
+      {
+        "name": "烟酰胺",
+        "role": "brightening",
+        "risk": "medium",
+        "supplier": "原料商A",
+        "coa": "coa-niacinamide-001",
+        "test_report": "test-niacinamide-001"
+      },
+      {
+        "name": "视黄醇",
+        "role": "renewal",
+        "risk": "high",
+        "supplier": "原料商B",
+        "coa": "",
+        "test_report": ""
+      }
+    ],
+    "supplier_documents": [
+      {
+        "supplier": "原料商A",
+        "document": "coa-niacinamide-001",
+        "status": "provided"
+      },
+      {
+        "supplier": "原料商B",
+        "document": "",
+        "status": "missing"
+      }
+    ],
+    "test_reports": [
+      {
+        "report_id": "test-niacinamide-001",
+        "scope": "烟酰胺纯度",
+        "status": "provided"
+      },
+      {
+        "report_id": "",
+        "scope": "视黄醇稳定性",
+        "status": "missing"
+      }
+    ],
+    "controversies": [
+      {
+        "source": "douyin_comment",
+        "issue": "用户反馈刺痛",
+        "severity": "medium"
+      },
+      {
+        "source": "creator_video",
+        "issue": "达人质疑夸大修复",
+        "severity": "high"
+      }
+    ],
+    "evidence": [
+      {
+        "id": "nmpa-001",
+        "type": "filing",
+        "title": "备案查询"
+      },
+      {
+        "id": "brand-001",
+        "type": "brand",
+        "title": "品牌手册"
+      }
+    ]
+  }
+}

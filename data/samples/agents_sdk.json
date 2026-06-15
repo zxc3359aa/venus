@@ -1,0 +1,31 @@
+{
+  "source": "manual_agents_sdk_review",
+  "generated_at": "2026-06-15T12:00:00+08:00",
+  "live_sdk_requested": false,
+  "environment": {
+    "OPENAI_API_KEY_configured": false,
+    "openai_agents_installed": false,
+    "deployment_manager_ready": false
+  },
+  "agent_run": {
+    "run_id": "venus-run-sdk-001",
+    "executed_workflows": [
+      "trend_scan",
+      "product_intel",
+      "content_eval",
+      "performance",
+      "connectors",
+      "scheduler",
+      "memory"
+    ],
+    "action_plan": [],
+    "external_actions": []
+  },
+  "eval_report": {
+    "summary": {
+      "autopilot_ready": false,
+      "readiness_status": "blocked_by_connector_readiness"
+    }
+  },
+  "tool_overrides": []
+}

@@ -1,0 +1,125 @@
+{
+  "source": "manual_connector_dispatch_review",
+  "workspace_root": ".",
+  "rehearsed_at": "2026-06-15T15:00:00+08:00",
+  "dispatch_requested": false,
+  "approved_dispatch_review": false,
+  "live_dispatch_requested": false,
+  "environment": {
+    "VENUS_FEISHU_APP_ID_configured": true,
+    "VENUS_AIRTABLE_BASE_ID_configured": true,
+    "VENUS_DOUYIN_CLIENT_ID_configured": false,
+    "VENUS_QIANCHUAN_APP_ID_configured": true,
+    "VENUS_WECHAT_APP_ID_configured": true
+  },
+  "execution_records": [
+    {
+      "execution_id": "exec-draft-feishu-report-001-feishu-bot",
+      "draft_id": "draft-feishu-report-001",
+      "outbox_id": "outbox-feishu-report-001",
+      "action_id": "feishu-report-001",
+      "action_type": "feishu_mobile_report",
+      "artifact_type": "feishu_card_draft",
+      "target_surface": "feishu",
+      "connector_id": "feishu-bot",
+      "connector_type": "feishu_bot",
+      "adapter_type": "feishu_card_send_candidate",
+      "required_secret_refs": ["VENUS_FEISHU_APP_ID"],
+      "manifest_payload": {
+        "card": {
+          "title": "Venus private report"
+        }
+      },
+      "execution_state": "local_manifest_ready",
+      "dispatch_state": "blocked_until_live_connector_enabled",
+      "approval_level": 2,
+      "external_action_enabled": false
+    },
+    {
+      "execution_id": "exec-draft-airtable-sync-001-airtable-ops",
+      "draft_id": "draft-airtable-sync-001",
+      "outbox_id": "outbox-airtable-sync-001",
+      "action_id": "airtable-sync-001",
+      "action_type": "airtable_sync_review",
+      "artifact_type": "airtable_record_package",
+      "target_surface": "airtable",
+      "connector_id": "airtable-ops",
+      "connector_type": "airtable_api",
+      "adapter_type": "airtable_record_write_candidate",
+      "required_secret_refs": ["VENUS_AIRTABLE_BASE_ID"],
+      "manifest_payload": {
+        "table": "Action Reviews"
+      },
+      "execution_state": "local_manifest_ready",
+      "dispatch_state": "blocked_until_live_connector_enabled",
+      "approval_level": 2,
+      "external_action_enabled": false
+    },
+    {
+      "execution_id": "exec-draft-douyin-reply-001-douyin-open",
+      "draft_id": "draft-douyin-reply-001",
+      "outbox_id": "outbox-douyin-reply-001",
+      "action_id": "douyin-reply-001",
+      "action_type": "douyin_reply_queue",
+      "artifact_type": "douyin_reply_package",
+      "target_surface": "douyin",
+      "connector_id": "douyin-open",
+      "connector_type": "douyin_open_api",
+      "adapter_type": "douyin_reply_or_metric_candidate",
+      "required_secret_refs": ["VENUS_DOUYIN_CLIENT_ID"],
+      "manifest_payload": {
+        "reply": "先看屏障状态。"
+      },
+      "execution_state": "local_manifest_ready",
+      "dispatch_state": "blocked_until_live_connector_enabled",
+      "approval_level": 3,
+      "external_action_enabled": false
+    },
+    {
+      "execution_id": "exec-draft-qianchuan-budget-001-qianchuan-ads",
+      "draft_id": "draft-qianchuan-budget-001",
+      "outbox_id": "outbox-qianchuan-budget-001",
+      "action_id": "qianchuan-budget-001",
+      "action_type": "qianchuan_budget_review",
+      "artifact_type": "qianchuan_budget_package",
+      "target_surface": "qianchuan",
+      "connector_id": "qianchuan-ads",
+      "connector_type": "oceanengine_marketing_api",
+      "adapter_type": "oceanengine_budget_candidate",
+      "required_secret_refs": ["VENUS_QIANCHUAN_APP_ID"],
+      "manifest_payload": {
+        "budget_delta": 500
+      },
+      "execution_state": "local_manifest_ready",
+      "dispatch_state": "blocked_until_live_connector_enabled",
+      "approval_level": 4,
+      "external_action_enabled": false
+    },
+    {
+      "execution_id": "exec-draft-wechat-handoff-001-wechat-private-domain",
+      "draft_id": "draft-wechat-handoff-001",
+      "outbox_id": "outbox-wechat-handoff-001",
+      "action_id": "wechat-handoff-001",
+      "action_type": "wechat_handoff_queue",
+      "artifact_type": "wechat_handoff_package",
+      "target_surface": "wechat",
+      "connector_id": "wechat-private-domain",
+      "connector_type": "wechat_mini_program",
+      "adapter_type": "wechat_private_domain_candidate",
+      "required_secret_refs": ["VENUS_WECHAT_APP_ID"],
+      "manifest_payload": {
+        "handoff": "Invite to Enterprise WeChat."
+      },
+      "execution_state": "local_manifest_ready",
+      "dispatch_state": "blocked_until_live_connector_enabled",
+      "approval_level": 2,
+      "external_action_enabled": false
+    }
+  ],
+  "dispatch_overrides": [
+    {
+      "execution_id": "exec-draft-wechat-handoff-001-wechat-private-domain",
+      "external_action_enabled": true
+    }
+  ]
+}

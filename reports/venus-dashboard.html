@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Venus Operations Dashboard</title>
+<style>
+
+:root {
+  color-scheme: light;
+  --bg: #f7f4ef;
+  --ink: #1f2933;
+  --muted: #667085;
+  --line: #d9d2c5;
+  --panel: #fffdf9;
+  --accent: #2f7d75;
+  --accent-soft: #dcefeb;
+  --risk: #b4432f;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  line-height: 1.5;
+}
+.shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 44px;
+}
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 20px;
+}
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: 0;
+}
+h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+.status-pill {
+  flex: 0 0 auto;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin: 22px 0;
+}
+.kpi-card,
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.kpi-card {
+  padding: 14px;
+  min-height: 116px;
+}
+.kpi-card span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.kpi-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+}
+.kpi-card p {
+  font-size: 12px;
+}
+.panel {
+  margin-top: 14px;
+  padding: 18px;
+}
+.bar-stack {
+  display: grid;
+  gap: 10px;
+}
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 220px) 1fr minmax(72px, auto);
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+}
+.bar-track {
+  height: 12px;
+  background: #ece6dc;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--accent);
+}
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th,
+td {
+  border-bottom: 1px solid var(--line);
+  padding: 9px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  color: var(--muted);
+  font-weight: 700;
+}
+.empty {
+  color: var(--muted);
+  text-align: center;
+}
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+}
+@media (max-width: 880px) {
+  .topbar,
+  .note-grid {
+    display: block;
+  }
+  .status-pill {
+    display: inline-block;
+    margin-top: 14px;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bar-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+@media (max-width: 520px) {
+  .shell {
+    width: min(100% - 20px, 1180px);
+  }
+  h1 {
+    font-size: 24px;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="topbar">
+<div>
+<p class="eyebrow">Venus / Local dry-run</p>
+<h1>Venus Operations Dashboard</h1>
+<p>Venus beauty and skincare operations base package.</p>
+</div>
+<div class="status-pill" id="external-actions-empty">external_actions: []</div>
+</header>
+<section class="kpi-grid" aria-label="Dashboard summary">
+<article class="kpi-card"><span>Tables</span><strong>6</strong><p>Airtable-ready operating surfaces</p></article>
+<article class="kpi-card"><span>Records</span><strong>10</strong><p>Rows available for review</p></article>
+<article class="kpi-card"><span>High-Risk Comments</span><strong>2</strong><p>Need approval before public reply</p></article>
+<article class="kpi-card"><span>High-Risk Products</span><strong>1</strong><p>Need careful evidence language</p></article>
+<article class="kpi-card"><span>Competitors</span><strong>1</strong><p>Accounts in current monitor</p></article>
+<article class="kpi-card"><span>Opportunities</span><strong>3</strong><p>Action ideas queued</p></article>
+</section>
+<section class="panel">
+<h2>Signal Overview</h2>
+<div class="bar-stack">
+<div class="bar-row"><span>成分党A</span><div class="bar-track"><div class="bar-fill" style="width: 100.0%"></div></div><strong>74.3 score</strong></div>
+<div class="bar-row"><span>High-risk products</span><div class="bar-track"><div class="bar-fill" style="width: 100.0%"></div></div><strong>1 count</strong></div>
+<div class="bar-row"><span>Approval-gated comments</span><div class="bar-track"><div class="bar-fill" style="width: 100.0%"></div></div><strong>2 count</strong></div>
+</div>
+</section>
+<section class="panel">
+<h2>Hotspots</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Topic</th>
+<th>Type</th>
+<th>Score</th>
+<th>Controversy</th>
+<th>Is Top Topic</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>早C晚A翻车</td>
+<td>controversy</td>
+<td>83</td>
+<td>8</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>夏季防晒补涂</td>
+<td>routine</td>
+<td>59</td>
+<td>3</td>
+<td>No</td>
+</tr>
+
+</tbody>
+</table>
+</div>
+</section>
+<section class="panel">
+<h2>Products</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Product</th>
+<th>Risk Level</th>
+<th>Evidence Confidence</th>
+<th>Forbidden Claims</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>屏障修护精华</td>
+<td>high</td>
+<td>high</td>
+<td>100%修复屏障</td>
+</tr>
+
+</tbody>
+</table>
+</div>
+</section>
+<section class="panel">
+<h2>Comments</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Comment ID</th>
+<th>Risk</th>
+<th>Approval Level</th>
+<th>Intent</th>
+<th>Text</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>c1</td>
+<td>high</td>
+<td>3</td>
+<td>risk_question</td>
+<td>敏感肌用了会不会烂脸？</td>
+</tr>
+<tr>
+<td>c2</td>
+<td>high</td>
+<td>3</td>
+<td>risk_question</td>
+<td>这个是不是100%能修复屏障？</td>
+</tr>
+<tr>
+<td>c3</td>
+<td>medium</td>
+<td>1</td>
+<td>shopping_advice</td>
+<td>求平价替代！</td>
+</tr>
+
+</tbody>
+</table>
+</div>
+</section>
+<section class="panel">
+<h2>Competitors</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Handle</th>
+<th>Growth Signal Score</th>
+<th>Avg Completion Rate</th>
+<th>Avg Engagement Rate</th>
+<th>Ad Ratio</th>
+<th>Live Hours</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>成分党A</td>
+<td>74.3</td>
+<td>0.72</td>
+<td>0.116</td>
+<td>0</td>
+<td>1</td>
+</tr>
+
+</tbody>
+</table>
+</div>
+</section>
+<section class="panel">
+<h2>Monitoring Opportunities</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Action Type</th>
+<th>Priority</th>
+<th>Based On</th>
+<th>Recommendation</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>film</td>
+<td>high</td>
+<td>成分党A</td>
+<td>围绕早C晚A翻车做一条证据框架型短视频，开头直接抛争议，中段给肤质判断，结尾引导评论区留下产品名和肤质。</td>
+</tr>
+<tr>
+<td>comment</td>
+<td>high</td>
+<td>成分党A</td>
+<td>把高风险评论先做成答疑选题，不自动公开回复，等人工确认措辞。</td>
+</tr>
+<tr>
+<td>live</td>
+<td>medium</td>
+<td>成分党A</td>
+<td>复盘对标账号直播主题和时长，优先准备敏感肌、屏障、成分搭配类问答卡片。</td>
+</tr>
+
+</tbody>
+</table>
+</div>
+</section>
+<section class="panel">
+<h2>Approvals</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Action Type</th>
+<th>Approval Level</th>
+<th>Status</th>
+<th>Reviewer</th>
+</tr></thead>
+<tbody>
+<tr><td colspan="4" class="empty">No records yet</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="panel">
+<h2>Sources And Safety</h2>
+<div class="note-grid">
+<p><strong>Base:</strong> Venus Ops</p>
+<p><strong>Namespace:</strong> venus_airtable</p>
+<p>Airtable write is disabled in this dry-run package.</p>
+<p>No bases, tables, records, automations, or interfaces were created.</p>
+<p>Public replies, publishing, lead routing, and ad changes remain approval-gated.</p>
+<p>Current source is local imported sample data, not live Douyin or live Airtable.</p>
+</div>
+</section>
+</main>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+  "source": "manual_airtable_sync_plan",
+  "workspace_root": ".",
+  "planned_at": "2026-06-15T11:20:00+08:00",
+  "sync_requested": false,
+  "approved_sync_review": false,
+  "airtable_package": {
+    "base": {
+      "name": "Venus Ops",
+      "namespace": "venus_airtable"
+    },
+    "tables": [
+      {
+        "name": "Hotspots",
+        "fields": [
+          {
+            "name": "Name",
+            "type": "singleLineText"
+          },
+          {
+            "name": "Topic",
+            "type": "singleLineText"
+          }
+        ],
+        "records": [
+          {
+            "fields": {
+              "Name": "早C晚A翻车",
+              "Topic": "早C晚A翻车"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "connector_reviews": [
+    {
+      "connector_id": "airtable-ops",
+      "surface": "airtable",
+      "status": "ready",
+      "permissions_granted": [
+        "base_read",
+        "record_write"
+      ],
+      "audit_ready": true,
+      "rollback_ready": true,
+      "external_action_enabled": false
+    }
+  ]
+}

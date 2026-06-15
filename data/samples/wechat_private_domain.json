@@ -1,0 +1,25 @@
+{
+  "source": "mini_program_export",
+  "retrieved_at": "2026-06-14T11:00:00+08:00",
+  "persona_samples": [
+    "姐妹们，先看屏障状态，证据和体验都要说清楚。"
+  ],
+  "mini_program_sessions": [
+    {
+      "session_id": "mp-001",
+      "nickname": "敏敏",
+      "questions": [
+        {
+          "question_id": "q1",
+          "text": "屏障受损泛红，早C晚A还能继续吗？",
+          "created_at": "2026-06-14T10:30:00+08:00"
+        },
+        {
+          "question_id": "q2",
+          "text": "我想加企业微信进群，让你帮我看产品搭配",
+          "created_at": "2026-06-14T10:33:00+08:00"
+        }
+      ]
+    }
+  ]
+}
