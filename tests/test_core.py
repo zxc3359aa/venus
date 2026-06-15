@@ -19,6 +19,7 @@ from venus.contracts import (
     MemoryKind,
     Tagged,
 )
+from venus.connectors_feishu import PlatformInterfaceNotVerified, real_start
 from venus.llm import FakeLLMProvider
 from venus.logging_setup import RedactingFormatter
 from venus.modules.m1_hotspot import build_m1_hotspot_package, validate_copy
@@ -50,6 +51,12 @@ from venus.modules.m7_ads import (
     validate_ad_script,
 )
 from venus.modules.m8_benchmark import build_m8_benchmark_report, validate_benchmark_commentary
+from venus.modules.m9_evolution import (
+    build_data_delete_action,
+    build_m9_evolution_report,
+    build_policy_change_action,
+    validate_evolution_proposal,
+)
 from venus.privacy import DefaultPrivacyFirewall, PrivacyError
 
 
@@ -94,6 +101,11 @@ def test_destination_allowlist():
     fw.assert_destination_allowlisted("https://api.openai.com/v1/chat/completions")
     with pytest.raises(PrivacyError):
         fw.assert_destination_allowlisted("https://evil.example.com/exfil")
+
+
+def test_real_feishu_start_is_blocked_until_context7_verification():
+    with pytest.raises(PlatformInterfaceNotVerified):
+        real_start("app-id", "app-secret", lambda _: None)
 
 
 # ---- 审批网关：幂等与过期 ----
@@ -1048,3 +1060,145 @@ def test_m8_rejects_tier_c_sources_and_c3_or_pii_payloads():
         build_m8_benchmark_report(tier_c_source)
     with pytest.raises(ValueError, match="C3"):
         build_m8_benchmark_report(private_source)
+
+
+def test_m9_builds_system_health_eval_runs_and_controlled_improvement_loop():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "eval_runs": [
+                {"module": "m1", "kpi": "script_quality", "score": 0.82, "threshold": 0.75},
+                {"module": "m4", "kpi": "reply_safety", "score": 0.62, "threshold": 0.8},
+                {"module": "m7", "kpi": "roas_guardrail", "score": 0.71, "threshold": 0.85},
+            ],
+            "incidents": [
+                {"module": "m4", "kind": "compliance_alert", "count": 2},
+                {"module": "m7", "kind": "cost_anomaly", "count": 1},
+            ],
+            "candidate_changes": [
+                {
+                    "change_id": "prompt-m4-001",
+                    "category": "prompt_parameter",
+                    "summary": "降低回复草稿医疗化表达",
+                    "expected_gain": 0.08,
+                    "rollback_ref": "prompt-m4-v1",
+                },
+                {
+                    "change_id": "core-identity-001",
+                    "category": "core_identity",
+                    "summary": "修改人设核心身份",
+                    "expected_gain": 0.2,
+                },
+            ],
+        },
+    )
+
+    report = build_m9_evolution_report(source)
+
+    assert report.data_class == DataClass.C2_SENSITIVE
+    assert report.pii is False
+    assert report.payload["module"] == "m9_evolution"
+    assert report.payload["system_health"]["status"] == "needs_attention"
+    assert report.payload["eval_runs_sink"]["table"] == "venus_eval_runs"
+    assert report.payload["eval_runs_sink"]["records"][1]["module"] == "m4"
+    assert report.payload["weaknesses"][0]["module"] in {"m4", "m7"}
+    assert (
+        report.payload["improvement_loop"]["allowed_scope"]
+        == "authorized_and_privacy_matrix_compliant_only"
+    )
+    assert report.payload["improvement_loop"]["auto_candidates"][0]["rollout"] == "canary_with_rollback"
+    assert report.payload["improvement_loop"]["approval_required_changes"][0]["category"] == "core_identity"
+    assert report.payload["external_actions"] == []
+
+
+def test_m9_backup_plan_uses_321_encryption_checksums_and_restore_drill():
+    source = Tagged(
+        data_class=DataClass.C2_SENSITIVE,
+        payload={
+            "backup": {
+                "backup_id": "backup-20260615",
+                "copies": [
+                    {
+                        "id": "local-db",
+                        "medium": "disk",
+                        "location": "primary_cn",
+                        "encrypted": True,
+                        "checksum": "sha256:a",
+                    },
+                    {
+                        "id": "object-store",
+                        "medium": "object",
+                        "location": "secondary_cn",
+                        "encrypted": True,
+                        "checksum": "sha256:b",
+                    },
+                    {
+                        "id": "offline-archive",
+                        "medium": "offline",
+                        "location": "offline_cn",
+                        "encrypted": True,
+                        "checksum": "sha256:c",
+                    },
+                ],
+                "schedule": {"incremental": "daily", "full": "weekly"},
+                "restore_drill": {"status": "passed", "checksum_match": True, "sampled_restore_count": 3},
+                "contains_personal_info": True,
+                "data_residency": "cn",
+            }
+        },
+    )
+
+    report = build_m9_evolution_report(source)
+    backup = report.payload["backup_plan"]
+
+    assert backup["strategy"] == "3-2-1"
+    assert backup["status"] == "restore_verified"
+    assert backup["encrypted_copies"] == 3
+    assert backup["media_count"] >= 2
+    assert backup["offsite_or_offline_copy"] is True
+    assert backup["schedule"] == {"incremental": "daily", "full": "weekly"}
+    assert backup["restore_drill"]["status"] == "passed"
+    assert backup["venus_backups_record"]["table"] == "venus_backups"
+    assert backup["data_residency_policy"] == "personal_info_cn_or_assessed_before_cross_border"
+
+
+def test_m9_high_risk_policy_and_delete_actions_are_idempotent_approval_actions():
+    policy = build_policy_change_action(change_id="core-identity-001", category="core_identity")
+    delete = build_data_delete_action(subject_ref="lead-hash-002", reason="user_requested_erasure")
+
+    assert isinstance(policy, Action)
+    assert policy.kind == "change_governed_policy"
+    assert policy.idempotency_key == "policy-change-core-identity-001"
+    assert policy.payload["requires_approval"] is True
+    assert policy.payload["rollback_required"] is True
+    assert policy.data_class == DataClass.C1_INTERNAL
+
+    assert isinstance(delete, Action)
+    assert delete.kind == "delete_data"
+    assert delete.idempotency_key == "delete-data-lead-hash-002"
+    assert delete.reversible is False
+    assert delete.payload["subject_ref"] == "lead-hash-002"
+    assert "phone" not in str(delete.payload)
+    assert delete.payload["requires_approval"] is True
+
+
+def test_m9_rejects_c3_or_pii_and_blocks_cloud_training_proposals():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"eval_runs": [{"module": "m3", "raw_persona": "私有语料"}]},
+    )
+
+    with pytest.raises(ValueError, match="C3"):
+        build_m9_evolution_report(source)
+
+    issues = validate_evolution_proposal(
+        {
+            "change_id": "bad-training",
+            "category": "model_training",
+            "data_class": "C3_SECRET",
+            "destination": "cloud_llm",
+            "summary": "把我的语料上传云端训练",
+        }
+    )
+    assert any("C3" in issue and "云" in issue for issue in issues)

@@ -63,3 +63,7 @@ def test_contract_conformance_checks_m7_ads_shape():
 
 def test_contract_conformance_checks_m8_benchmark_shape():
     assert contract_conformance._check_m8_contracts() == []
+
+
+def test_contract_conformance_checks_m9_evolution_shape():
+    assert contract_conformance._check_m9_contracts() == []
