@@ -101,6 +101,15 @@ class MemoryItem:
     weight: float = 1.0  # 用于衰减/巩固
 
 
+@dataclass
+class ConsolidationReport:
+    since: datetime
+    candidate_items: list[MemoryItem] = field(default_factory=list)
+    requires_approval: list[dict] = field(default_factory=list)
+    rejected_feedback_loops: list[str] = field(default_factory=list)
+    metrics: dict = field(default_factory=dict)
+
+
 class MemoryStore(ABC):
     @abstractmethod
     def write(self, item: MemoryItem) -> None: ...
@@ -109,7 +118,7 @@ class MemoryStore(ABC):
     def retrieve(self, query: str, *, kind: MemoryKind | None = None, k: int = 8) -> list[MemoryItem]: ...
 
     @abstractmethod
-    def consolidate(self, since: datetime) -> Any: ...  # §7 受控巩固（批量·可人审）
+    def consolidate(self, since: datetime) -> ConsolidationReport: ...  # §7 受控巩固（批量·可人审）
 
     @abstractmethod
     def decay(self) -> None: ...  # §7 衰减/遗忘
