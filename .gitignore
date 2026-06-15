@@ -1,11 +1,7 @@
+.DS_Store
 .env
 .venv/
-__pycache__/
 .pytest_cache/
-*.pyc
+__pycache__/
+*.py[cod]
 *.egg-info/
-data/venus/*
-!data/venus/.gitkeep
-logs/
-*.sqlite
-*.db

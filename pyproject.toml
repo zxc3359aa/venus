@@ -1,23 +1,29 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "venus-agent"
-version = "0.1.0"
-description = "Local MVP for the Venus beauty and skincare agent system."
+name = "venus"
+version = "0.0.1-m0"
+description = "维纳斯：美妆护肤全自动智能体系统（M0 骨架）"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = []            # M0 核心零三方依赖（标准库）；各期按 AGENTS.md §4.4 增
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8"]
+feishu = ["lark-oapi>=1.4"]  # 真实长连接
+data = ["psycopg[binary]>=3", "redis>=5", "minio>=7", "pgvector>=0.3"]
+orchestration = ["langgraph>=0.2", "tenacity>=8", "httpx>=0.27"]
 
-[project.scripts]
-venus = "venus.cli:main"
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
 [tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,4 @@
+{"name":"good","text":"你知道吗？千万别踩这个护肤坑，看完关注我，评论区扣1告诉你","should_pass":true}
+{"name":"bad_no_hook","text":"这是一段普通的护肤分享内容，记得关注我，评论区扣1","should_pass":false}
+{"name":"bad_banned_words","text":"你知道吗？这是全网最有效、100%根治痘痘的方法，关注，评论","should_pass":false}
+{"name":"bad_no_cta","text":"你知道吗？千万别踩这个坑，但我不告诉你怎么办","should_pass":false}

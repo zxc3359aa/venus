@@ -1,0 +1,13 @@
+# Venus project-level Codex configuration template.
+#
+# Keep real credentials out of this file. Configure MCP servers locally before
+# writing platform integration code that needs latest official docs.
+#
+# Example:
+# [mcp_servers.context7]
+# command = "npx"
+# args = ["-y", "@upstash/context7-mcp"]
+#
+# [mcp_servers.github]
+# command = "npx"
+# args = ["-y", "@modelcontextprotocol/server-github"]
