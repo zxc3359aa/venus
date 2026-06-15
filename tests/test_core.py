@@ -28,6 +28,11 @@ from venus.modules.m3_persona_memory import (
     build_m3_persona_learning_report,
     distill_persona_descriptor,
 )
+from venus.modules.m4_community import (
+    build_m4_community_report,
+    build_reply_action,
+    validate_reply_draft,
+)
 from venus.privacy import DefaultPrivacyFirewall, PrivacyError
 
 
@@ -443,3 +448,88 @@ def test_m3_persona_learning_report_uses_tagged_contracts_and_no_external_action
     assert report.payload["consolidation"]["metrics"]["processed"] == 1
     assert report.payload["slow_layer_policy"] == "core_identity_changes_require_approval"
     assert report.payload["external_actions"] == []
+
+
+def test_m4_community_report_summarizes_comments_and_drafts_safe_replies():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "video_id": "video-001",
+            "comments": [
+                {
+                    "id": "c1",
+                    "text": "敏感肌用了早C晚A刺痛怎么办？",
+                    "like_count": 18,
+                    "author_hash": "u1",
+                },
+                {
+                    "id": "c2",
+                    "text": "可以直接根治闭口吗？",
+                    "like_count": 7,
+                    "author_hash": "u2",
+                },
+                {
+                    "id": "c3",
+                    "text": "成分表里视黄醇和酸能不能一起用？",
+                    "like_count": 12,
+                    "author_hash": "u3",
+                },
+            ],
+            "persona_descriptor": "先问肤质和频率，再给证据化建议。",
+        },
+    )
+
+    report = build_m4_community_report(source)
+
+    assert report.data_class == DataClass.C1_INTERNAL
+    assert report.pii is False
+    assert report.payload["module"] == "m4_community"
+    assert report.payload["comment_insights"]["total_comments"] == 3
+    assert report.payload["comment_insights"]["top_intents"][0]["intent"] in {"safety_reaction", "ingredient_pairing"}
+    assert report.payload["reply_drafts"]
+    assert all(validate_reply_draft(item["draft"]) == [] for item in report.payload["reply_drafts"])
+    assert "医疗诊断" in report.payload["safety_boundary"]["medical_boundary"]
+    assert report.payload["external_actions"] == []
+
+
+def test_m4_reply_action_is_idempotent_and_requires_approval():
+    action = build_reply_action(
+        video_id="video-001",
+        comment_id="c1",
+        draft="先暂停叠加，告诉我肤质、频率和具体产品，我按屏障状态帮你拆。",
+    )
+
+    assert isinstance(action, Action)
+    assert action.kind == "reply_comment"
+    assert action.idempotency_key == "reply-video-001-c1"
+    assert action.reversible is False
+    assert action.data_class == DataClass.C1_INTERNAL
+
+
+def test_m4_rejects_c3_comment_payloads():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"comments": [{"id": "private", "text": "我的手机号 13800138000"}]},
+    )
+
+    with pytest.raises(ValueError, match="C3"):
+        build_m4_community_report(source)
+
+
+def test_m4_live_barrage_is_advice_only_and_blocks_unofficial_auto_send():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "video_id": "live-001",
+            "comments": [{"id": "b1", "text": "主播这个能不能刷酸后用？"}],
+            "live_mode": True,
+            "auto_send_barrage": True,
+        },
+    )
+
+    report = build_m4_community_report(source)
+
+    assert report.payload["live_assist"]["mode"] == "summary_and_suggested_talk_track"
+    assert report.payload["live_assist"]["auto_send_blocked"] is True
+    assert report.payload["live_assist"]["tier_c_blocked"] is True

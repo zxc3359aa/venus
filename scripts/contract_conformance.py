@@ -11,6 +11,7 @@ from venus.modules.m3_persona_memory import (
     build_m3_persona_learning_report,
     distill_persona_descriptor,
 )
+from venus.modules.m4_community import build_m4_community_report, build_reply_action
 
 
 def main() -> int:
@@ -20,6 +21,7 @@ def main() -> int:
     failures.extend(_check_m1_contracts())
     failures.extend(_check_m2_contracts())
     failures.extend(_check_m3_contracts())
+    failures.extend(_check_m4_contracts())
 
     if failures:
         print("contract-conformance: FAIL")
@@ -140,6 +142,40 @@ def _check_m3_contracts() -> list[str]:
         failures.append("M3 不应产生对外动作")
     if report.payload.get("slow_layer_policy") != "core_identity_changes_require_approval":
         failures.append("M3 慢层核心身份变更必须人审")
+    return failures
+
+
+def _check_m4_contracts() -> list[str]:
+    source = Tagged(
+        payload={
+            "video_id": "contract-video",
+            "comments": [
+                {"id": "c1", "text": "敏感肌叠加刺痛怎么办", "like_count": 3},
+                {"id": "c2", "text": "视黄醇和酸能不能一起用", "like_count": 2},
+            ],
+            "live_mode": True,
+            "auto_send_barrage": True,
+        },
+        data_class=DataClass.C1_INTERNAL,
+    )
+    report = build_m4_community_report(source)
+    action = build_reply_action(video_id="contract-video", comment_id="c1", draft=report.payload["reply_drafts"][0]["draft"])
+    failures = []
+    if not isinstance(report, Tagged):
+        failures.append("M4 输出必须是 Tagged")
+    if report.data_class != DataClass.C1_INTERNAL or report.pii:
+        failures.append("M4 输出必须是无 PII 的 C1_INTERNAL")
+    if report.payload.get("external_actions") != []:
+        failures.append("M4 报告不应直接产生外部动作")
+    if not isinstance(action, Action):
+        failures.append("M4 回复动作必须是 Action")
+    if action.kind != "reply_comment" or not action.idempotency_key:
+        failures.append("M4 回复 Action 必须带 reply_comment 与 idempotency_key")
+    if action.reversible:
+        failures.append("M4 公开回复动作必须标为不可逆")
+    live = report.payload.get("live_assist") or {}
+    if not live.get("auto_send_blocked") or not live.get("tier_c_blocked"):
+        failures.append("M4 必须阻止非官方弹幕自动发送")
     return failures
 
 
