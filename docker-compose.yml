@@ -1,0 +1,23 @@
+# 分级基础设施（规格 §4.4）。MVP 仅需 mvp profile。
+# 启动 MVP：  docker compose --profile mvp up -d
+services:
+  postgres:
+    image: pgvector/pgvector:pg16     # 关系库 + 向量(pgvector)
+    profiles: ["mvp", "full"]
+    environment:
+      POSTGRES_USER: venus
+      POSTGRES_PASSWORD: venus
+      POSTGRES_DB: venus
+    ports: ["5432:5432"]
+  redis:
+    image: redis:7
+    profiles: ["mvp", "full"]
+    ports: ["6379:6379"]
+  minio:
+    image: minio/minio
+    profiles: ["mvp", "full"]
+    command: server /data --console-address ":9001"
+    ports: ["9000:9000", "9001:9001"]
+  # —— 以下仅 full profile（按升级触发引入）——
+  # clickhouse: { image: clickhouse/clickhouse-server, profiles: ["full"] }
+  # milvus / temporal / grafana: 见规格 §4.4

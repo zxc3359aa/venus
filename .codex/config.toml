@@ -1,0 +1,15 @@
+# Venus project-level Codex configuration.
+#
+# Keep real credentials out of this file. Context7 is required before writing
+# real platform integration code that depends on changing official APIs.
+# Optional higher-rate Context7 access should be provided from the local
+# environment, never committed:
+#   CONTEXT7_API_KEY=...
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+
+# GitHub is handled by the installed Codex GitHub plugin in this workspace.
+# If a local stdio GitHub MCP is needed later, configure it locally with an
+# environment-provided token rather than committing credentials.
