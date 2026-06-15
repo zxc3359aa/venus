@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from pathlib import Path
 
 from venus.connectors_feishu import (
     _build_event_handler,
@@ -23,6 +24,42 @@ def test_real_start_rejects_without_credentials(monkeypatch):
 
     with pytest.raises(ValueError, match="不能为空"):
         real_start("", "app-secret", lambda _: None)
+
+
+def test_real_start_allows_verified_by_marker(monkeypatch, tmp_path: Path):
+    marker = tmp_path / "feishu_context7.ok"
+    marker.write_text("ok")
+    monkeypatch.setenv("VENUS_FEISHU_CONTEXT7_MARKER", str(marker))
+    monkeypatch.setenv("VENUS_FEISHU_LIVE_ENABLED", "true")
+
+    calls: dict[str, int] = {"started": 0, "built": 0}
+
+    class DummyClient:
+        def __init__(self, *_args, **_kwargs):
+            calls["built"] += 1
+
+        def start(self):
+            calls["started"] += 1
+
+    class DummyModule:
+        EventDispatcherHandler = lambda: object()
+
+    class DummyWs:
+        Client = DummyClient
+
+    def fake_import():
+        module = DummyModule()
+        module.ws = DummyWs
+        return module
+
+    monkeypatch.setattr("venus.connectors_feishu._import_lark_oapi", fake_import)
+    monkeypatch.setattr("venus.connectors_feishu._build_event_handler", lambda *_args: object())
+    monkeypatch.setattr("venus.connectors_feishu._build_ws_client", lambda *_, **__: DummyClient())
+
+    real_start("app-id", "app-secret", lambda _: None)
+
+    assert calls["built"] == 1
+    assert calls["started"] == 1
 
 
 def test_real_start_launches_ws_client_when_enabled(monkeypatch):
