@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scripts import contract_conformance
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,3 +35,7 @@ def test_contract_conformance_script_passes_current_m0_tree():
     result = _run("contract_conformance.py")
 
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_contract_conformance_checks_m2_output_shape():
+    assert contract_conformance._check_m2_contracts() == []

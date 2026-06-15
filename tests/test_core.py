@@ -19,6 +19,7 @@ from venus.contracts import (
 from venus.llm import FakeLLMProvider
 from venus.logging_setup import RedactingFormatter
 from venus.modules.m1_hotspot import build_m1_hotspot_package, validate_copy
+from venus.modules.m2_product_diligence import build_m2_product_diligence_report
 from venus.privacy import DefaultPrivacyFirewall, PrivacyError
 
 
@@ -202,3 +203,112 @@ def test_m1_hotspot_package_rejects_c3_inputs_before_llm():
     with pytest.raises(ValueError, match="C3"):
         build_m1_hotspot_package(source, llm)
     assert llm.calls == []
+
+
+def test_m2_product_diligence_report_separates_fact_claim_and_inference():
+    source = Tagged(
+        data_class=DataClass.C1_INTERNAL,
+        payload={
+            "product_name": "维纳斯修护精华",
+            "brand": "Venus Lab",
+            "nmpa": {
+                "registration_no": "国妆网备字20260001",
+                "status": "active",
+                "verified": True,
+                "source": "https://www.nmpa.gov.cn/xxgk/ggtg/hzhpggtg/",
+            },
+            "ingredients": [
+                {
+                    "name": "烟酰胺",
+                    "inci": "Niacinamide",
+                    "position": 3,
+                    "evidence_strength": 0.8,
+                    "impact": 0.3,
+                    "sources": ["ingredient-db"],
+                },
+                {
+                    "name": "视黄醇",
+                    "inci": "Retinol",
+                    "position": 8,
+                    "evidence_strength": 0.7,
+                    "impact": 0.6,
+                    "controversy": "敏感肌刺激风险",
+                    "sources": ["cosmetic-review", "derm-paper"],
+                },
+            ],
+            "supplier_reports": [
+                {
+                    "ingredient": "视黄醇",
+                    "supplier": "授权原料商A",
+                    "report_id": "COA-001",
+                    "verified": False,
+                    "source": "brand-provided-coa",
+                }
+            ],
+            "brand_backing": [
+                {
+                    "claim": "品牌称拥有第三方检测报告",
+                    "source": "brand-site",
+                    "verified": False,
+                }
+            ],
+            "incidents": [
+                {
+                    "title": "用户反馈刺痛",
+                    "severity": 0.4,
+                    "source": "public-comment-cluster",
+                    "verified": False,
+                }
+            ],
+        },
+    )
+
+    report = build_m2_product_diligence_report(source)
+
+    assert report.data_class == DataClass.C1_INTERNAL
+    assert report.pii is False
+    assert report.payload["module"] == "m2_product_diligence"
+    assert report.payload["product"]["name"] == "维纳斯修护精华"
+    assert report.payload["nmpa_verification"]["status"] == "verified"
+    assert report.payload["risk"]["method"] == "weighted_evidence_strength_times_impact"
+    assert 0 < report.payload["risk"]["score"] < 1
+    assert report.payload["risk"]["confidence_interval"][0] < report.payload["risk"]["score"]
+    assert report.payload["facts"]
+    assert report.payload["external_claims"]
+    assert report.payload["inferences"]
+    assert all("source" in item for section in ("facts", "external_claims") for item in report.payload[section])
+    assert report.payload["medical_boundary"] == "no_medical_diagnosis_or_treatment_claims"
+    assert report.payload["external_actions"] == []
+
+
+def test_m2_product_diligence_report_marks_nmpa_manual_review_when_unverified():
+    source = Tagged(
+        data_class=DataClass.C0_PUBLIC,
+        payload={
+            "product_name": "同名精华",
+            "nmpa": {
+                "registration_no": "待查",
+                "verified": False,
+                "requires_captcha": True,
+                "source": "https://www.nmpa.gov.cn/",
+            },
+            "ingredients": [],
+        },
+    )
+
+    report = build_m2_product_diligence_report(source)
+
+    assert report.payload["nmpa_verification"]["status"] == "manual_review_required"
+    assert report.payload["nmpa_verification"]["tier_c_blocked"] is True
+    assert "不绕验证码" in report.payload["nmpa_verification"]["note"]
+
+
+def test_m2_product_diligence_report_rejects_c3_inputs():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={"product_name": "私域用户追问过的产品", "ingredients": []},
+    )
+
+    with pytest.raises(ValueError, match="C3"):
+        build_m2_product_diligence_report(source)

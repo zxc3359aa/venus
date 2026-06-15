@@ -5,6 +5,7 @@ from venus.approval import InMemoryApprovalGate
 from venus.contracts import Action, ApprovalStatus, DataClass, LLMProvider, Tagged
 from venus.llm import FakeLLMProvider
 from venus.modules.m1_hotspot import build_m1_hotspot_package, build_publish_action
+from venus.modules.m2_product_diligence import build_m2_product_diligence_report
 
 
 def main() -> int:
@@ -12,6 +13,7 @@ def main() -> int:
     failures.extend(_check_llm_provider())
     failures.extend(_check_approval_gate_shape())
     failures.extend(_check_m1_contracts())
+    failures.extend(_check_m2_contracts())
 
     if failures:
         print("contract-conformance: FAIL")
@@ -66,6 +68,32 @@ def _check_m1_contracts() -> list[str]:
         failures.append("build_publish_action 必须返回 Action")
     if not action.idempotency_key:
         failures.append("Action 必须带 idempotency_key")
+    return failures
+
+
+def _check_m2_contracts() -> list[str]:
+    source = Tagged(
+        payload={
+            "product_name": "契约核对精华",
+            "nmpa": {"verified": False, "source": "manual-contract-check"},
+            "ingredients": [{"name": "烟酰胺", "sources": ["ingredient-db"], "impact": 0.2}],
+        },
+        data_class=DataClass.C0_PUBLIC,
+    )
+    report = build_m2_product_diligence_report(source)
+    failures = []
+    if not isinstance(report, Tagged):
+        failures.append("M2 输出必须是 Tagged")
+    if report.data_class != DataClass.C1_INTERNAL:
+        failures.append("M2 输出 data_class 必须是 C1_INTERNAL")
+    if report.payload.get("external_actions") != []:
+        failures.append("M2 不应产生对外动作")
+    risk = report.payload.get("risk") or {}
+    if risk.get("method") != "weighted_evidence_strength_times_impact":
+        failures.append("M2 风险评分必须给透明方法")
+    nmpa = report.payload.get("nmpa_verification") or {}
+    if not nmpa.get("tier_c_blocked"):
+        failures.append("M2 NMPA 边界必须保留 Tier 限制")
     return failures
 
 
