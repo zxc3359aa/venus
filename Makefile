@@ -1,4 +1,4 @@
-.PHONY: setup test demo eval lint compliance-gate contract-conformance
+.PHONY: setup test demo eval lint compliance-gate contract-conformance feishu-live
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then printf ".venv/bin/python"; elif command -v python3 >/dev/null 2>&1; then command -v python3; else command -v python; fi)
 
 setup:
@@ -22,3 +22,7 @@ contract-conformance:
 
 lint:
 	@echo "安装 ruff/black/mypy 后启用：ruff check . && black --check . && mypy src"
+
+feishu-live:
+	@echo "启动飞书实时接入看门人（仅检查；未通过门禁将退出）"
+	PYTHONPATH=src $(PYTHON) scripts/feishu_live_bootstrap.py

@@ -235,8 +235,10 @@ your own bootstrap script.
 To run the local bootstrap helper script in a controlled environment:
 
 ```bash
-python scripts/feishu_live_bootstrap.py
+make feishu-live
 ```
+
+(Equivalent direct run: `.venv/bin/python scripts/feishu_live_bootstrap.py`.)
 
 It prints a clear gate summary and exits with non-zero status when:
 - credentials are missing
