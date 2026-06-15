@@ -12,6 +12,7 @@ from __future__ import annotations
 import importlib
 import os
 from dataclasses import dataclass, field
+from collections import deque
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping
 
@@ -35,6 +36,28 @@ class FakeFeishuGateway:
     def send_approval_card(self, req: ApprovalRequest) -> None:
         # 真实：调 lark_oapi 发交互卡片（同意/修改/驳回按钮 + 卡片状态机）
         self.sent_cards.append(req)
+
+
+@dataclass
+class _EventDeduplicator:
+    """简单内存级事件幂等缓存：按 event_id 去重，避免重复处理重复事件。"""
+
+    max_size: int = 512
+    _seen: set[str] = field(default_factory=set, init=False)
+    _order: deque[str] = field(default_factory=deque, init=False)
+
+    def is_duplicate(self, event_id: str | None) -> bool:
+        if not event_id:
+            return False
+        if event_id in self._seen:
+            return True
+
+        self._seen.add(event_id)
+        self._order.append(event_id)
+        if len(self._order) > self.max_size:
+            expired = self._order.popleft()
+            self._seen.discard(expired)
+        return False
 
 
 def _env_bool(value: object) -> bool:
@@ -79,8 +102,39 @@ def _extract_event_payload(message: Any) -> Mapping[str, Any]:
     return {}
 
 
-def _build_event_handler(lark_oapi_module, on_message: Callable[[Mapping[str, Any]], None]):
+def _extract_event_id(payload: Mapping[str, Any]) -> str | None:
+    for key in (
+        "event_id",
+        "eventId",
+        "message_id",
+        "messageId",
+        "open_message_id",
+    ):
+        value = payload.get(key)
+        if isinstance(value, str) and value:
+            return value
+    if "event" in payload and isinstance(payload["event"], Mapping):
+        event_payload = payload["event"]
+        for key in (
+            "event_id",
+            "eventId",
+            "message_id",
+            "messageId",
+            "open_message_id",
+        ):
+            value = event_payload.get(key)
+            if isinstance(value, str) and value:
+                return value
+    return None
+
+
+def _build_event_handler(
+    lark_oapi_module,
+    on_message: Callable[[Mapping[str, Any]], None],
+    event_deduplicator: _EventDeduplicator | None = None,
+):
     """Build a minimal event handler for message events and keep registration compatibility."""
+    deduplicator = event_deduplicator or _EventDeduplicator()
 
     def _attempt_register(target: Any, method_names: Iterable[str]) -> Any:
         candidate = None
@@ -115,7 +169,11 @@ def _build_event_handler(lark_oapi_module, on_message: Callable[[Mapping[str, An
     builder = getattr(event_handler_cls, "builder", None)
 
     def _on_message(event: Any):
-        on_message(_extract_event_payload(event))
+        payload = _extract_event_payload(event)
+        event_id = _extract_event_id(payload)
+        if deduplicator.is_duplicate(event_id):
+            return
+        on_message(payload)
 
     register_names = (
         "register_p2_im_message_receive_v1",
@@ -195,7 +253,7 @@ def real_start(app_id: str, app_secret: str, on_message: Callable[[Mapping[str, 
         raise ValueError("app_id 与 app_secret 均不能为空。")
 
     lark_oapi = _import_lark_oapi()
-    handler = _build_event_handler(lark_oapi, on_message)
+    handler = _build_event_handler(lark_oapi, on_message, event_deduplicator=_EventDeduplicator())
     ws_client = _build_ws_client(lark_oapi, app_id, app_secret, handler)
 
     if not hasattr(ws_client, "start"):

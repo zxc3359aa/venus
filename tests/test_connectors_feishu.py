@@ -5,7 +5,9 @@ from pathlib import Path
 
 from venus.connectors_feishu import (
     _build_event_handler,
+    _extract_event_id,
     PlatformInterfaceNotVerified,
+    _EventDeduplicator,
     real_start,
 )
 
@@ -53,7 +55,10 @@ def test_real_start_allows_verified_by_marker(monkeypatch, tmp_path: Path):
         return module
 
     monkeypatch.setattr("venus.connectors_feishu._import_lark_oapi", fake_import)
-    monkeypatch.setattr("venus.connectors_feishu._build_event_handler", lambda *_args: object())
+    monkeypatch.setattr(
+        "venus.connectors_feishu._build_event_handler",
+        lambda *_args, **_kwargs: object(),
+    )
     monkeypatch.setattr("venus.connectors_feishu._build_ws_client", lambda *_, **__: DummyClient())
 
     real_start("app-id", "app-secret", lambda _: None)
@@ -89,9 +94,9 @@ def test_real_start_launches_ws_client_when_enabled(monkeypatch):
 
     monkeypatch.setattr("venus.connectors_feishu._import_lark_oapi", fake_import)
     monkeypatch.setattr(
-        "venus.connectors_feishu._build_event_handler",
-        lambda *_args: object(),
-    )
+            "venus.connectors_feishu._build_event_handler",
+            lambda *_args, **_kwargs: object(),
+        )
     monkeypatch.setattr("venus.connectors_feishu._build_ws_client", lambda *_, **__: DummyClient())
 
     real_start("app-id", "app-secret", lambda _: None)
@@ -129,6 +134,54 @@ def test_build_event_handler_prefers_builder_api():
 
     handler.callback({"event": {"text": "hello", "tag": "unit"}})
     assert captured == [{"text": "hello", "tag": "unit"}]
+
+
+def test_build_event_handler_deduplicates_repeated_event_id():
+    captured = []
+    dedup = _EventDeduplicator(max_size=8)
+
+    class DummyBuilder:
+        def __init__(self):
+            self.callback = None
+
+        def register_p2_im_message_receive_v1(self, callback):
+            self.callback = callback
+            return self
+
+        def build(self):
+            return self
+
+    class DummyHandler:
+        @staticmethod
+        def builder(_encrypt_key: str, _verification_token: str):
+            return DummyBuilder()
+
+    class DummyModule:
+        EventDispatcherHandler = DummyHandler
+
+    handler = _build_event_handler(
+        DummyModule,
+        lambda payload: captured.append(payload),
+        event_deduplicator=dedup,
+    )
+    assert isinstance(handler, DummyBuilder)
+    assert handler.callback is not None
+
+    payload = {"event_id": "evt-1", "event": {"text": "first", "event_id": "evt-1"}}
+    handler.callback(payload)
+    handler.callback(payload)
+    handler.callback({"event_id": "evt-2", "event": {"text": "second", "event_id": "evt-2"}})
+
+    assert captured == [
+        {"text": "first", "event_id": "evt-1"},
+        {"text": "second", "event_id": "evt-2"},
+    ]
+
+
+def test_extract_event_id_supports_nested_event_field():
+    assert _extract_event_id({"event_id": "abc"}) == "abc"
+    assert _extract_event_id({"event": {"eventId": "xyz"}}) == "xyz"
+    assert _extract_event_id({"event": {"event": {"event_id": "inner"}}}) is None
 
 
 def test_build_event_handler_falls_back_to_direct_handler_api():
