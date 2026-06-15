@@ -2,10 +2,15 @@
 from __future__ import annotations
 
 from venus.approval import InMemoryApprovalGate
-from venus.contracts import Action, ApprovalStatus, DataClass, LLMProvider, Tagged
+from venus.contracts import Action, ApprovalStatus, DataClass, LLMProvider, MemoryStore, Tagged
 from venus.llm import FakeLLMProvider
 from venus.modules.m1_hotspot import build_m1_hotspot_package, build_publish_action
 from venus.modules.m2_product_diligence import build_m2_product_diligence_report
+from venus.modules.m3_persona_memory import (
+    InMemoryPersonaMemoryStore,
+    build_m3_persona_learning_report,
+    distill_persona_descriptor,
+)
 
 
 def main() -> int:
@@ -14,6 +19,7 @@ def main() -> int:
     failures.extend(_check_approval_gate_shape())
     failures.extend(_check_m1_contracts())
     failures.extend(_check_m2_contracts())
+    failures.extend(_check_m3_contracts())
 
     if failures:
         print("contract-conformance: FAIL")
@@ -94,6 +100,46 @@ def _check_m2_contracts() -> list[str]:
     nmpa = report.payload.get("nmpa_verification") or {}
     if not nmpa.get("tier_c_blocked"):
         failures.append("M2 NMPA 边界必须保留 Tier 限制")
+    return failures
+
+
+def _check_m3_contracts() -> list[str]:
+    store = InMemoryPersonaMemoryStore()
+    source = Tagged(
+        payload={
+            "raw_corpus": ["私有原始语料只留本地"],
+            "values": ["先证据后建议"],
+            "tone": ["口语、克制"],
+            "events": [
+                {
+                    "id": "contract-m3",
+                    "kind": "episodic",
+                    "content": "外部真实信号：证据型脚本互动更好",
+                    "source": "external_metric:script",
+                    "confidence": 0.8,
+                }
+            ],
+        },
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+    )
+    descriptor = distill_persona_descriptor(source)
+    report = build_m3_persona_learning_report(source, store)
+    failures = []
+    if not isinstance(store, MemoryStore):
+        failures.append("M3 记忆实现必须满足 MemoryStore")
+    if not isinstance(descriptor, Tagged):
+        failures.append("M3 风格描述符必须是 Tagged")
+    if descriptor.data_class != DataClass.C1_INTERNAL or descriptor.pii:
+        failures.append("M3 C3 蒸馏输出必须降级为无 PII 的 C1")
+    if not isinstance(report, Tagged):
+        failures.append("M3 输出必须是 Tagged")
+    if report.data_class != DataClass.C1_INTERNAL:
+        failures.append("M3 报告输出 data_class 必须是 C1_INTERNAL")
+    if report.payload.get("external_actions") != []:
+        failures.append("M3 不应产生对外动作")
+    if report.payload.get("slow_layer_policy") != "core_identity_changes_require_approval":
+        failures.append("M3 慢层核心身份变更必须人审")
     return failures
 
 

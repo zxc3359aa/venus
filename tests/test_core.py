@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import logging
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -14,12 +15,19 @@ from venus.contracts import (
     Destination,
     LLMMessage,
     LLMProvider,
+    MemoryItem,
+    MemoryKind,
     Tagged,
 )
 from venus.llm import FakeLLMProvider
 from venus.logging_setup import RedactingFormatter
 from venus.modules.m1_hotspot import build_m1_hotspot_package, validate_copy
 from venus.modules.m2_product_diligence import build_m2_product_diligence_report
+from venus.modules.m3_persona_memory import (
+    InMemoryPersonaMemoryStore,
+    build_m3_persona_learning_report,
+    distill_persona_descriptor,
+)
 from venus.privacy import DefaultPrivacyFirewall, PrivacyError
 
 
@@ -312,3 +320,126 @@ def test_m2_product_diligence_report_rejects_c3_inputs():
 
     with pytest.raises(ValueError, match="C3"):
         build_m2_product_diligence_report(source)
+
+
+def test_m3_distills_c3_persona_to_c1_descriptor_without_raw_corpus():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={
+            "raw_corpus": ["我叫Chris，手机号13800138000，私域客户A问过屏障修护。"],
+            "values": ["先看屏障，再谈成分功效"],
+            "tone": ["口语、直接、讲证据"],
+            "taboo_words": ["根治", "100%"],
+        },
+    )
+
+    descriptor = distill_persona_descriptor(source)
+
+    assert descriptor.data_class == DataClass.C1_INTERNAL
+    assert descriptor.pii is False
+    assert descriptor.payload["cloud_llm_safe"] is True
+    rendered = str(descriptor.payload)
+    assert "13800138000" not in rendered
+    assert "私域客户A" not in rendered
+    assert "raw_corpus" not in descriptor.payload
+    assert descriptor.payload["external_actions"] == []
+
+
+def test_m3_memory_store_consolidates_without_self_reinforcing_echo_chamber():
+    store = InMemoryPersonaMemoryStore()
+    since = datetime.now(timezone.utc) - timedelta(days=1)
+    store.write(
+        MemoryItem(
+            id="self-accepted",
+            kind=MemoryKind.EPISODIC,
+            content="模型生成内容被采纳：以后都用同一个开头模板",
+            data_class=DataClass.C1_INTERNAL,
+            confidence=0.95,
+            source="model_output_accepted",
+            created_at=datetime.now(timezone.utc),
+        )
+    )
+    store.write(
+        MemoryItem(
+            id="metric-signal",
+            kind=MemoryKind.EPISODIC,
+            content="外部真实信号：证据型开头完播率提升",
+            data_class=DataClass.C1_INTERNAL,
+            confidence=0.82,
+            source="external_metric:douyin_video",
+            created_at=datetime.now(timezone.utc),
+        )
+    )
+    store.write(
+        MemoryItem(
+            id="owner-override",
+            kind=MemoryKind.EPISODIC,
+            content="我的显式设置：不要使用根治、100%这类绝对词",
+            data_class=DataClass.C3_SECRET,
+            confidence=1.0,
+            source="explicit_owner_override",
+            created_at=datetime.now(timezone.utc),
+        )
+    )
+
+    report = store.consolidate(since)
+
+    assert report.metrics["processed"] == 3
+    assert "self-accepted" in report.rejected_feedback_loops
+    candidate_ids = {item.id for item in report.candidate_items}
+    assert "metric-signal:consolidated" in candidate_ids
+    assert "owner-override:consolidated" in candidate_ids
+    assert all(item.data_class != DataClass.C3_SECRET for item in report.candidate_items)
+
+
+def test_m3_core_identity_changes_require_approval_before_slow_layer_update():
+    store = InMemoryPersonaMemoryStore()
+    store.write(
+        MemoryItem(
+            id="identity-change",
+            kind=MemoryKind.EPISODIC,
+            content="核心身份变更：以后改成强销售强逼单人设",
+            data_class=DataClass.C3_SECRET,
+            confidence=0.9,
+            source="explicit_owner_override:core_identity",
+            created_at=datetime.now(timezone.utc),
+        )
+    )
+
+    report = store.consolidate(datetime.now(timezone.utc) - timedelta(hours=1))
+
+    assert report.requires_approval
+    assert report.requires_approval[0]["item_id"] == "identity-change"
+    assert report.candidate_items == []
+
+
+def test_m3_persona_learning_report_uses_tagged_contracts_and_no_external_actions():
+    source = Tagged(
+        data_class=DataClass.C3_SECRET,
+        pii=True,
+        payload={
+            "values": ["敏感肌优先看屏障"],
+            "tone": ["像真人聊天，不装专家"],
+            "taboo_words": ["根治"],
+            "events": [
+                {
+                    "id": "e1",
+                    "kind": "episodic",
+                    "content": "外部真实信号：评论区更爱成分证据拆解",
+                    "source": "external_metric:comment_cluster",
+                    "confidence": 0.8,
+                }
+            ],
+        },
+    )
+
+    report = build_m3_persona_learning_report(source, InMemoryPersonaMemoryStore())
+
+    assert report.data_class == DataClass.C1_INTERNAL
+    assert report.pii is False
+    assert report.payload["module"] == "m3_persona_memory"
+    assert report.payload["descriptor"]["cloud_llm_safe"] is True
+    assert report.payload["consolidation"]["metrics"]["processed"] == 1
+    assert report.payload["slow_layer_policy"] == "core_identity_changes_require_approval"
+    assert report.payload["external_actions"] == []

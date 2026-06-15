@@ -39,3 +39,7 @@ def test_contract_conformance_script_passes_current_m0_tree():
 
 def test_contract_conformance_checks_m2_output_shape():
     assert contract_conformance._check_m2_contracts() == []
+
+
+def test_contract_conformance_checks_m3_memory_shape():
+    assert contract_conformance._check_m3_contracts() == []
