@@ -230,6 +230,31 @@ your own bootstrap script.
 默认不发送任何消息；若未设置 `VENUS_FEISHU_CONTEXT7_VERIFIED=true` 或
 `VENUS_FEISHU_LIVE_ENABLED=true`，实时通道仍会保持阻断（`PlatformInterfaceNotVerified`）。
 
+### Live Feishu bootstrap (explicitly gated)
+
+To run the local bootstrap helper script in a controlled environment:
+
+```bash
+python scripts/feishu_live_bootstrap.py
+```
+
+It prints a clear gate summary and exits with non-zero status when:
+- credentials are missing
+- Context7/official-document verification has not been confirmed
+- live mode has not been explicitly enabled
+- real connector start fails
+
+Once approved and ready, run after setting:
+
+```bash
+export VENUS_FEISHU_APP_ID=你的AppID
+export VENUS_FEISHU_APP_SECRET=你的AppSecret
+export VENUS_FEISHU_CONTEXT7_VERIFIED=true
+export VENUS_FEISHU_LIVE_ENABLED=true
+```
+
+and rerun the bootstrap script. `real_start` is expected to block on websocket run; if it exits quickly, check webhook/event config and approval-card callbacks.
+
 The Feishu dry-run entry also supports `/venus monitoring` when the local `data/samples/competitors.json` sample is present.
 It also supports `/venus airtable` to preview the Airtable-ready operations package without writing to Airtable.
 It also supports `/venus airtable-sync` to preview approved local Airtable sync plans without writing any Airtable records.
