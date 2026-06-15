@@ -46,8 +46,8 @@ make eval
 验证结果：
 
 - 所有阶段均可 fast-forward 合并，无本地冲突。
-- M9 功能最终提交为 `38a05f3 feat(m9): add evolution and backup package`；后续仅追加验收、Context7 与平台接口生产化红线文档。
-- `make test`：59 passed。
+- M9 功能最终提交为 `38a05f3 feat(m9): add evolution and backup package`；后续追加验收、Context7 与平台接口生产化红线文档，并将未核验的飞书真实入口硬阻断。
+- `make test`：60 passed。
 - `make compliance-gate`：PASS。
 - `make contract-conformance`：PASS。
 - `make demo`：隐私红线、审批挂起/恢复与幂等演示通过。
@@ -67,7 +67,7 @@ make eval
 | `codex/venus-v2-m6` | 43 passed | PASS | PASS |
 | `codex/venus-v2-m7` | 49 passed | PASS | PASS |
 | `codex/venus-v2-m8` | 54 passed | PASS | PASS |
-| `codex/venus-v2-m9` | 59 passed | PASS | PASS |
+| `codex/venus-v2-m9` | 60 passed | PASS | PASS |
 
 说明：远端 `main` 当前不是完整 M0 骨架入口，因此不能用远端 `main` 重新证明规格文本中的“14 项基线”。M1 分支导入了 M0 骨架与 M1 切片，当前可复核的阶段基线从 M1 的 19 项测试开始。
 
@@ -81,6 +81,7 @@ make eval
 - 契约门覆盖 LLM Provider、审批网关，以及 M1-M9 主要输出/Action 形状。
 - 不可逆外部动作只构造 `Action` 草稿，不直接发视频、回评论、投流、加客户或删数据。
 - M3/M9 对 C3 原始画像、语料、私域个人信息保持阻断，不允许进入云端模型或第三方训练路径。
+- `src/venus/connectors_feishu.py` 中的 `real_start()` 在 Context7/官方文档核验完成前只抛出 `PlatformInterfaceNotVerified`，避免误启动真实飞书长连接。
 
 ## 5. 未完成生产化事项
 
@@ -133,7 +134,7 @@ make eval
 
 预期结果：
 
-- `make test`：59 passed。
+- `make test`：60 passed。
 - `make compliance-gate`：PASS。
 - `make contract-conformance`：PASS。
 - `make demo`：展示 C3 阻断、审批挂起/恢复与幂等执行。

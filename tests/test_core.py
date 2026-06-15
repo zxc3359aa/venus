@@ -19,6 +19,7 @@ from venus.contracts import (
     MemoryKind,
     Tagged,
 )
+from venus.connectors_feishu import PlatformInterfaceNotVerified, real_start
 from venus.llm import FakeLLMProvider
 from venus.logging_setup import RedactingFormatter
 from venus.modules.m1_hotspot import build_m1_hotspot_package, validate_copy
@@ -100,6 +101,11 @@ def test_destination_allowlist():
     fw.assert_destination_allowlisted("https://api.openai.com/v1/chat/completions")
     with pytest.raises(PrivacyError):
         fw.assert_destination_allowlisted("https://evil.example.com/exfil")
+
+
+def test_real_feishu_start_is_blocked_until_context7_verification():
+    with pytest.raises(PlatformInterfaceNotVerified):
+        real_start("app-id", "app-secret", lambda _: None)
 
 
 # ---- 审批网关：幂等与过期 ----
