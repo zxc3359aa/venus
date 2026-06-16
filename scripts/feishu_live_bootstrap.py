@@ -23,6 +23,37 @@ from venus.connectors_feishu import PlatformInterfaceNotVerified, real_start
 from venus.feishu_entry import run_feishu_entry
 
 
+def _load_dotenv(path: Path) -> None:
+    if not path.exists():
+        return
+
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError:
+        return
+
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+
+        if not key or key in os.environ:
+            continue
+
+        if (value.startswith('"') and value.endswith('"')) or (
+            value.startswith("'") and value.endswith("'")
+        ):
+            value = value[1:-1]
+
+        os.environ[key] = value
+
+
 def _extract_message_text(payload: dict[str, Any]) -> str:
     if not isinstance(payload, dict):
         return ""
@@ -49,6 +80,8 @@ def _on_message(payload: dict[str, Any]) -> None:
 
 
 def main() -> int:
+    _load_dotenv(ROOT / ".env")
+
     app_id = os.getenv("VENUS_FEISHU_APP_ID", "").strip()
     app_secret = os.getenv("VENUS_FEISHU_APP_SECRET", "").strip()
     print("启动飞书接入前置检查...")

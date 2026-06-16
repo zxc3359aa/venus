@@ -239,6 +239,7 @@ make feishu-live
 ```
 
 (Equivalent direct run: `.venv/bin/python scripts/feishu_live_bootstrap.py`.)
+If `.env` is present in repository root, `make feishu-live` also reads it automatically.
 
 It prints a clear gate summary and exits with non-zero status when:
 - credentials are missing
