@@ -1,43 +1,288 @@
-# 维纳斯（Venus）· M0 工程骨架
+# Venus
 
-美妆护肤全自动智能体系统的 **M0 最小可运行骨架**。配套《交付级工程规格 v2.0》。
-本骨架**零三方依赖即可跑测试**（标准库 + pytest），用于给 Codex 一个可执行的起点与接口锚点。
+Venus is a beauty and skincare agent system for content intelligence, product research, persona learning, approval-gated reply drafting, and future platform integrations.
 
-## 这套骨架证明了什么（可交付的逻辑闭环）
-- **隐私红线运行期生效**：C3（个人画像/语料/私域 PII）被数据流向矩阵拦截，禁止外发云 LLM（`src/venus/privacy.py`）。
-- **人在回路 + 审批挂起/恢复**：不可逆动作（如发布视频）提交审批后挂起，飞书回调批准后凭 `approval_id` 恢复执行（`src/venus/orchestrator.py` + `approval.py`）。
-- **幂等执行**：同一 `idempotency_key` 只执行一次，重试/重复回调安全。
-- **确定性可测**：LLM 用 Fake 注入，离线可测；内容质量用 golden 评测器（`eval/`）。
-- **日志脱敏**：密钥/手机号等自动打码（`src/venus/logging_setup.py`）。
+The first implementation slice runs locally and does not touch live Douyin, Feishu, WeChat, Qianchuan, Xingtu, Airtable, or Enterprise WeChat accounts.
 
-## 运行
+## Local Setup
+
 ```bash
-make setup      # 安装 pytest
-make test       # 14 项单元测试应全绿
-make demo       # 端到端演示（隐私红线 + 审批挂起/恢复 + 幂等）
-make eval       # 内容质量评测（4/4）
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
 ```
 
-## 给 Codex
-**先读 `AGENTS.md`**（Codex 自动读取的项目指令：红线、工具/技能/插件、操作手册）。
-接口唯一锚点：`src/venus/contracts.py`。MCP/技能配置见 `.codex/config.toml` 与 `.agents/skills/`。
+## Smoke Commands
 
-## 目录
+Run all tests:
+
+```bash
+pytest -v
 ```
-AGENTS.md                 # Codex 操作指令（红线 + 工具/技能/MCP + 手册）
-.codex/config.toml        # 审批/沙箱/MCP servers
-.agents/skills/           # 项目技能：$add-module / $compliance-gate / $contract-conformance
-src/venus/contracts.py    # 接口唯一锚点（§5）
-src/venus/privacy.py      # 隐私防火墙三位一体（§3.2/§9）
-src/venus/llm.py          # LLM 双拓扑（Fake + OpenAI 兼容占位）
-src/venus/approval.py     # 审批网关(幂等/超时) + 幂等执行器
-src/venus/orchestrator.py # 编排状态机(审批挂起/恢复)
-src/venus/logging_setup.py# 日志脱敏
-src/venus/connectors_feishu.py  # 飞书长连接(真实 lark-oapi + 离线 Fake)
-src/venus/modules/m1_hotspot.py # M1 切片(map-reduce 汇总 + 文案校验)
-src/venus/demo_e2e.py     # 端到端演示
-eval/                     # golden 集 + 评分器
-tests/                    # 单元 + 端到端测试
-docker-compose.yml        # 分级基础设施(mvp/full profile)
+
+Generate a hotspot brief:
+
+```bash
+venus hotspot data/samples/hotspots.json
 ```
-> M0 用扁平包结构与内存实现；生产按规格 §4.5 展开到完整目录树，并把内存实现替换为 Postgres/Redis/Temporal 持久化。
+
+Generate a product research card:
+
+```bash
+venus product data/samples/products.json
+```
+
+Build a deep product intelligence dossier:
+
+```bash
+venus product-intel data/samples/product_intelligence.json
+```
+
+Analyze comments and draft approval-gated replies:
+
+```bash
+venus comments data/samples/comments.json
+```
+
+Build a local Douyin beauty trend scan report:
+
+```bash
+venus trend-scan data/samples/trend_scan.json
+```
+
+Build a local competitor monitoring report:
+
+```bash
+venus monitoring data/samples/competitors.json
+```
+
+Build a local Airtable-ready operations export:
+
+```bash
+venus airtable data/samples/airtable_export.json
+```
+
+Preview the local Airtable sync plan gate:
+
+```bash
+venus airtable-sync data/samples/airtable_sync_plan.json
+```
+
+Build a local approval inbox:
+
+```bash
+venus approvals data/samples/approvals.json
+```
+
+Build a local approval decision ledger draft:
+
+```bash
+venus approval-ledger data/samples/approval_ledger.json
+```
+
+Preview the local approval decision archive gate:
+
+```bash
+venus approval-archive data/samples/approval_archive.json
+```
+
+Preview the local approval-driven action outbox gate:
+
+```bash
+venus action-outbox data/samples/action_outbox.json
+```
+
+Preview local delivery drafts for approved outbox items:
+
+```bash
+venus delivery-drafts data/samples/delivery_drafts.json
+```
+
+Preview the local delivery status ledger:
+
+```bash
+venus delivery-status data/samples/delivery_status.json
+```
+
+Preview the local connector execution gateway:
+
+```bash
+venus connector-execution data/samples/connector_execution.json
+```
+
+Preview the local connector dispatch rehearsal:
+
+```bash
+venus connector-dispatch data/samples/connector_dispatch.json
+```
+
+Build a local Douyin comment and live-message engagement report:
+
+```bash
+venus douyin data/samples/douyin_engagement.json
+```
+
+Build a local Douyin ecommerce operations report:
+
+```bash
+venus ecommerce data/samples/ecommerce.json
+```
+
+Build a local WeChat Mini Program Q&A and Enterprise WeChat handoff report:
+
+```bash
+venus wechat data/samples/wechat_private_domain.json
+```
+
+Build a local Qianchuan and Xingtu commercial strategy report:
+
+```bash
+venus commercial data/samples/commercial_strategy.json
+```
+
+Build a local self-improvement, regression, and backup verification report:
+
+```bash
+venus improvement data/samples/self_improvement.json
+```
+
+Build a local versioned memory review report:
+
+```bash
+venus memory data/samples/memory.json
+```
+
+Build a local 24-hour scheduler run plan:
+
+```bash
+venus scheduler data/samples/scheduler.json
+```
+
+Build a local connector readiness audit:
+
+```bash
+venus connectors data/samples/connectors.json
+```
+
+Build a local short-video production and editing package:
+
+```bash
+venus production data/samples/video_production.json
+```
+
+Build a local pre-publish content quality evaluation:
+
+```bash
+venus content-eval data/samples/content_eval.json
+```
+
+Build a local content performance calibration report:
+
+```bash
+venus performance data/samples/performance.json
+```
+
+Build a local Agent Run eval gate report:
+
+```bash
+venus evals data/samples/evals.json
+```
+
+Build a local OpenAI Agents SDK-ready runtime manifest:
+
+```bash
+venus agents-sdk data/samples/agents_sdk.json
+```
+
+Build a local approval-gated Agent Run plan:
+
+```bash
+venus agent-run data/samples/agent_run.json
+```
+
+Build a local static operations dashboard:
+
+```bash
+venus dashboard data/samples/airtable_export.json reports/venus-dashboard.html
+```
+
+Run the local Feishu dry-run entry:
+
+```bash
+venus feishu data/samples/feishu_message.json
+```
+
+This command parses a Feishu-like `/venus` message and returns a card-ready JSON draft. It does not send Feishu messages or perform external actions.
+
+If you need to test a live Feishu long-connection adapter locally (offline-safe to dry-run by default):
+
+```bash
+export VENUS_FEISHU_APP_ID=你的AppID
+export VENUS_FEISHU_APP_SECRET=你的AppSecret
+export VENUS_FEISHU_CONTEXT7_VERIFIED=true
+export VENUS_FEISHU_LIVE_ENABLED=true
+```
+
+Then run the gateway starter in a controlled environment (approval confirmed) by calling
+`venus.connectors_feishu.real_start(VENUS_FEISHU_APP_ID, VENUS_FEISHU_APP_SECRET, handler)` in
+your own bootstrap script.  
+默认不发送任何消息；若未设置 `VENUS_FEISHU_CONTEXT7_VERIFIED=true` 或
+`VENUS_FEISHU_LIVE_ENABLED=true`，实时通道仍会保持阻断（`PlatformInterfaceNotVerified`）。
+
+### Live Feishu bootstrap (explicitly gated)
+
+To run the local bootstrap helper script in a controlled environment:
+
+```bash
+make feishu-live
+```
+
+(Equivalent direct run: `.venv/bin/python scripts/feishu_live_bootstrap.py`.)
+
+It prints a clear gate summary and exits with non-zero status when:
+- credentials are missing
+- Context7/official-document verification has not been confirmed
+- live mode has not been explicitly enabled
+- real connector start fails
+
+Once approved and ready, run after setting:
+
+```bash
+export VENUS_FEISHU_APP_ID=你的AppID
+export VENUS_FEISHU_APP_SECRET=你的AppSecret
+export VENUS_FEISHU_CONTEXT7_VERIFIED=true
+export VENUS_FEISHU_LIVE_ENABLED=true
+```
+
+and rerun the bootstrap script. `real_start` is expected to block on websocket run; if it exits quickly, check webhook/event config and approval-card callbacks.
+
+The Feishu dry-run entry also supports `/venus monitoring` when the local `data/samples/competitors.json` sample is present.
+It also supports `/venus airtable` to preview the Airtable-ready operations package without writing to Airtable.
+It also supports `/venus airtable-sync` to preview approved local Airtable sync plans without writing any Airtable records.
+It also supports `/venus approvals` to preview the pending approval inbox and recorded-only decision intents without applying approvals.
+It also supports `/venus approval-ledger` to preview deduplicated approval decision ledger entries, write plans, and rollback plans without writing storage.
+It also supports `/venus approval-archive` to preview the local approval archive gate; approved low-risk entries can be persisted only through the isolated Venus JSON store, with no platform actions.
+It also supports `/venus action-outbox` to preview approval-driven local action queueing while keeping every platform delivery disabled.
+It also supports `/venus delivery-drafts` to preview local Feishu card and Airtable record-package drafts without sending or syncing anything.
+It also supports `/venus delivery-status` to preview local manual delivery status records without confirming or changing any external platform state.
+It also supports `/venus connector-execution` to preview platform-specific execution manifests without dispatching to Feishu, Airtable, Douyin, WeChat, Qianchuan, Xingtu, OpenAI, or backups.
+It also supports `/venus connector-dispatch` to preview request envelopes, credential-readiness checks, audit packets, and rollback packets without calling any live connector.
+It also supports `/venus product-intel` to preview brand backing, filing checks, ingredient risk, supplier documents, test reports, controversies, and product retrieval tasks without live product-data reads.
+It also supports `/venus douyin` to preview comment and live-message reply queues without touching Douyin.
+It also supports `/venus ecommerce` to preview product catalog checks, inventory alerts, live product-card plans, promotions, and after-sales risk without touching shop, order, price, coupon, or inventory state.
+It also supports `/venus wechat` to preview Mini Program answer and Enterprise WeChat handoff queues without touching WeChat.
+It also supports `/venus commercial` to preview Qianchuan budget guardrails and Xingtu brief reviews without touching ad accounts or brand tasks.
+It also supports `/venus improvement` to preview learning candidates, defect guardrails, and backup verification tasks without changing memory, code, or backups.
+It also supports `/venus memory` to preview versioned memory merges, rollback plans, privacy blocks, and backup checks without writing long-term memory.
+It also supports `/venus scheduler` to preview a 24-hour run queue, blocked connector jobs, approval-gated jobs, and private operator digests without starting timers or platform actions.
+It also supports `/venus connectors` to preview connector permissions, audit logs, rollback gaps, and launch sequence without configuring live apps.
+It also supports `/venus production` to preview scripts, shot lists, editing timelines, subtitles, and publishing drafts without rendering or publishing video.
+It also supports `/venus content-eval` to preview retention, interaction, comment, follow, persona, evidence, and claim-safety gates without publishing video.
+It also supports `/venus performance` to preview video metric winners, underperformers, calibration rules, and next-content actions without reading live Douyin metrics.
+It also supports `/venus evals` to preview Agent Run safety gates before live autopilot, connector writes, memory writes, replies, publishing, or ad spend are considered.
+It also supports `/venus agents-sdk` to preview the OpenAI Agents SDK-ready runtime manifest without installing dependencies or calling OpenAI.
+It also supports `/venus trend-scan` to preview Douyin beauty/skincare hot topics, products, creators, comments, ingredients, tags, controversies, and refresh gaps without live platform reads.
+It also supports `/venus agent-run` to preview the next Venus operating cycle and pending approval records.
+
+The local MVP never performs external actions. Public replies, publishing, lead routing, and ad spend remain approval-gated future integrations.

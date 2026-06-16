@@ -1,0 +1,155 @@
+{
+  "source": "manual_connector_execution_review",
+  "workspace_root": ".",
+  "executed_at": "2026-06-15T14:00:00+08:00",
+  "execution_requested": false,
+  "approved_execution_review": false,
+  "live_dispatch_requested": false,
+  "draft_records": [
+    {
+      "draft_id": "draft-feishu-report-001",
+      "outbox_id": "outbox-feishu-report-001",
+      "action_id": "feishu-report-001",
+      "action_type": "feishu_mobile_report",
+      "artifact_type": "feishu_card_draft",
+      "target_surface": "feishu",
+      "draft_payload": {
+        "card": {
+          "title": "Venus private report"
+        }
+      },
+      "dispatch_state": "local_review_required",
+      "approval_level": 2,
+      "external_action_enabled": false
+    },
+    {
+      "draft_id": "draft-airtable-sync-001",
+      "outbox_id": "outbox-airtable-sync-001",
+      "action_id": "airtable-sync-001",
+      "action_type": "airtable_sync_review",
+      "artifact_type": "airtable_record_package",
+      "target_surface": "airtable",
+      "draft_payload": {
+        "table": "Action Reviews"
+      },
+      "dispatch_state": "local_review_required",
+      "approval_level": 2,
+      "external_action_enabled": false
+    },
+    {
+      "draft_id": "draft-douyin-reply-001",
+      "outbox_id": "outbox-douyin-reply-001",
+      "action_id": "douyin-reply-001",
+      "action_type": "douyin_reply_queue",
+      "artifact_type": "douyin_reply_package",
+      "target_surface": "douyin",
+      "draft_payload": {
+        "reply": "先看屏障状态。"
+      },
+      "dispatch_state": "local_review_required",
+      "approval_level": 3,
+      "external_action_enabled": false
+    },
+    {
+      "draft_id": "draft-qianchuan-budget-001",
+      "outbox_id": "outbox-qianchuan-budget-001",
+      "action_id": "qianchuan-budget-001",
+      "action_type": "qianchuan_budget_review",
+      "artifact_type": "qianchuan_budget_package",
+      "target_surface": "qianchuan",
+      "draft_payload": {
+        "budget_delta": 500
+      },
+      "dispatch_state": "local_review_required",
+      "approval_level": 4,
+      "external_action_enabled": false
+    },
+    {
+      "draft_id": "draft-wechat-handoff-001",
+      "outbox_id": "outbox-wechat-handoff-001",
+      "action_id": "wechat-handoff-001",
+      "action_type": "wechat_handoff_queue",
+      "artifact_type": "wechat_handoff_package",
+      "target_surface": "wechat",
+      "draft_payload": {
+        "handoff": "Invite to Enterprise WeChat."
+      },
+      "dispatch_state": "local_review_required",
+      "approval_level": 2,
+      "external_action_enabled": false
+    }
+  ],
+  "connector_reviews": [
+    {
+      "connector_id": "feishu-bot",
+      "surface": "feishu",
+      "connector_type": "feishu_bot",
+      "ready_for_launch": true,
+      "missing_permissions": [],
+      "permissions_required": ["send_private_card"],
+      "permissions_granted": ["send_private_card"],
+      "secret_refs": ["VENUS_FEISHU_APP_ID"],
+      "audit_ready": true,
+      "rollback_ready": true,
+      "approval_level": 2
+    },
+    {
+      "connector_id": "airtable-ops",
+      "surface": "airtable",
+      "connector_type": "airtable_api",
+      "ready_for_launch": true,
+      "missing_permissions": [],
+      "permissions_required": ["record_write"],
+      "permissions_granted": ["record_write"],
+      "secret_refs": ["VENUS_AIRTABLE_BASE_ID"],
+      "audit_ready": true,
+      "rollback_ready": true,
+      "approval_level": 2
+    },
+    {
+      "connector_id": "douyin-open",
+      "surface": "douyin",
+      "connector_type": "douyin_open_api",
+      "ready_for_launch": true,
+      "missing_permissions": ["video_comment_reply"],
+      "permissions_required": ["video_comment_reply"],
+      "permissions_granted": ["video_comment_read"],
+      "secret_refs": ["VENUS_DOUYIN_CLIENT_ID"],
+      "audit_ready": true,
+      "rollback_ready": true,
+      "approval_level": 3
+    },
+    {
+      "connector_id": "qianchuan-ads",
+      "surface": "qianchuan",
+      "connector_type": "oceanengine_marketing_api",
+      "ready_for_launch": true,
+      "missing_permissions": [],
+      "permissions_required": ["budget_write"],
+      "permissions_granted": ["budget_write"],
+      "secret_refs": ["VENUS_QIANCHUAN_APP_ID"],
+      "audit_ready": true,
+      "rollback_ready": true,
+      "approval_level": 4
+    },
+    {
+      "connector_id": "wechat-private-domain",
+      "surface": "wechat",
+      "connector_type": "wechat_mini_program",
+      "ready_for_launch": true,
+      "missing_permissions": [],
+      "permissions_required": ["customer_message_send"],
+      "permissions_granted": ["customer_message_send"],
+      "secret_refs": ["VENUS_WECHAT_APP_ID"],
+      "audit_ready": true,
+      "rollback_ready": true,
+      "approval_level": 2
+    }
+  ],
+  "execution_overrides": [
+    {
+      "draft_id": "draft-wechat-handoff-001",
+      "external_action_enabled": true
+    }
+  ]
+}

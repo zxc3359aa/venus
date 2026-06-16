@@ -1,0 +1,12 @@
+[
+  {
+    "brand": "Example Skin",
+    "name": "Barrier Serum",
+    "filing_id": "粤G妆网备字20260001",
+    "category": "essence",
+    "claims": ["舒缓", "100%修复屏障"],
+    "ingredients": ["panthenol", "centella asiatica extract"],
+    "evidence": ["nmpa-sample-001"],
+    "controversies": ["达人质疑夸大修复"]
+  }
+]
