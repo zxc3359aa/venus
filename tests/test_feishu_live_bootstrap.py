@@ -37,3 +37,27 @@ def test_live_bootstrap_returns_zero_when_real_start_succeeds(monkeypatch):
     monkeypatch.setattr(script, "real_start", fake_real_start)
     assert script.main() == 0
     assert started["value"] == 1
+
+
+def test_live_message_is_routed_to_feishu_entry(monkeypatch):
+    calls: list[dict[str, object]] = []
+
+    def fake_entry(payload, workspace_root=None):
+        calls.append({"payload": payload, "workspace_root": str(workspace_root or "none")})
+        return {"workflow": "feishu", "dry_run": True, "command": {"name": "help"}, "card": {"type": "status"}}
+
+    monkeypatch.setattr(script, "run_feishu_entry", fake_entry)
+
+    payload = {
+        "text": "/venus status",
+        "message_id": "msg-001",
+        "chat_id": "chat-001",
+        "sender_id": "sender-001",
+        "timestamp": "2026-06-16T00:00:00Z",
+    }
+
+    script._on_message(payload)
+
+    assert len(calls) == 1
+    assert calls[0]["payload"] == payload
+    assert calls[0]["workspace_root"].endswith("维纳斯")

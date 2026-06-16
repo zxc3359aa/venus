@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import datetime
+import json
 from pathlib import Path
 from typing import Any
+from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = ROOT / "src"
@@ -19,6 +20,7 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from venus.connectors_feishu import PlatformInterfaceNotVerified, real_start
+from venus.feishu_entry import run_feishu_entry
 
 
 def _extract_message_text(payload: dict[str, Any]) -> str:
@@ -40,7 +42,10 @@ def _on_message(payload: dict[str, Any]) -> None:
     preview = text if text else "<empty message>"
     if len(preview) > 200:
         preview = preview[:200] + "..."
-    print(f"[{datetime.utcnow().isoformat()}] Received message: {preview}")
+    print(f"[{datetime.now(timezone.utc).isoformat()}] Received message: {preview}")
+
+    card_payload = run_feishu_entry(payload, workspace_root=ROOT)
+    print(json.dumps(card_payload, ensure_ascii=False, indent=2, sort_keys=True))
 
 
 def main() -> int:
