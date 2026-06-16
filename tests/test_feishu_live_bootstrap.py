@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from scripts import feishu_live_bootstrap as script
 
@@ -33,6 +35,35 @@ def test_live_bootstrap_returns_zero_when_real_start_succeeds(monkeypatch):
         assert app_secret == "app-secret"
         assert callable(handler)
         # 在真实环境 real_start 通常会阻塞；测试场景这里改为返回以完成主流程。
+
+    monkeypatch.setattr(script, "real_start", fake_real_start)
+    assert script.main() == 0
+    assert started["value"] == 1
+
+
+def test_live_bootstrap_loads_from_dotenv_if_present(monkeypatch, tmp_path: Path):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "VENUS_FEISHU_APP_ID=from-file-id\n"
+        "VENUS_FEISHU_APP_SECRET=from-file-secret\n"
+        "VENUS_FEISHU_CONTEXT7_VERIFIED=true\n"
+        "VENUS_FEISHU_LIVE_ENABLED=true\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.delenv("VENUS_FEISHU_APP_ID", raising=False)
+    monkeypatch.delenv("VENUS_FEISHU_APP_SECRET", raising=False)
+    monkeypatch.delenv("VENUS_FEISHU_CONTEXT7_VERIFIED", raising=False)
+    monkeypatch.delenv("VENUS_FEISHU_LIVE_ENABLED", raising=False)
+    monkeypatch.setattr(script, "ROOT", tmp_path)
+
+    started = {"value": 0}
+
+    def fake_real_start(app_id, app_secret, handler):  # pragma: no cover - mocked path
+        started["value"] += 1
+        assert app_id == "from-file-id"
+        assert app_secret == "from-file-secret"
+        assert callable(handler)
 
     monkeypatch.setattr(script, "real_start", fake_real_start)
     assert script.main() == 0
